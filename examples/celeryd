@@ -1,0 +1,3 @@
+celery multi start worker1 -A medtracker.backgroundtasks.celery -b 'redis://:redis_pass@localhost:6379/0' \
+--pidfile "$HOME/run/celery/%n.pid" \
+--logfile "$HOME/log/celery/%n.pid"

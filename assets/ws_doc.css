@@ -1,0 +1,39 @@
+body {
+    margin: 0px;
+    padding: 10px;
+    font-family: sans-serif;
+}
+#header {
+    background-color: #8A76B0;
+    color: #FEE2FE;
+    padding: 5px 10px;
+    margin: -10px;
+}
+h1 {
+    font-size: xx-large;
+    color: #FEE2FE;
+}
+#header p {
+    font-size: large;
+}
+
+dt {
+    margin-top: 1em;
+}
+
+.description {
+    padding-left: 1.5em;
+    margin-bottom: 1.5em;
+}
+
+a:link {
+    color: #006600;
+}
+
+a:visited {
+    color: #030;
+}
+
+a:hover {
+    color: #003300;
+}

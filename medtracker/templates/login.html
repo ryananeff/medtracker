@@ -1,0 +1,67 @@
+<html lang="en">
+<!-- vvvvvvvvvvvvvv -->
+<!-- Not Authorized -->
+<!-- ^^^^^^^^^^^^^^ -->
+<head>
+  <!-- required -->
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1.5, minimum-scale=0.5" />
+
+  <!-- Google Sign in for authentication -->
+  <meta name="google-signin-scope" content="profile email">
+  <meta name="google-signin-client_id" content="{{ vm_client_id }}">
+  <script src="https://apis.google.com/js/platform.js" async defer></script>
+  
+</head>
+<body>
+  <div class="container" style="width:100%; height:100%;font-family:sans-serif">
+  <div id="signin1" style="height:100px; width:30%; min-width:300px;margin: 0 auto; text-align:center; display:block"><h2>Please sign in to MedTracker</h2></div>
+  <div id="signin2" style="width:120px;margin: 0 auto; display:block">
+	<div class="g-signin2" data-onsuccess="onSignIn" data-theme="light"></div>
+  </div>
+    <script>
+      function onSignIn(googleUser) {
+        // Useful data for your client-side scripts:
+        var profile = googleUser.getBasicProfile();
+        console.log("Email: " + profile.getEmail());
+
+        // The ID token you need to pass to your backend:
+        var id_token = googleUser.getAuthResponse().id_token;
+		var xhr = new XMLHttpRequest();
+		xhr.open('POST', '/tokensignin');
+		xhr.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded');
+		xhr.onload = function() {
+			console.log("Signed in as: ", xhr.responseText);
+			document.getElementById('signin1').style.display='block';
+			document.getElementById('signin2').style.display='block';
+			document.getElementById('curuser').innerHTML="Logged in as: " + xhr.responseText + ' | <a href="#" onclick="signOut();">Log out</a></p>';
+			document.getElementById('curuser').innerHTML += '<p><a href="' + document.referrer + '">Continue to site</a></p>';
+		};
+		xhr.send('idtoken=' + id_token);
+	  };
+  </script>
+  <script>
+	    function signOut() {
+		    var auth2 = gapi.auth2.getAuthInstance(); 
+		    var xhr = new XMLHttpRequest();
+		    xhr.open('GET', '/logout');
+		    xhr.send();
+		    document.getElementById('player1').style.display='none';
+                    document.getElementById('signin1').style.display='block';
+                    document.getElementById('signin2').style.display='block';
+		    auth2.signOut().then(function () {
+		          console.log('User signed out.');
+			      });
+			        }
+</script>
+  <div class="player-container" style="display:none; width:30%; min-width:300px; margin: 0 auto" id="player1">
+	 {% if current_user.is_authenticated %}
+	 <p style="font-size:10px;text-align:center" id="curuser">Logged in as: {{ current_user.email }} | <a href="#" onclick="signOut();">Log out</a></p>
+	 {% else %}
+	 <p style="font-size:12px;text-align:center" id="curuser">Not logged in. | <a href="#" onclick="signOut();">Retry</a></p>
+	 {% endif %}
+	 </div>
+    </div>
+  </div>
+</body>
+</html>
+

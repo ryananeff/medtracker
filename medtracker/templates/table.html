@@ -1,0 +1,30 @@
+{% extends "layout.html" %}
+{% block body %}
+	    <div class="page-header">
+		    <h1>{{ title }}</h1>
+	    </div>
+	    <table class="table table-hover">
+		<thead>
+			<tr>
+			{% for k in data.keys %}
+				<th>{{ key }}</th>
+			{% endfor %}
+			</tr>
+		</thead>
+		<tbody>
+		{% for i in range(0,data.values|length) %}
+		<tr>
+			{% for key in data.keys %}
+				<td>{{ data[key][i] }}</td>
+			{% endfor %}
+		</tr>
+		{% endfor %}			
+		</tbody>
+	    </table>
+	    {% if data.values|length == 0 %}
+	    <div class="alert alert-error">Nothing in DB.</div>
+	    {% endif %}
+	    <a href="/intents/edit" class="btn btn-lg btn-primary">Add</a>
+	    </div>
+    </div><!-- /.container -->
+{% endblock %}

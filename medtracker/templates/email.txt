@@ -1,0 +1,13 @@
+{{ subject line }}
+
+{{ body }}
+
+Thanks, 
+MedTracker
+
+---
+Notice a bug? Let us know
+Phone: 973.960.8144
+E-mail: help@medtracker.com
+
+
