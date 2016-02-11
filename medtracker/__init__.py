@@ -15,6 +15,7 @@ mail = Mail(app)
 from medtracker.database import db_session 	# to make sqlalchemy DB calls
 import medtracker.models			# database models
 import medtracker.views				# web pages 
+import medtracker.email_helper      # emails
 import medtracker.backgroundtasks		# sending push reminders
 
 @app.teardown_appcontext
