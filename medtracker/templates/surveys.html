@@ -1,0 +1,40 @@
+{% extends "layout.html" %}
+{% block body %}
+	    <div class="page-header">
+		    <h1>Surveys</h1>
+	    </div>
+	    <table class="table table-hover">
+		<thead>
+			<tr>
+			<th> ID </th>
+			<th> Title </th>
+			<th> Actions </th>
+			</tr>
+		</thead>
+		<tbody>
+		{% for survey in surveys %}
+		<tr>
+			<th scope="row">{{ survey.id }}</th>
+			<td> {{ survey.title }}</td>
+			<td> 
+			<a href="/surveys/edit/{{ survey.id }}">Edit</a> 
+			<a href="/surveys/serve/{{ survey.id }}">Test</a>
+			<a href="/surveys/delete/{{ survey.id }}">Delete</a> 
+				</td>
+		</tr>
+		{% endfor %}			
+		</tbody>
+	    </table>
+	    {% if surveys.first() == None %}
+	    <div class="well">
+		<div class="starter-template">
+		No surveys yet.
+		<h1>:(</h1>
+		<a href="/surveys/new/">How about building a new survey?</a>
+		</div></div>
+	    {% else %}
+	    <a href="/surveys/edit" class="btn btn-lg btn-primary">Build a new survey</a>
+	    {% endif %}
+	    </div>
+    </div><!-- /.container -->
+{% endblock %}

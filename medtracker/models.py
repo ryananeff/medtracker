@@ -1,4 +1,5 @@
 from medtracker.database import db
+from medtracker.config import *
 from sqlalchemy_utils import EncryptedType, ChoiceType
 
 class Survey(db.Model):
@@ -24,7 +25,8 @@ class Question(db.Model):
 	body = db.Column(db.String)
 	image = db.Column(db.String)
 	kind = db.Column(ChoiceType(QUESTION_KIND_CHOICES))
-	survey = db.Column(db.relationship("survey"))
+	survey = db.Column(db.Integer, db.ForeignKey('survey.id'))
+	survey_obj = db.relationship("Survey", backref=db.backref('questions', lazy='dynamic'))
 
 	def __str__(self):
 		return '%s' % self.body
@@ -36,7 +38,8 @@ class QuestionResponse(db.Model):
 	response = db.Column(EncryptedType(db.String, flask_secret_key))
 	uniq_id = db.Column(EncryptedType(db.String, flask_secret_key))
 	session_id = db.Column(EncryptedType(db.String, flask_secret_key))
-	question = db.Column(db.relationship("question"))
+	question = db.Column(db.Integer, db.ForeignKey('question.id'))
+	question_obj = db.relationship("Question", backref=db.backref('responses', lazy='dynamic'))
 
 	def __str__(self):
 		return '%s' % self.response

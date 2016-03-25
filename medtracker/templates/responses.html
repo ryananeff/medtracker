@@ -1,0 +1,45 @@
+{% extends "layout.html" %}
+{% block body %}
+	    <div class="page-header">
+		    <h1>Responses</h1>
+	    </div>
+	    <table class="table table-hover">
+		<thead>
+			<tr>
+			<th> ID </th>
+			<th> Patient </th>
+			<th> Survey </th>
+			<th> Question </th>
+			<th> Answer </th>
+			<th> Actions </th>
+			</tr>
+		</thead>
+		<tbody>
+		{% for response in responses %}
+		<tr>
+			<th scope="row">{{ response.id }}</th>
+			<td> {{ response.uniq_id }}</td>
+			<td> {{ response.question_obj.survey_obj.title }}</td>
+			<td> {{ response.question_obj.title }}</td>
+			<td> {{ response.response }}</td>
+			<td> 
+			<a href="/responses/edit/{{ response.id }}">Edit</a> 
+			<a href="/responses/delete/{{ response.id }}">Delete</a> 
+				</td>
+		</tr>
+		{% endfor %}			
+		</tbody>
+	    </table>
+	    {% if responses.first() == None %}
+	    <div class="well">
+		<div class="starter-template">
+		No responses yet.
+		<h1>:(</h1>
+		<a href="/surveys">Choose a survey to take &raquo;</a>
+		</div></div>
+	    {% else %}
+	    Page 1 of 1 (TODO: add pagination)
+	    {% endif %}
+	    </div>
+    </div><!-- /.container -->
+{% endblock %}
