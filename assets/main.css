@@ -36,3 +36,24 @@
     border-top-color: #777;
     border-bottom-color: #777;
 }
+
+.img-circle {
+	horizontal-align:middle;
+	border-radius:50%;
+	height:150px;
+}
+
+.col-lg-4 {
+text-align:center;
+}
+
+.jumbotron {
+text-align:center;
+}
+
+.footer {
+    padding-top: 40px;
+    padding-bottom: 40px;
+    margin-top: 40px;
+    border-top: 1px solid #eee;
+}
