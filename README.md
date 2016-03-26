@@ -1,5 +1,5 @@
 # Suretify
-![Suretify logo](https://raw.githubusercontent.com/nosarcasm/medtracker/master/assets/images/suretify-logo.png | height=100)
+![Suretify logo](https://raw.githubusercontent.com/nosarcasm/medtracker/master/assets/images/suretify-logo.png)
 Discharge tracking app. Deployable to Heroku for fast prototyping.
 
 Notes:
