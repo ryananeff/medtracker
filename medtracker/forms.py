@@ -21,6 +21,6 @@ class QuestionForm(Form):
 	body = TextField('Question', [validators.Length(min=5, max=255)])
 	image = FileField('Upload an image')
 	kind = SelectField('Type', choices=QUESTION_KIND_CHOICES)
-	survey_id = DisabledSelectField("Survey")
+	survey_id = SelectField("Survey", choices=[], coerce=int)
 	
     

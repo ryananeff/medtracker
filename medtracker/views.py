@@ -82,13 +82,14 @@ def add_question():
 	survey = Survey.query.get_or_404(_id)
         survey_id = survey.id
 	formobj = QuestionForm(request.form, survey_id=survey_id)
-	formobj.survey.choices = [(survey.id, survey.title)]
+	formobj.survey_id.choices = [(survey.id, survey.title)]
+	formobj.survey_id.data = survey.id
 	if request.method == 'POST' and formobj.validate():
 		dbobj = Question(
 				formobj.body.data,
 				formobj.image.data,
 				formobj.kind.data,
-				survey_id
+				formobj.survey_id.data
 		)
 		db_session.add(dbobj)
 		db_session.commit()
@@ -103,18 +104,17 @@ def edit_question(_id):
 	question = Question.query.get_or_404(_id)
         survey = Survey.query.get_or_404(question.survey_id)
         survey_id = survey.id
-	formout = QuestionForm(obj=question)
-	formobj = QuestionForm(request.form)
-        formout.survey_id.choices = [(survey.id, survey.title)]
-	if request.method == 'POST' and formobj.validate():
-		question.body = formobj.body.data
-		question.image = formobj.image.data
-		question.kind = formobj.kind.data
-		question.survey_id = formobj.survey_id.data
+	formout = QuestionForm(formdata=request.form, obj=question)
+	formout.survey_id.choices = [(survey.id, survey.title)]
+	if request.method == 'POST' and formout.validate():
+		formout.populate_obj(question)
 		db_session.add(question)
 		db_session.commit()
 		flash('Question edited.')
 		return redirect(url_for('view_survey', _id=survey_id))
+	else:
+        	formout.survey_id.data = survey.id
+		formout.kind.data = question.kind
 	return render_template("form.html", action="Edit", data_type="question " + str(_id), form=formout)
 
 @app.route('/questions/delete/<int:_id>', methods=['GET', 'POST'])
