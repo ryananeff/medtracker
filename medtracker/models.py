@@ -9,6 +9,9 @@ class Survey(db.Model):
 
 	def __str__(self):
 		return '%s' % self.title
+	
+	def __init__(self, title=title):
+		self.title = title
 
 class Question(db.Model):
 	__tablename__ = 'question'
