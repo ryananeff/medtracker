@@ -1,7 +1,7 @@
 {% macro render(form) -%}
 
-<fieldset class="form-group">
 {% for field in form %}
+<fieldset class="form-group">
 {% if field.type in ['CSRFTokenField', 'HiddenField'] %}
   {{ field() }}
 {% else %}
@@ -29,6 +29,6 @@
     </div>
   </div>
 {% endif %}
-{% endfor %}
 </fieldset>
+{% endfor %}
 {% endmacro %}

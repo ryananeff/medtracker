@@ -1,0 +1,40 @@
+{% extends "layout.html" %}
+{% block body %}
+	    <div class="page-header">
+		    <h3><span style="color: grey;">username / <a href="/surveys">surveys</a> /</span> {{ survey.title }} <span style="color: grey;font-size:16px">(#id: {{survey.id}})</span></h3>
+	    </div>
+	    <table class="table table-hover">
+		<thead>
+			<tr>
+			<th> ID </th>
+			<th> Title </th>
+			<th> Actions </th>
+			</tr>
+		</thead>
+		<tbody>
+		{% for question in survey.questions %}
+		<tr>
+			<th scope="row">{{ question.id }}</th>
+			<td> {{ question.body }}</td>
+			<td> 
+			<a href="/questions/edit/{{ question.id }}">Edit</a> 
+			<a href="/questions/serve/{{ question.id }}">Test</a>
+			<a href="/questions/delete/{{ question.id }}">Delete</a> 
+				</td>
+		</tr>
+		{% endfor %}			
+		</tbody>
+	    </table>
+	    {% if survey.questions == None %}
+	    <div class="well">
+		<div class="starter-template">
+		No questions for this survey yet.
+		<h1>:(</h1>
+		<a href="/questions/new/?survey={{ survey.id }}">Add a new question to this survey</a>
+		</div></div>
+	    {% else %}
+	    <a href="/questions/new/?survey={{ survey.id }}" class="btn btn-lg btn-primary">Add more questions</a>
+	    {% endif %}
+	    </div>
+    </div><!-- /.container -->
+{% endblock %}
