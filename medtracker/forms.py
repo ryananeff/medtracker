@@ -1,5 +1,5 @@
 from wtforms import *
-from medtracker.models import QUESTION_KIND_CHOICES
+from medtracker.models import QUESTION_KIND_CHOICES, TRIGGER_KIND_CHOICES
 import re
 
 class DisabledTextField(TextField):
@@ -23,4 +23,10 @@ class QuestionForm(Form):
 	kind = SelectField('Type', choices=QUESTION_KIND_CHOICES)
 	survey_id = SelectField("Survey", choices=[], coerce=int)
 	
-    
+class TriggerForm(Form):				
+	'''GUI: trigger build form used in views'''
+	kind = SelectField('Type', choices=TRIGGER_KIND_CHOICES)
+	questions = SelectMultipleField("Attach to these questions", choices=[], coerce=int)
+	criteria = TextField('Match criteria', [validators.Length(min=1, max=50)])
+	title = TextField('Message to send', [validators.Length(min=5, max=255)])
+	after_function = TextField('Callback', [validators.Length(min=2, max=255)])

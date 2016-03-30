@@ -18,14 +18,14 @@
 			<td> {{ question.body }}</td>
 			<td> 
 			<a href="/questions/edit/{{ question.id }}">Edit</a> 
-			<a href="/questions/serve/{{ question.id }}">Test</a>
+			<a href="/surveys/serve/{{survey.id}}?question={{ question.id }}">Test</a>
 			<a href="/questions/delete/{{ question.id }}">Delete</a> 
 				</td>
 		</tr>
 		{% endfor %}			
 		</tbody>
 	    </table>
-	    {% if survey.questions == None %}
+	    {% if survey.questions|length == 0 %}
 	    <div class="well">
 		<div class="starter-template">
 		No questions for this survey yet.

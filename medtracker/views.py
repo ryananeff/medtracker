@@ -2,6 +2,10 @@ from medtracker import *
 from medtracker.models import *
 from medtracker.forms import *
 from flask import flash
+import random, string
+from werkzeug import secure_filename
+
+image_staticdir = '../assets/uploads/'
 
 #### index pages
 
@@ -24,6 +28,14 @@ def serve_responses_index():
         responses = QuestionResponse.query
         return render_template("responses.html",
                                 responses = responses)
+
+@app.route('/triggers', methods=['GET'])
+##@flask_login.login_required
+def serve_triggers_index():
+	'''GUI: serve the trigger index page'''
+        triggers = Trigger.query
+        return render_template("triggers.html",
+                                triggers = triggers)                         
 
 ### controller functions for surveys
 
@@ -70,6 +82,23 @@ def view_survey(_id):
     dbobj = Survey.query.get_or_404(_id)
     return render_template("view_survey.html", survey = dbobj)
 
+@app.route('/surveys/serve/<int:survey_id>', methods=['GET', 'POST'])
+#@flask_login.login_required
+def serve_survey(survey_id):
+	survey = Survey.query.get_or_404(survey_id)
+	question_ids = [q.id for q in survey.questions]
+	if len(question_ids) == 0:
+			return render_template("view_survey.html", survey = survey)
+	question_id = request.values.get("question", None)
+	if question_id == None:
+		question_id = question_ids[0]
+	question_id = int(question_id)
+	question = Question.query.get_or_404(question_id)
+	curpos = question_ids.index(question_id)
+	next_question = question_ids[curpos+1] if curpos+1 < len(question_ids) else None
+	last_question = question_ids[curpos-1] if curpos-1 >= 0 else None
+	return render_template("serve_question.html", survey = survey, question = question, next_q = next_question, last_q = last_question)
+
 ### controller functions for questions
 
 @app.route('/questions/new/', methods=['GET', 'POST'])
@@ -82,15 +111,20 @@ def add_question():
 	survey = Survey.query.get_or_404(_id)
         survey_id = survey.id
 	formobj = QuestionForm(request.form, survey_id=survey_id)
-	formobj.survey_id.choices = [(survey.id, survey.title)]
+	formobj.survey_id.choices = [(s.id, s.title) for s in Survey.query]
 	formobj.survey_id.data = survey.id
 	if request.method == 'POST' and formobj.validate():
 		dbobj = Question(
 				formobj.body.data,
-				formobj.image.data,
+				None,
 				formobj.kind.data,
 				formobj.survey_id.data
 		)
+		if request.files["image"]:
+			imgfile = request.files["image"]
+			filename = secure_filename(imgfile.filename)
+			imgfile.save(image_staticdir + filename)
+			dbobj.image = filename
 		db_session.add(dbobj)
 		db_session.commit()
 		flash('Question added.')
@@ -105,16 +139,24 @@ def edit_question(_id):
         survey = Survey.query.get_or_404(question.survey_id)
         survey_id = survey.id
 	formout = QuestionForm(formdata=request.form, obj=question)
-	formout.survey_id.choices = [(survey.id, survey.title)]
+	formout.survey_id.choices = [(s.id, s.title) for s in Survey.query]
 	if request.method == 'POST' and formout.validate():
-		formout.populate_obj(question)
+		question.kind = formout.kind.data
+		question.survey_id = formout.survey_id.data
+		question.body = formout.body.data
+		if request.files["image"]:
+			imgfile = request.files["image"]
+			filename = secure_filename(imgfile.filename)
+			imgfile.save(image_staticdir + filename)
+			question.image = filename
 		db_session.add(question)
 		db_session.commit()
 		flash('Question edited.')
 		return redirect(url_for('view_survey', _id=survey_id))
 	else:
-        	formout.survey_id.data = survey.id
+		formout.survey_id.data = survey.id
 		formout.kind.data = question.kind
+		formout.image.data = question.image
 	return render_template("form.html", action="Edit", data_type="question " + str(_id), form=formout)
 
 @app.route('/questions/delete/<int:_id>', methods=['GET', 'POST'])
@@ -133,8 +175,54 @@ def view_question(_id):
     dbobj = Question.query.get_or_404(_id)
     return render_template("view_question.html", survey = dbobj)
 
+### controller for trigger functions
+
+@app.route('/triggers/new/', methods=['GET', 'POST'])
+#@flask_login.login_required
+def add_trigger():
+	'''GUI: add a trigger to the DB'''
+	formobj = TriggerForm(request.form)
+	if request.method == 'POST' and formobj.validate():
+		dbobj = Trigger(formobj.title.data)
+		db_session.add(dbobj)
+		db_session.commit()
+		flash('Trigger added.')
+		return redirect(url_for('serve_trigger_index'))
+	formobj.questions.choices = [(q.id, "(ID: %s) "% str(q.id) + q.body) for q in Question.query]
+	return render_template("form.html", action="Add", data_type="a trigger", form=formobj)
+
+@app.route('/triggers/edit/<int:_id>', methods=['GET', 'POST'])
+#@flask_login.login_required
+def edit_trigger(_id):
+	'''GUI: edit a trigger in the DB'''
+	trigger = Trigger.query.get_or_404(_id)
+	formout = TriggerForm(obj=trigger)
+	formobj = TriggerForm(request.form)
+	if request.method == 'POST' and formobj.validate():
+		trigger.title = formobj.title.data
+		db_session.add(trigger)
+		db_session.commit()
+		flash('Trigger edited.')
+		return redirect(url_for('serve_trigger_index'))
+	return render_template("form.html", action="Edit", data_type="trigger #" + str(_id), form=formout)
+
+@app.route('/triggers/delete/<int:_id>', methods=['GET', 'POST'])
+#@flask_login.login_required
+def remove_trigger(_id):
+    dbobj = Trigger.query.get_or_404(_id)
+    db_session.delete(dbobj)
+    db_session.commit()
+    flash('Trigger removed.')
+    return redirect(url_for('serve_trigger_index'))
+
 ### static files
 	
 @app.route('/assets/<path:path>')
 def send_js(path):
     return send_from_directory('../assets', path)
+
+#### other helpers
+    
+def randomword(length):
+	'''generate a random string of whatever length, good for filenames'''
+	return ''.join(random.choice(string.lowercase) for i in range(length))
