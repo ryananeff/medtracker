@@ -19,8 +19,8 @@
 		<tr>
 			<th scope="row">{{ response.id }}</th>
 			<td> {{ response.uniq_id }}</td>
-			<td> {{ response.question_obj.survey_obj.title }}</td>
-			<td> {{ response.question_obj.title }}</td>
+			<td> {{ response._question.survey.title }}</td>
+			<td> {{ response._question.body }}</td>
 			<td> {{ response.response }}</td>
 			<td> 
 			<a href="/responses/edit/{{ response.id }}">Edit</a> 

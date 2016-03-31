@@ -61,6 +61,7 @@ def edit_survey(_id):
 	formobj = SurveyForm(request.form)
 	if request.method == 'POST' and formobj.validate():
 		survey.title = formobj.title.data
+		survey.description = formobj.description.data
 		db_session.add(survey)
 		db_session.commit()
 		flash('Survey edited.')
@@ -82,14 +83,22 @@ def view_survey(_id):
     dbobj = Survey.query.get_or_404(_id)
     return render_template("view_survey.html", survey = dbobj)
 
+@app.route('/surveys/start/<int:survey_id>', methods=['GET', 'POST'])
+def start_survey(survey_id):
+	uniq_id = randomword(64)
+	survey = Survey.query.get_or_404(survey_id)
+	return render_template('start_survey.html', survey=survey, u = uniq_id)
+	#return redirect(url_for(serve_survey), survey_id=_id, u=uniq_id)
+
 @app.route('/surveys/serve/<int:survey_id>', methods=['GET', 'POST'])
 #@flask_login.login_required
 def serve_survey(survey_id):
 	survey = Survey.query.get_or_404(survey_id)
+	question_id = request.values.get("question", None)
+	uniq_id = request.values.get("u", None)
 	question_ids = [q.id for q in survey.questions]
 	if len(question_ids) == 0:
 			return render_template("view_survey.html", survey = survey)
-	question_id = request.values.get("question", None)
 	if question_id == None:
 		question_id = question_ids[0]
 	question_id = int(question_id)
@@ -99,11 +108,23 @@ def serve_survey(survey_id):
 	last_question = question_ids[curpos-1] if curpos-1 >= 0 else None
 	formobj = QuestionView().get(question)
 	if request.method == 'POST':
+		save_response(request.form, question_id)
 		if next_question == None:
 			return redirect(url_for('view_survey', _id=survey_id))
-		return redirect(url_for('serve_survey', survey_id=survey_id, question=next_question))
+		return redirect(url_for('serve_survey', survey_id=survey_id, question=next_question, u=uniq_id))
 	else:
-		return render_template("serve_question.html", survey = survey, question = question, next_q = next_question, last_q = last_question, form=formobj)
+		return render_template("serve_question.html", survey = survey, question = question, next_q = next_question, last_q = last_question, form=formobj, u=uniq_id)
+
+def save_response(formdata, question_id, session_id=None):
+	_response = QuestionResponse(
+		formdata["response"],
+		formdata["uniq_id"],
+		session_id,
+		question_id
+	)
+	db_session.add(_response)
+	db_session.commit()
+	return "Response saved."
 
 ### controller functions for questions
 

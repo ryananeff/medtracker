@@ -18,6 +18,7 @@ class DisabledSelectField(SelectField):
 class SurveyForm(Form):				
     '''GUI: survey build form used in views'''
     title = TextField('Title', [validators.Length(min=3, max=255)])
+    description = TextAreaField('Description', [validators.Length(min=3, max=255)])
 
 class QuestionForm(Form):				
 	'''GUI: question build form used in views'''
@@ -25,16 +26,6 @@ class QuestionForm(Form):
 	image = FileField('Upload an image')
 	kind = SelectField('Type', choices=QUESTION_KIND_CHOICES)
 	survey_id = SelectField("Survey", choices=[], coerce=int)
-	
-class TriggerForm(Form):				
-	'''GUI: trigger build form used in views'''
-	kind = SelectField('Type', choices=TRIGGER_KIND_CHOICES)
-	questions = QuerySelectField("Attach to these questions", query_factory=Question.query.all, 
-											get_pk=lambda a: a.id,
-											get_label=lambda a: a.body)
-	criteria = TextField('Match criteria', [validators.Length(min=1, max=50)])
-	title = TextField('Message to send', [validators.Length(min=5, max=255)])
-	after_function = TextField('Callback', [validators.Length(min=2, max=255)])
 
 class QuestionView(MethodView):
 	def get(self, question):
@@ -45,15 +36,25 @@ class QuestionView(MethodView):
 		return d
 
 	def getField(self, kind):
-		label = [b for a,b in QUESTION_KIND_CHOICES if a==kind][0]
+		qlabel = [b for a,b in QUESTION_KIND_CHOICES if a==kind][0]
+		qtype = "response"
 		if kind == "text":
-			return label, TextField(label)
+			return qtype, TextField(qlabel)
 		if kind == "yes-no":
-			return label, RadioField(label, choices=[(1,"Yes"), (0, "No")], coerce=int)
+			return qtype, RadioField(qlabel, choices=[(1,"Yes"), (0, "No")], coerce=int)
 		if kind == "numeric":
-			return label, SelectField(label, choices=[(a,str(a)) for a in range(1,11)], coerce=int)
+			return qtype, SelectField(qlabel, choices=[(a,str(a)) for a in range(1,11)], coerce=int)
 		else:
-			label = "Select from the following"
-			return label, TextField(label)
+			qlabel = "Select from the following"
+			return qtype, TextField(qlabel)
 		# can extend if clauses at every new fieldtype
     
+class TriggerForm(Form):				
+	'''GUI: trigger build form used in views'''
+	kind = SelectField('Type', choices=TRIGGER_KIND_CHOICES)
+	questions = QuerySelectField("Attach to these questions", query_factory=Question.query.all, 
+											get_pk=lambda a: a.id,
+											get_label=lambda a: a.body)
+	criteria = TextField('Match criteria', [validators.Length(min=1, max=50)])
+	title = TextField('Message to send', [validators.Length(min=5, max=255)])
+	after_function = TextField('Callback', [validators.Length(min=2, max=255)])

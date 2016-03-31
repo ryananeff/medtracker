@@ -1,6 +1,7 @@
 from medtracker.database import db
 from medtracker.config import *
 from sqlalchemy_utils import EncryptedType, ChoiceType
+from datetime import datetime
 
 TEXT = 'text'
 YES_NO = 'yes-no'
@@ -32,13 +33,15 @@ class Survey(db.Model):
 	__tablename__ = 'survey'
 	id = db.Column(db.Integer, primary_key=True)
 	title = db.Column(db.String)
+	description = db.Column(db.String)
 	questions = db.relationship("Question", backref='survey', cascade="all, delete-orphan")
 
 	def __str__(self):
 		return '%s' % self.title
 	
-	def __init__(self, title=None):
+	def __init__(self, title=None, description=None):
 		self.title = title
+		self.description=description
 
 class Question(db.Model):
 	__tablename__ = 'question'
@@ -75,12 +78,21 @@ class QuestionResponse(db.Model):
 	__tablename__ = 'question_response'
 	id = db.Column(db.Integer, primary_key=True)
 	response = db.Column(EncryptedType(db.String, flask_secret_key))
+	time = db.Column(EncryptedType(db.DateTime, flask_secret_key))
 	uniq_id = db.Column(EncryptedType(db.String, flask_secret_key))
 	session_id = db.Column(EncryptedType(db.String, flask_secret_key))
 	question_id = db.Column(db.Integer, db.ForeignKey('question.id'))
+	_question = db.relationship("Question", backref='_response')
 
 	def __str__(self):
 		return '%s' % self.response
+	
+	def __init__(self, response=None, uniq_id=None, session_id=None, question_id=None, time=datetime.utcnow()):
+		self.response = response
+		self.uniq_id = uniq_id
+		self.session_id = session_id
+		self.question_id = question_id
+		self.time = time
 
 class Trigger(db.Model):
 	__tablename__ = 'trigger'
