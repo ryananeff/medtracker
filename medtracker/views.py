@@ -97,7 +97,13 @@ def serve_survey(survey_id):
 	curpos = question_ids.index(question_id)
 	next_question = question_ids[curpos+1] if curpos+1 < len(question_ids) else None
 	last_question = question_ids[curpos-1] if curpos-1 >= 0 else None
-	return render_template("serve_question.html", survey = survey, question = question, next_q = next_question, last_q = last_question, form=QuestionView().get(question))
+	formobj = QuestionView().get(question)
+	if request.method == 'POST':
+		if next_question == None:
+			return redirect(url_for('view_survey', _id=survey_id))
+		return redirect(url_for('serve_survey', survey_id=survey_id, question=next_question))
+	else:
+		return render_template("serve_question.html", survey = survey, question = question, next_q = next_question, last_q = last_question, form=formobj)
 
 ### controller functions for questions
 

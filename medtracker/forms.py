@@ -52,5 +52,8 @@ class QuestionView(MethodView):
 			return label, RadioField(label, choices=[(1,"Yes"), (0, "No")], coerce=int)
 		if kind == "numeric":
 			return label, SelectField(label, choices=[(a,str(a)) for a in range(1,11)], coerce=int)
+		else:
+			label = "Select from the following"
+			return label, TextField(label)
 		# can extend if clauses at every new fieldtype
     
