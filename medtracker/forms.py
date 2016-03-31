@@ -1,4 +1,6 @@
 from wtforms import *
+from wtforms.ext.sqlalchemy.fields import QuerySelectField
+from medtracker.models import *
 from medtracker.models import QUESTION_KIND_CHOICES, TRIGGER_KIND_CHOICES
 import re
 
@@ -26,7 +28,12 @@ class QuestionForm(Form):
 class TriggerForm(Form):				
 	'''GUI: trigger build form used in views'''
 	kind = SelectField('Type', choices=TRIGGER_KIND_CHOICES)
-	questions = SelectMultipleField("Attach to these questions", choices=[], coerce=int)
+	questions = QuerySelectField("Attach to these questions", query_factory=Question.query.all, 
+											get_pk=lambda a: a.id,
+											get_label=lambda a: a.body)
 	criteria = TextField('Match criteria', [validators.Length(min=1, max=50)])
 	title = TextField('Message to send', [validators.Length(min=5, max=255)])
 	after_function = TextField('Callback', [validators.Length(min=2, max=255)])
+	
+	
+    

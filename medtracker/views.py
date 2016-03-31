@@ -183,12 +183,20 @@ def add_trigger():
 	'''GUI: add a trigger to the DB'''
 	formobj = TriggerForm(request.form)
 	if request.method == 'POST' and formobj.validate():
-		dbobj = Trigger(formobj.title.data)
-		db_session.add(dbobj)
+		trigger = Trigger(
+			formobj.title.data,
+			formobj.kind.data,
+			formobj.criteria.data,
+			formobj.after_function.data
+			)
+		db_session.add(trigger)
+		q = Question.query.get_or_404(formobj.questions.data.id)
+		q.trigger_id = trigger.id
+		db_session.add(q)
 		db_session.commit()
 		flash('Trigger added.')
-		return redirect(url_for('serve_trigger_index'))
-	formobj.questions.choices = [(q.id, "(ID: %s) "% str(q.id) + q.body) for q in Question.query]
+		return redirect(url_for('serve_triggers_index'))
+	#formobj.questions.choices = [(q.id, "(ID: %s) "% str(q.id) + q.body) for q in Question.query]
 	return render_template("form.html", action="Add", data_type="a trigger", form=formobj)
 
 @app.route('/triggers/edit/<int:_id>', methods=['GET', 'POST'])
@@ -199,11 +207,11 @@ def edit_trigger(_id):
 	formout = TriggerForm(obj=trigger)
 	formobj = TriggerForm(request.form)
 	if request.method == 'POST' and formobj.validate():
-		trigger.title = formobj.title.data
+		trigger = formobj.populate_obj(Trigger)
 		db_session.add(trigger)
 		db_session.commit()
 		flash('Trigger edited.')
-		return redirect(url_for('serve_trigger_index'))
+		return redirect(url_for('serve_triggers_index'))
 	return render_template("form.html", action="Edit", data_type="trigger #" + str(_id), form=formout)
 
 @app.route('/triggers/delete/<int:_id>', methods=['GET', 'POST'])
@@ -213,7 +221,7 @@ def remove_trigger(_id):
     db_session.delete(dbobj)
     db_session.commit()
     flash('Trigger removed.')
-    return redirect(url_for('serve_trigger_index'))
+    return redirect(url_for('serve_triggers_index'))
 
 ### static files
 	
