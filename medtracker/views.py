@@ -97,7 +97,7 @@ def serve_survey(survey_id):
 	curpos = question_ids.index(question_id)
 	next_question = question_ids[curpos+1] if curpos+1 < len(question_ids) else None
 	last_question = question_ids[curpos-1] if curpos-1 >= 0 else None
-	return render_template("serve_question.html", survey = survey, question = question, next_q = next_question, last_q = last_question)
+	return render_template("serve_question.html", survey = survey, question = question, next_q = next_question, last_q = last_question, form=QuestionView().get(question))
 
 ### controller functions for questions
 
@@ -169,12 +169,6 @@ def remove_question(_id):
     flash('Question removed.')
     return redirect(url_for('view_survey', _id=survey_id))
 
-@app.route('/questions/view/<int:_id>', methods=['GET', 'POST'])
-#@flask_login.login_required
-def view_question(_id):
-    dbobj = Question.query.get_or_404(_id)
-    return render_template("view_question.html", survey = dbobj)
-
 ### controller for trigger functions
 
 @app.route('/triggers/new/', methods=['GET', 'POST'])
@@ -207,8 +201,18 @@ def edit_trigger(_id):
 	formout = TriggerForm(obj=trigger)
 	formobj = TriggerForm(request.form)
 	if request.method == 'POST' and formobj.validate():
-		trigger = formobj.populate_obj(Trigger)
+		trigger.title = formobj.title.data
+		trigger.kind = formobj.kind.data
+		trigger.criteria = formobj.criteria.data
+		trigger.after_function = formobj.after_function.data
 		db_session.add(trigger)
+		for old_q in trigger.questions:
+			old_q = Question.query.get(old_q.id)
+			old_q.trigger_id = None
+			db_session.add(old_q)
+		q = Question.query.get_or_404(formobj.questions.data.id)
+		q.trigger_id = trigger.id
+		db_session.add(q)
 		db_session.commit()
 		flash('Trigger edited.')
 		return redirect(url_for('serve_triggers_index'))

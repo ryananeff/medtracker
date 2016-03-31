@@ -1,6 +1,7 @@
 from wtforms import *
 from wtforms.ext.sqlalchemy.fields import QuerySelectField
 from medtracker.models import *
+from flask.views import MethodView
 from medtracker.models import QUESTION_KIND_CHOICES, TRIGGER_KIND_CHOICES
 import re
 
@@ -34,6 +35,22 @@ class TriggerForm(Form):
 	criteria = TextField('Match criteria', [validators.Length(min=1, max=50)])
 	title = TextField('Message to send', [validators.Length(min=5, max=255)])
 	after_function = TextField('Callback', [validators.Length(min=2, max=255)])
-	
-	
+
+class QuestionView(MethodView):
+	def get(self, question):
+		class DynamicForm(Form): pass
+		label, field = self.getField(question.kind)
+		setattr(DynamicForm, label, field)
+		d = DynamicForm() # Dont forget to instantiate your new form before rendering
+		return d
+
+	def getField(self, kind):
+		label = [b for a,b in QUESTION_KIND_CHOICES if a==kind][0]
+		if kind == "text":
+			return label, TextField(label)
+		if kind == "yes-no":
+			return label, RadioField(label, choices=[(1,"Yes"), (0, "No")], coerce=int)
+		if kind == "numeric":
+			return label, SelectField(label, choices=[(a,str(a)) for a in range(1,11)], coerce=int)
+		# can extend if clauses at every new fieldtype
     
