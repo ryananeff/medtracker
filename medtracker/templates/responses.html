@@ -3,42 +3,56 @@
 	    <div class="page-header">
 		    <h1>Responses</h1>
 	    </div>
-	    <table class="table table-hover">
-		<thead>
-			<tr>
-			<th> ID </th>
-			<th> Patient </th>
-			<th> Survey </th>
-			<th> Question </th>
-			<th> Answer </th>
-			<th> Actions </th>
-			</tr>
-		</thead>
-		<tbody>
-		{% for response in responses %}
-		<tr>
-			<th scope="row">{{ response.id }}</th>
-			<td> {{ response.uniq_id }}</td>
-			<td> {{ response._question.survey.title }}</td>
-			<td> {{ response._question.body }}</td>
-			<td> {{ response.response }}</td>
-			<td> 
-			<a href="/responses/edit/{{ response.id }}">Edit</a> 
-			<a href="/responses/delete/{{ response.id }}">Delete</a> 
+	    <div class="panel-group" id="accordion" role="tablist" aria-multiselectable="true">
+		{% for uniq_id,responseobj in responses.iteritems() %}
+		  <div class="panel panel-default">
+			<div class="panel-heading" role="tab" id="headingOne">
+			  <h4 class="panel-title">
+				<a role="button" data-toggle="collapse" data-parent="#accordion" href="#collapse{{loop.index}}" aria-expanded="true" aria-controls="collapse{{loop.index}}">
+				  		Patient ID: {{ uniq_id[:8] }}
+				</a>
+			  </h4>
+			</div>
+			<div id="collapse{{loop.index}}" class="panel-collapse collapse in" role="tabpanel" aria-labelledby="heading{{loop.index}}">
+			  <div class="panel-body">
+				  <table class="table">
+					  <thead>
+					  <th>Question</th>
+					  <th>Response</th>
+					  <th></th>
+					  </thead>
+					  <tbody>
+					  </tbody>
+				  {% for response in responseobj %}
+				  <tr><td>{{response.question.body}}</h4></td>
+				<td>Responded with 
+				{% if "YES" in response.question.kind|string %}
+					{% if response.response %}YES{% else %}NO{% endif %}
+				{% elif "10" in response.question.kind|string %}
+					{{response.response}} out of 10
+				{% else %}
+				"{{response.response}}"
+				{% endif %}
 				</td>
-		</tr>
-		{% endfor %}			
-		</tbody>
-	    </table>
-	    {% if responses.first() == None %}
+				<td>
+				<a href="/responses/delete/{{ response.id }}" class="btn btn-xs btn-secondary">Delete</a>
+				</td></tr>	
+				{% endfor %}
+				
+				</tbody>
+				</table>
+			  </div>
+			</div>
+		  </div>
+		{% endfor %}
+		</div>
+	    {% if responses|length == 0 %}
 	    <div class="well">
 		<div class="starter-template">
 		No responses yet.
 		<h1>:(</h1>
 		<a href="/surveys">Choose a survey to take &raquo;</a>
 		</div></div>
-	    {% else %}
-	    Page 1 of 1 (TODO: add pagination)
 	    {% endif %}
 	    </div>
     </div><!-- /.container -->

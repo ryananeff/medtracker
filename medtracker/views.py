@@ -25,9 +25,13 @@ def serve_survey_index():
 ##@flask_login.login_required
 def serve_responses_index():
 	'''GUI: serve the response index page'''
-        responses = QuestionResponse.query
-        return render_template("responses.html",
-                                responses = responses)
+	outdict = {}
+	uniq_ids = [a.uniq_id for a in QuestionResponse.query.group_by(QuestionResponse.uniq_id).all()]
+	for u in uniq_ids:
+		responses = QuestionResponse.query.filter(QuestionResponse.uniq_id==u)
+		outdict[u] = responses
+	return render_template("responses.html",
+							responses = outdict)
 
 @app.route('/triggers', methods=['GET'])
 ##@flask_login.login_required

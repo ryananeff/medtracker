@@ -1,7 +1,7 @@
 {% extends "layout.html" %}
 {% block body %}
 	    <div class="page-header">
-		    <h2><span style="color: grey;">username /</span> Triggers </h2>
+		    <h2><span style="color: grey;">username /</span> Triggers <a href="/triggers/new" class="btn btn-sm btn-primary">Add a trigger for a question</a> </h2>
 	    </div>
 	    <table class="table table-hover">
 		{% for trigger in triggers %}
@@ -50,8 +50,6 @@
 		<h1>:(</h1>
 		<a href="/triggers/new">Create a trigger for a question &raquo;</a>
 		</div></div>
-	    {% else %}
-	    <a href="/triggers/new" class="btn btn-sm btn-primary">Add a trigger for a question &raquo;</a>
 	    {% endif %}
 	    </div>
     </div><!-- /.container -->

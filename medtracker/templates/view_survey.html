@@ -6,7 +6,7 @@
 	    <table class="table table-hover">
 		<thead>
 			<tr>
-			<th> ID </th>
+			<th> # </th>
 			<th> Title </th>
 			<th> Actions </th>
 			</tr>
@@ -14,12 +14,11 @@
 		<tbody>
 		{% for question in survey.questions %}
 		<tr>
-			<th scope="row">{{ question.id }}</th>
-			<td> {{ question.body }}</td>
-			<td> 
-			<a href="/questions/edit/{{ question.id }}">Edit</a> 
-			<a href="/surveys/serve/{{survey.id}}?question={{ question.id }}">Test</a>
-			<a href="/questions/delete/{{ question.id }}">Delete</a> 
+			<th scope="row">{{ loop.index }}</th>
+			<td> {{ question.body }} <a href="/questions/edit/{{ question.id }}" class="btn btn-xs btn-secondary">Edit</a></td>
+			<td>
+			<a href="/surveys/serve/{{survey.id}}?question={{ question.id }}" class="btn btn-xs btn-primary">View</a>
+			<a href="/questions/delete/{{ question.id }}" class="btn btn-xs btn-secondary">Delete</a> 
 				</td>
 		</tr>
 		{% endfor %}			
