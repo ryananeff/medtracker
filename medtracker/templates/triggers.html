@@ -1,0 +1,58 @@
+{% extends "layout.html" %}
+{% block body %}
+	    <div class="page-header">
+		    <h2><span style="color: grey;">username /</span> Triggers </h2>
+	    </div>
+	    <table class="table table-hover">
+		{% for trigger in triggers %}
+		<tr><td>
+		<ul class="media-list">
+		  <li class="media">
+			  <div class="media-body">
+				  <h4 class="media-heading">
+				  When the answer to:
+				  <span style="font-weight:bold">{% for q in trigger.questions %}{{ q.body }}{% endfor %}</span>
+				  is set to
+				  <span style="font-weight:bold">{{trigger.criteria}}</span></h4>
+				</div>
+			<div class="media">
+			<div class="media-left">
+			  <a href="#">
+				  {% if "phone" in trigger.kind|string %}
+				<img class="media-object" src="/assets/images/phone-st.png" alt="..." style="height:64px">
+				{% elif "email" in trigger.kind|string %}
+				<img class="media-object" src="/assets/images/email-st.png" alt="..." style="height:64px">
+				{% elif "SMS" in trigger.kind|string %}
+				<img class="media-object" src="/assets/images/sms-st.png" alt="..." style="height:64px">
+				{% else %}
+				<img class="media-object" src="/assets/images/web-st.png" alt="..." style="height:64px">
+				{% endif %}
+			  </a>
+			</div>
+			<div class="media-body">
+			  <h4 class="media-heading">{{ trigger.kind }}</h4>
+			  <span style="font-weight:bold">"{{ trigger.title }}"</span><br><br>
+			  <h4 class="media-heading">Return results to:</h4>
+			  <span style="font-weight:bold">{{trigger.after_function}}</span><br><br>
+			<a href="/triggers/edit/{{ trigger.id }}" class="btn btn-sm btn-primary">Edit</a>
+			<a href="/triggers/delete/{{ trigger.id }}" class="btn btn-sm btn-danger">Delete</a>
+			</div>
+			</div>
+		  </li>
+		</ul>
+		</td></tr>
+		{% endfor %}
+	    </table>
+	    {% if triggers.first() == None %}
+	    <div class="well">
+		<div class="starter-template">
+		No triggers defined.
+		<h1>:(</h1>
+		<a href="/triggers/new">Create a trigger for a question &raquo;</a>
+		</div></div>
+	    {% else %}
+	    <a href="/triggers/new" class="btn btn-sm btn-primary">Add a trigger for a question &raquo;</a>
+	    {% endif %}
+	    </div>
+    </div><!-- /.container -->
+{% endblock %}

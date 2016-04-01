@@ -1,0 +1,23 @@
+{% extends "layout.html" %}
+{% import '_forms.html' as forms %}
+{% block body %}
+	    <div class="page-header">
+		    <h3><span style="color: grey;">username / <a href="/surveys">surveys</a> /</span> {{ survey.title }} </h3>
+	    </div>
+	    <div class="jumbotron">
+	    <h2 style="color:gray">{{question.body}}</h2>
+	    {% if question.image %}
+	    <img src="/assets/uploads/{{question.image}}" style="max-height:500px">
+	    {% endif %}
+	    {% include 'form_auto.html' %}
+	    {% if last_q != None %}
+	    <a href="/surveys/serve/{{survey.id}}?question={{last_q}}&u={{u}}" class="btn btn-sm btn-primary" onclick='document.getElementById("serveSurvey").submit();'>Back</a>
+	    {% endif %}
+	    {% if next_q != None %}
+	    <a href="/surveys/serve/{{survey.id}}?question={{next_q}}&u={{u}}" class="btn btn-sm btn-primary" onclick='document.getElementById("serveSurvey").submit();'>Next</a>
+	    {% else %}
+	    <a href="/surveys" class="btn btn-sm btn-primary">Finish and submit</a>
+	    {% endif %}
+	    </div>
+    </div><!-- /.container -->
+{% endblock %}

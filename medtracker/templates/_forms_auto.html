@@ -1,0 +1,34 @@
+{% macro render(form) -%}
+
+{% for field in form %}
+<fieldset class="form-group">
+{% if field.type in ['CSRFTokenField', 'HiddenField'] %}
+  {{ field() }}
+{% else %}
+  <div class="clearfix {% if field.errors %}error{% endif %}">
+    {{ field.label }}
+      {% if field.type == "RadioField" %}
+		{% for item in field %}
+		<div class="radio">
+			<label>
+			{{item(onchange="this.form.submit()")|safe}} {{item.label.text|safe}}
+			</label>
+		</div>
+		{% endfor %}
+      {% else %}
+		{{ field(class="form-control", onchange="this.form.submit()") }}
+      {% endif %}
+      {% if field.errors or field.help_text %}
+        <span class="help-inline">
+        {% if field.errors %}
+          {{ field.errors|join(' ') }}
+        {% else %}
+          {{ field.help_text }}
+        {% endif %}
+        </span>	
+      {% endif %}
+  </div>
+{% endif %}
+</fieldset>
+{% endfor %}
+{% endmacro %}

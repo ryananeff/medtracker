@@ -1,0 +1,25 @@
+{% extends 'layout.html' %}
+{% import '_forms_auto.html' as forms %}
+{% block body %}
+    <div class="container">
+		<div class="row">
+			<div class="col-lg-3">
+				</div>
+			<div class="col-lg-6">
+				{% block form %}
+				<section>
+				<h1>{{ action }} {{ data_type }}</h1>
+				<form action="{{ form_action }}" method="{{ method | d("POST") }}" id="serveSurvey">
+				{{ forms.render(form) }}
+				{% if u %}
+					<input type="hidden" name="uniq_id" value="{{u}}">
+				{% endif %}
+				</form>
+				</section>
+				{% endblock form %}
+			  </div>
+			<div class="col-lg-6">
+			  </div> 
+		</div>
+    </div><!-- /.container -->
+{% endblock %}

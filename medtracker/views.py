@@ -45,7 +45,7 @@ def add_survey():
 	'''GUI: add a survey to the DB'''
 	formobj = SurveyForm(request.form)
 	if request.method == 'POST' and formobj.validate():
-		dbobj = Survey(formobj.title.data)
+		dbobj = Survey(formobj.title.data, formobj.description.data)
 		db_session.add(dbobj)
 		db_session.commit()
 		flash('Survey added.')
@@ -108,7 +108,8 @@ def serve_survey(survey_id):
 	last_question = question_ids[curpos-1] if curpos-1 >= 0 else None
 	formobj = QuestionView().get(question)
 	if request.method == 'POST':
-		save_response(request.form, question_id)
+		if uniq_id:
+			save_response(request.form, question_id)
 		if next_question == None:
 			return redirect(url_for('view_survey', _id=survey_id))
 		return redirect(url_for('serve_survey', survey_id=survey_id, question=next_question, u=uniq_id))
