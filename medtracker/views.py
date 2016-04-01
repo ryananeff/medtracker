@@ -258,6 +258,15 @@ def remove_trigger(_id):
     db_session.commit()
     flash('Trigger removed.')
     return redirect(url_for('serve_triggers_index'))
+    
+@app.route('/responses/delete/<int:_id>', methods=['GET', 'POST'])
+#@flask_login.login_required
+def remove_response(_id):
+    dbobj = QuestionResponse.query.get_or_404(_id)
+    db_session.delete(dbobj)
+    db_session.commit()
+    flash('Response removed.')
+    return redirect(url_for('serve_responses_index'))
 
 ### static files
 	
