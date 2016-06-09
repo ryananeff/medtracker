@@ -2,6 +2,7 @@ from medtracker.database import db
 from medtracker.config import *
 from sqlalchemy_utils import EncryptedType, ChoiceType
 from datetime import datetime
+from passlib.apps import custom_app_context as pwd_context
 
 TEXT = 'text'
 YES_NO = 'yes-no'
@@ -52,6 +53,7 @@ class Question(db.Model):
 	kind = db.Column(ChoiceType(QUESTION_KIND_CHOICES))
 	survey_id = db.Column(db.Integer, db.ForeignKey('survey.id'))
 	trigger_id = db.Column(db.Integer, db.ForeignKey('trigger.id'))
+	trigger = db.relationship("Trigger", backref='question')
 	survey_pos = db.column(db.Integer)
 	responses = db.relationship("QuestionResponse", backref='question')
 
@@ -101,16 +103,50 @@ class Trigger(db.Model):
 	title = db.Column(db.String)
 	criteria = db.Column(db.String)
 	kind = db.Column(ChoiceType(TRIGGER_KIND_CHOICES))
-	questions = db.relationship("Question", backref='trigger')
+	recipients = db.Column(db.String)
 	after_function = db.Column(db.String)
 
 	def __str__(self):
 		return '%s' % self.body
 	
-	def __init__(self, body=None, kind=None, criteria=None, af=None):
+	def __init__(self, body=None, kind=None, criteria=None, recipients=None, af=None):
 		self.title = body
 		self.kind = kind
 		self.criteria = criteria
+		self.recipients = recipients
 		self.after_function = af
 
+class User(db.Model):
+    """A user capable of listening to voicemails"""
+    __tablename__ = 'user'
 
+    id = db.Column(db.Integer, primary_key=True)
+    email = db.Column(EncryptedType(db.String, flask_secret_key), unique=True)
+    username = db.Column(EncryptedType(db.String, flask_secret_key), unique=True)
+    name = db.Column(EncryptedType(db.String, flask_secret_key))
+    password_hash = db.Column(db.String(256))
+    active = db.Column(db.Boolean, default=False)
+    google_token = db.Column(EncryptedType(db.String, flask_secret_key))
+    authenticated = db.Column(db.Boolean, default=False)
+
+    def is_active(self):
+        """True, as all users are active."""
+        return True
+
+    def get_id(self):
+        """Return the id to satisfy Flask-Login's requirements."""
+        return self.id
+
+    def is_authenticated(self):
+        """Return True if the user is authenticated."""
+        return self.authenticated
+
+    def is_anonymous(self):
+        """False, as anonymous users aren't supported."""
+        return False
+
+    def hash_password(self, password):
+        self.password_hash = pwd_context.encrypt(password)
+
+    def verify_password(self, password):
+        return pwd_context.verify(password, self.password_hash)
