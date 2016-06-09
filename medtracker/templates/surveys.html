@@ -6,10 +6,6 @@
 	    
 	    <div class="row">
 		{% for survey in surveys %}
-		{% if (loop.index % 4 == 0) and (loop.index > 0)  %}
-		</div>
-		<div class="row">
-			{% endif %}
 			<div class="card card--medium col-xs-4">
 			  <h2 class="card__title"><a href="/surveys/start/{{ survey.id }}">{{ survey.title }}</a></h2><span class="card__subtitle">(ID: {{survey.id}})</span>
 			  <p class="card__text">{{survey.description}}</p>

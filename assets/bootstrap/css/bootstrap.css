@@ -1296,7 +1296,7 @@ p {
   font-weight: 300;
   line-height: 1.4;
 }
-@media (min-width: 768px) {
+@media (min-width: 640px) {
   .lead {
     font-size: 21px;
   }
@@ -1452,7 +1452,7 @@ dt {
 dd {
   margin-left: 0;
 }
-@media (min-width: 768px) {
+@media (min-width: 640px) {
   .dl-horizontal dt {
     float: left;
     width: 160px;
@@ -1588,9 +1588,9 @@ pre code {
   margin-right: auto;
   margin-left: auto;
 }
-@media (min-width: 768px) {
+@media (min-width: 600px) {
   .container {
-    width: 750px;
+    width: 650px;
   }
 }
 @media (min-width: 992px) {
@@ -1775,7 +1775,7 @@ pre code {
 .col-xs-offset-0 {
   margin-left: 0;
 }
-@media (min-width: 768px) {
+@media (min-width: 600px) {
   .col-sm-1, .col-sm-2, .col-sm-3, .col-sm-4, .col-sm-5, .col-sm-6, .col-sm-7, .col-sm-8, .col-sm-9, .col-sm-10, .col-sm-11, .col-sm-12 {
     float: left;
   }
@@ -2914,7 +2914,7 @@ select[multiple].input-lg {
   margin-bottom: 10px;
   color: #737373;
 }
-@media (min-width: 768px) {
+@media (min-width: 600px) {
   .form-inline .form-group {
     display: inline-block;
     margin-bottom: 0;
@@ -3635,7 +3635,7 @@ tbody.collapse.in {
   bottom: 100%;
   margin-bottom: 2px;
 }
-@media (min-width: 768px) {
+@media (min-width: 600px) {
   .navbar-right .dropdown-menu {
     right: 0;
     left: auto;
@@ -4058,7 +4058,7 @@ select[multiple].input-group-sm > .input-group-btn > .btn {
   top: auto;
   left: auto;
 }
-@media (min-width: 768px) {
+@media (min-width: 600px) {
   .nav-tabs.nav-justified > li {
     display: table-cell;
     width: 1%;
