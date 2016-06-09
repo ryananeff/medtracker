@@ -1,5 +1,7 @@
 from wtforms import *
+from flask_wtf import Form
 from wtforms.ext.sqlalchemy.fields import QuerySelectField
+from wtforms.validators import DataRequired
 from medtracker.models import *
 from flask.views import MethodView
 from medtracker.models import QUESTION_KIND_CHOICES, TRIGGER_KIND_CHOICES
@@ -52,9 +54,17 @@ class QuestionView(MethodView):
 class TriggerForm(Form):				
 	'''GUI: trigger build form used in views'''
 	kind = SelectField('Type', choices=TRIGGER_KIND_CHOICES)
-	questions = QuerySelectField("Attach to these questions", query_factory=Question.query.all, 
-											get_pk=lambda a: a.id,
-											get_label=lambda a: a.body)
 	criteria = TextField('Match criteria', [validators.Length(min=1, max=50)])
 	title = TextField('Message to send', [validators.Length(min=5, max=255)])
+	recipients = TextField('Recipients', [validators.Length(min=4, max=255)])
 	after_function = TextField('Callback', [validators.Length(min=2, max=255)])
+
+class UsernamePasswordForm(Form):
+    username = StringField('Username', validators=[DataRequired()])
+    password = PasswordField('Password', validators=[DataRequired()])
+
+class NewUserForm(Form):
+    email = StringField('Email', validators=[DataRequired()])
+    password = PasswordField('Password', validators=[DataRequired()])
+    username = StringField('Username', validators=[DataRequired()])
+    name = StringField('Full Name', validators=[DataRequired()])
