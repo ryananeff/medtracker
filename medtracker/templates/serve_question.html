@@ -7,7 +7,7 @@
 	    <div class="jumbotron">
 	    <h2 style="color:gray">{{question.body}}</h2>
 	    {% if question.image %}
-	    <img src="/assets/uploads/{{question.image}}" style="max-height:500px">
+	    <img src="/assets/uploads/{{question.image}}" style="max-height:300px; max-width:300px">
 	    {% endif %}
 	    {% include 'form_auto.html' %}
 	    {% if last_q != None %}
