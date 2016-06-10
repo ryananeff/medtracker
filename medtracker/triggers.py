@@ -60,7 +60,7 @@ def read_phone_trigger_message():
 	resp = twilio.twiml.Response()
 	message = request.values.get("m", None)
 	if message:
-		resp.say("Hello, you have a new message from Suretify.")
+		resp.say("Hello, you have a new message from Sure tiff fy.")
 		resp.pause(length=1)
 		resp.say(message)
 	else:
