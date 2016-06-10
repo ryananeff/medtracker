@@ -36,6 +36,9 @@ class Survey(db.Model):
 	title = db.Column(db.String)
 	description = db.Column(db.String)
 	questions = db.relationship("Question", backref='survey', cascade="all, delete-orphan")
+	user_id = db.Column(db.Integer, db.ForeignKey('user.id'))
+	read_public = db.Column(db.Boolean)
+	edit_public = db.Column(db.Boolean)
 
 	def __str__(self):
 		return '%s' % self.title
@@ -52,6 +55,7 @@ class Question(db.Model):
 	image = db.Column(db.String)
 	kind = db.Column(ChoiceType(QUESTION_KIND_CHOICES))
 	survey_id = db.Column(db.Integer, db.ForeignKey('survey.id'))
+	question = db.relationship("Survey", backref='question')
 	trigger_id = db.Column(db.Integer, db.ForeignKey('trigger.id'))
 	trigger = db.relationship("Trigger", backref='question')
 	survey_pos = db.column(db.Integer)
@@ -84,6 +88,7 @@ class QuestionResponse(db.Model):
 	uniq_id = db.Column(EncryptedType(db.String, flask_secret_key))
 	session_id = db.Column(EncryptedType(db.String, flask_secret_key))
 	question_id = db.Column(db.Integer, db.ForeignKey('question.id'))
+	user_id = db.Column(db.Integer, db.ForeignKey('user.id'))
 	_question = db.relationship("Question", backref='_response')
 
 	def __str__(self):
@@ -105,6 +110,10 @@ class Trigger(db.Model):
 	kind = db.Column(ChoiceType(TRIGGER_KIND_CHOICES))
 	recipients = db.Column(db.String)
 	after_function = db.Column(db.String)
+	questions = db.relationship("Question", backref='_trigger')
+	user_id = db.Column(db.Integer, db.ForeignKey('user.id'))
+	read_public = db.Column(db.Boolean)
+	edit_public = db.Column(db.Boolean)
 
 	def __str__(self):
 		return '%s' % self.body
@@ -128,6 +137,9 @@ class User(db.Model):
     active = db.Column(db.Boolean, default=False)
     google_token = db.Column(EncryptedType(db.String, flask_secret_key))
     authenticated = db.Column(db.Boolean, default=False)
+    surveys = db.relationship("Survey", backref='user', lazy='dynamic')
+    triggers = db.relationship("Trigger", backref='user', lazy='dynamic')
+    responses = db.relationship("QuestionResponse", backref='user', lazy='dynamic')
 
     def is_active(self):
         """True, as all users are active."""

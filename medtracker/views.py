@@ -8,7 +8,7 @@ import random, string
 from werkzeug import secure_filename
 import sys
 
-from flask_login import login_user, logout_user
+from flask_login import login_user, logout_user, current_user
 
 image_staticdir = '../assets/uploads/'
 
@@ -131,7 +131,7 @@ def index():
 @flask_login.login_required
 def serve_survey_index():
 	'''GUI: serve the survey index page'''
-        surveys = Survey.query
+        surveys = current_user.surveys
         return render_template("surveys.html",
                                 surveys = surveys)
 
@@ -140,7 +140,7 @@ def serve_survey_index():
 def serve_responses_index():
 	'''GUI: serve the response index page'''
 	outdict = {}
-	uniq_ids = [a.uniq_id for a in QuestionResponse.query.group_by(QuestionResponse.uniq_id).all()]
+	uniq_ids = [a.uniq_id for a in QuestionResponse.query.filter(QuestionResponse.user_id==current_user.id).group_by(QuestionResponse.uniq_id).all()]
 	for u in uniq_ids:
 		responses = QuestionResponse.query.filter(QuestionResponse.uniq_id==u)
 		outdict[u] = responses
@@ -151,9 +151,11 @@ def serve_responses_index():
 @flask_login.login_required
 def serve_triggers_index():
 	'''GUI: serve the trigger index page'''
-        questions = Question.query.filter(Question.trigger_id != None)
+        questions = Question.query.filter(Question.trigger_id != None, Trigger.user_id==current_user.id)
+        triggers = Trigger.query.filter(Trigger.questions==None)
         return render_template("triggers.html",
-                                questions = questions)                         
+                                questions = questions, 
+                                triggers = triggers)                         
 
 ### controller functions for surveys
 
@@ -164,6 +166,7 @@ def add_survey():
 	formobj = SurveyForm(request.form)
 	if request.method == 'POST' and formobj.validate():
 		dbobj = Survey(formobj.title.data, formobj.description.data)
+		dbobj.user_id = current_user.id
 		db_session.add(dbobj)
 		db_session.commit()
 		flash('Survey added.')
@@ -202,6 +205,7 @@ def view_survey(_id):
     return render_template("view_survey.html", survey = dbobj)
 
 @app.route('/surveys/start/<int:survey_id>', methods=['GET', 'POST'])
+@flask_login.login_required
 def start_survey(survey_id):
 	uniq_id = randomword(64)
 	survey = Survey.query.get_or_404(survey_id)
@@ -209,6 +213,7 @@ def start_survey(survey_id):
 	#return redirect(url_for(serve_survey), survey_id=_id, u=uniq_id)
 
 @app.route('/surveys/serve/<int:survey_id>', methods=['GET', 'POST'])
+@flask_login.login_required
 def serve_survey(survey_id):
 	survey = Survey.query.get_or_404(survey_id)
 	question_id = request.values.get("question", None)
@@ -241,6 +246,7 @@ def save_response(formdata, question_id, session_id=None):
 		session_id,
 		question_id
 	)
+	_response.user_id = current_user.id
 	db_session.add(_response)
 	db_session.commit()
 	question = _response._question
@@ -270,6 +276,7 @@ def add_question():
 				formobj.kind.data,
 				formobj.survey_id.data
 		)
+		dbobj.user_id = current_user.id
 		if request.files["image"]:
 			imgfile = request.files["image"]
 			filename = secure_filename(imgfile.filename)
@@ -326,6 +333,7 @@ def remove_question(_id):
 def add_trigger():
 	'''GUI: add a trigger to the DB'''
 	formobj = TriggerForm(request.form)
+	formobj.questions.query = Question.query.filter(Survey.user_id==current_user.id).all()
 	if request.method == 'POST' and formobj.validate():
 		trigger = Trigger(
 			formobj.title.data,
@@ -333,8 +341,10 @@ def add_trigger():
 			formobj.criteria.data,
 			formobj.after_function.data
 			)
+		trigger.user_id = current_user.id
 		db_session.add(trigger)
-		q = Question.query.get_or_404(formobj.questions.data.id)
+		db_session.commit()
+		q = formobj.questions.data
 		q.trigger_id = trigger.id
 		db_session.add(q)
 		db_session.commit()
@@ -349,6 +359,7 @@ def edit_trigger(_id):
 	'''GUI: edit a trigger in the DB'''
 	trigger = Trigger.query.get_or_404(_id)
 	formout = TriggerForm(request.form, obj=trigger)
+	formout.questions.query = Question.query.filter(Survey.user_id==current_user.id).all()
 	if request.method == 'POST' and formout.validate():
 		trigger.title = formout.title.data
 		trigger.kind = formout.kind.data
@@ -357,14 +368,14 @@ def edit_trigger(_id):
 		trigger.after_function = formout.after_function.data
 		db_session.add(trigger)
 		db_session.commit()
-		#for old_q in trigger.questions:
-		#	old_q = Question.query.get(old_q.id)
-		#	old_q.trigger_id = None
-		#	db_session.add(old_q)
-		#q = Question.query.get_or_404(formout.questions.data.id)
-		#q.trigger_id = trigger.id
-		#db_session.add(q)
-		#db_session.commit()
+		for old_q in trigger.questions:
+			old_q = Question.query.get(old_q.id)
+			old_q.trigger_id = None
+			db_session.add(old_q)
+		q = formout.questions.data
+		q.trigger_id = trigger.id
+		db_session.add(q)
+		db_session.commit()
 		flash('Trigger edited.')
 		return redirect(url_for('serve_triggers_index'))
 	return render_template("form.html", action="Edit", data_type="trigger #" + str(_id), form=formout)

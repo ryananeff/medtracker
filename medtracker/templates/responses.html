@@ -1,7 +1,7 @@
 {% extends "layout.html" %}
 {% block body %}
 	    <div class="page-header">
-		    <h1>Responses</h1>
+		    <h2><span style="color: grey;">{{current_user.username}} /</span> Responses</h2>
 	    </div>
 	    <div class="panel-group" id="accordion" role="tablist" aria-multiselectable="true">
 		{% for uniq_id,responseobj in responses.iteritems() %}
