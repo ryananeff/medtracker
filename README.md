@@ -6,3 +6,5 @@ Discharge tracking app. Deployable to Heroku for fast prototyping.
 Notes:
 * 2/10/2016: This is just a skeleton at the moment. It won't be able to run.
 * 3/25/2016: Runable skeleton with models made and index pages for views (but the controller needs to be built).
+* 4/10/2016: Runable demo with surveys, triggers, responses (but only survey data collection working).
+* 6/10/2016: Triggers working to SMS, email, phone, and URLs (but no trigger data collection yet).
