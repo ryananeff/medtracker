@@ -152,7 +152,7 @@ def serve_responses_index():
 def serve_triggers_index():
 	'''GUI: serve the trigger index page'''
         questions = Question.query.filter(Question.trigger_id != None, Trigger.user_id==current_user.id)
-        triggers = Trigger.query.filter(Trigger.questions==None)
+        triggers = Trigger.query.filter(Trigger.questions==None, Trigger.user_id==current_user.id)
         return render_template("triggers.html",
                                 questions = questions, 
                                 triggers = triggers)                         
