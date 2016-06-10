@@ -1,7 +1,7 @@
 {% extends "layout.html" %}
 {% block body %}
 	    <div class="page-header">
-		    <h3><span style="color: grey;">username / <a href="/surveys">surveys</a> /</span> {{ survey.title }} <span style="color: grey;font-size:16px">(#id: {{survey.id}})</span></h3>
+		    <h3><span style="color: grey;">{{current_user.username}} / <a href="/surveys">surveys</a> /</span> {{ survey.title }} <span style="color: grey;font-size:16px">(#id: {{survey.id}})</span></h3>
 	    </div>
 	    <table class="table table-hover">
 		<thead>
