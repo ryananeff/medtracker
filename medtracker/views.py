@@ -2,9 +2,11 @@ from medtracker import *
 from medtracker.models import *
 from medtracker.forms import *
 from medtracker.email_helper import send_email
+from medtracker.triggers import *
 from flask import flash, Markup
 import random, string
 from werkzeug import secure_filename
+import sys
 
 from flask_login import login_user, logout_user
 
@@ -224,6 +226,7 @@ def serve_survey(survey_id):
 	formobj = QuestionView().get(question)
 	if request.method == 'POST':
 		if uniq_id:
+			print "saving..."
 			save_response(request.form, question_id)
 		if next_question == None:
 			return redirect(url_for('view_survey', _id=survey_id))
@@ -240,6 +243,10 @@ def save_response(formdata, question_id, session_id=None):
 	)
 	db_session.add(_response)
 	db_session.commit()
+	question = _response._question
+	if _response.uniq_id != None:
+		sys.stderr.write('starting trigger')
+		run_trigger(question, _response)
 	return "Response saved."
 
 ### controller functions for questions
