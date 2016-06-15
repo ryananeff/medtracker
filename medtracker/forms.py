@@ -58,7 +58,7 @@ class TriggerForm(Form):
 	title = TextField('Message to send', [validators.Length(min=5, max=255)])
 	recipients = TextField('Recipients', [validators.Length(min=4, max=255)])
 	after_function = TextField('Callback', [validators.Length(min=2, max=255)])
-	questions = QuerySelectField("Attach to these questions", 
+	questions = QuerySelectField("Attach to this question", 
 		get_pk=lambda a: a.id, get_label=lambda a: a.body)
 
 class UsernamePasswordForm(Form):
