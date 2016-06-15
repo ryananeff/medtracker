@@ -6,7 +6,9 @@ from medtracker.triggers import *
 from flask import flash, Markup
 import random, string
 from werkzeug import secure_filename
+import pytz
 import sys
+from itertools import groupby
 
 from flask_login import login_user, logout_user, current_user
 
@@ -127,6 +129,10 @@ def confirm_email(token):
 def index():
 	return render_template("index.html")
 
+@app.route("/about", methods=["GET"])
+def about():
+	return render_template("about.html")
+
 @app.route('/surveys', methods=['GET'])
 @flask_login.login_required
 def serve_survey_index():
@@ -139,11 +145,22 @@ def serve_survey_index():
 @flask_login.login_required
 def serve_responses_index():
 	'''GUI: serve the response index page'''
-	outdict = {}
-	uniq_ids = [a.uniq_id for a in QuestionResponse.query.filter(QuestionResponse.user_id==current_user.id).group_by(QuestionResponse.uniq_id).all()]
-	for u in uniq_ids:
-		responses = QuestionResponse.query.filter(QuestionResponse.uniq_id==u)
-		outdict[u] = responses
+	outdict = []
+	surveys = Survey.query.filter(Survey.user_id==current_user.id)
+	questions = []
+	for s in surveys:
+		questions.extend(s.questions)
+	responses = []
+	for q in questions:
+		responses.extend(q.responses)
+	responses = [[r.uniq_id, r.time, r] for r in responses]
+	responses = sorted(responses, key=lambda x:x[0])
+	for name,group in groupby(responses, key=lambda x:x[0]):
+		g = list(group)
+		outdict.append([[name, g[0][1]], [r[2] for r in g]])
+	outdict = sorted(outdict, key=lambda x:x[0][1], reverse=True)
+	for g in outdict:
+		g[0][1] = pytz.utc.localize(g[0][1]).astimezone(pytz.timezone('US/Eastern')).strftime('at %-I:%M %P on %h %d, %Y')
 	return render_template("responses.html",
 							responses = outdict)
 
@@ -246,7 +263,8 @@ def save_response(formdata, question_id, session_id=None):
 		session_id,
 		question_id
 	)
-	_response.user_id = current_user.id
+	print formdata["response"]
+	_response.user_id = None
 	db_session.add(_response)
 	db_session.commit()
 	question = _response._question
@@ -339,6 +357,7 @@ def add_trigger():
 			formobj.title.data,
 			formobj.kind.data,
 			formobj.criteria.data,
+			formobj.recipients.data,
 			formobj.after_function.data
 			)
 		trigger.user_id = current_user.id
@@ -359,7 +378,9 @@ def edit_trigger(_id):
 	'''GUI: edit a trigger in the DB'''
 	trigger = Trigger.query.get_or_404(_id)
 	formout = TriggerForm(request.form, obj=trigger)
+	formout.kind.data = trigger.kind
 	formout.questions.query = Question.query.filter(Survey.user_id==current_user.id).all()
+	formout.questions.data = Question.query.filter_by(trigger_id=trigger.id).first()
 	if request.method == 'POST' and formout.validate():
 		trigger.title = formout.title.data
 		trigger.kind = formout.kind.data

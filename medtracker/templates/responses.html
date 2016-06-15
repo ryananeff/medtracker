@@ -1,15 +1,16 @@
 {% extends "layout.html" %}
+{% block title %}Responses | Suretify{% endblock %}
 {% block body %}
 	    <div class="page-header">
 		    <h2><span style="color: grey;">{{current_user.username}} /</span> Responses</h2>
 	    </div>
 	    <div class="panel-group" id="accordion" role="tablist" aria-multiselectable="true">
-		{% for uniq_id,responseobj in responses.iteritems() %}
+		{% for uniq_id,responseobj in responses %}
 		  <div class="panel panel-default">
 			<div class="panel-heading" role="tab" id="headingOne">
 			  <h4 class="panel-title">
 				<a role="button" data-toggle="collapse" data-parent="#accordion" href="#collapse{{loop.index}}" aria-expanded="true" aria-controls="collapse{{loop.index}}">
-				  		Patient ID: {{ uniq_id[:8] }}
+				  		Patient ID: {{ uniq_id[0][:8] }} <div class="pull-right">{{uniq_id[1]}}</div>
 				</a>
 			  </h4>
 			</div>
@@ -27,7 +28,7 @@
 				  <tr><td>{{response.question.body}}</h4></td>
 				<td>Responded with 
 				{% if "YES" in response.question.kind|string %}
-					{% if response.response %}YES{% else %}NO{% endif %}
+					{% if response.response == '0' %}YES{% else %}NO{% endif %}
 				{% elif "10" in response.question.kind|string %}
 					{{response.response}} out of 10
 				{% else %}
