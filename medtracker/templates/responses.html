@@ -26,13 +26,15 @@
 					  </tbody>
 				  {% for response in responseobj %}
 				  <tr><td>{{response.question.body}}</h4></td>
-				<td>Responded with 
+				<td>
 				{% if "YES" in response.question.kind|string %}
-					{% if response.response == '0' %}YES{% else %}NO{% endif %}
+					Responded with {% if response.response == '0' %}YES{% else %}NO{% endif %}
 				{% elif "10" in response.question.kind|string %}
-					{{response.response}} out of 10
+					Responded with {{response.response}} out of 10
+				{% elif "/assets/audio/" in response.response %}
+					<audio controls preload="none" style="width:200px"><source src="{{response.response}}"></audio>
 				{% else %}
-				"{{response.response}}"
+				Responded with "{{response.response}}"
 				{% endif %}
 				</td>
 				<td>
