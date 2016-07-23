@@ -168,11 +168,11 @@ def serve_responses_index():
 @flask_login.login_required
 def serve_triggers_index():
 	'''GUI: serve the trigger index page'''
-        questions = Question.query.filter(Question.trigger_id != None, Trigger.user_id==current_user.id)
-        triggers = Trigger.query.filter(Trigger.questions==None, Trigger.user_id==current_user.id)
-        return render_template("triggers.html",
-                                questions = questions, 
-                                triggers = triggers)                         
+	triggers = Trigger.query.filter(Trigger.questions==None, Trigger.user_id==current_user.id)
+	questions = Question.query.filter(Question.trigger_id != None, Trigger.user_id==current_user.id)
+	return render_template("triggers.html",
+		questions = questions, 
+		triggers = triggers)                         
 
 ### controller functions for surveys
 
@@ -378,9 +378,7 @@ def edit_trigger(_id):
 	'''GUI: edit a trigger in the DB'''
 	trigger = Trigger.query.get_or_404(_id)
 	formout = TriggerForm(request.form, obj=trigger)
-	formout.kind.data = trigger.kind
 	formout.questions.query = Question.query.filter(Survey.user_id==current_user.id).all()
-	formout.questions.data = Question.query.filter_by(trigger_id=trigger.id).first()
 	if request.method == 'POST' and formout.validate():
 		trigger.title = formout.title.data
 		trigger.kind = formout.kind.data
@@ -399,6 +397,9 @@ def edit_trigger(_id):
 		db_session.commit()
 		flash('Trigger edited.')
 		return redirect(url_for('serve_triggers_index'))
+	else:
+		formout.kind.data = trigger.kind
+		formout.questions.data = Question.query.filter_by(trigger_id=trigger.id).first()
 	return render_template("form.html", action="Edit", data_type="trigger #" + str(_id), form=formout)
 
 @app.route('/triggers/delete/<int:_id>', methods=['GET', 'POST'])

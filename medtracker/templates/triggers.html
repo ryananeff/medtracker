@@ -4,7 +4,7 @@
 	    <div class="page-header">
 		    <h2><span style="color: grey;">{{current_user.username}} /</span> Triggers <a href="/triggers/new" class="btn btn-sm btn-primary">Add a trigger for a question</a> </h2>
 	    </div>
-	    {% if questions.first() == None or triggers.first()==None %}
+	    {% if questions.first() == None and triggers.first()==None %}
 	    <div class="well">
 		<div class="starter-template">
 		No triggers defined.

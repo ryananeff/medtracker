@@ -11,8 +11,8 @@ RADIO = 'radio'
 SELECT = 'select'
 
 QUESTION_KIND_CHOICES = (
-	(TEXT, 'Type your answer below'),
-	(YES_NO, 'Choose YES or NO'),
+	(TEXT, 'Type your answer'),
+	(YES_NO, 'Choose YES (Y) or NO (N)'),
 	(NUMERIC, 'Choose 1 - 10'),
 	(RADIO, 'Select one'),
 	(SELECT, 'Select one or more')
@@ -30,6 +30,22 @@ TRIGGER_KIND_CHOICES = (
 	(CURL, 'POST to a URL')
 )
 
+class Progress(db.Model):
+	__tablename__ = 'progress'
+	id = db.Column(db.Integer, primary_key=True)
+	user = db.Column(EncryptedType(db.String, flask_secret_key))
+	task = db.Column(db.String)
+	iterator = db.Column(db.Integer)
+	parent_id = db.Column(db.String) # this is the uniq_id?
+	complete = db.Column(db.Integer)
+
+	def __init__(self, user='', task='', iterator=0, parent_id='', complete=0):
+		self.user = str(user)
+		self.task = str(task)
+		self.iterator = int(iterator)
+		self.parent_id = str(parent_id)
+		self.complete = int(complete)
+	
 class Survey(db.Model):
 	__tablename__ = 'survey'
 	id = db.Column(db.Integer, primary_key=True)
