@@ -28,7 +28,7 @@
 				  <tr><td>{{response.question.body}}</h4></td>
 				<td>
 				{% if "YES" in response.question.kind|string %}
-					Responded with {% if response.response == '0' %}YES{% else %}NO{% endif %}
+					Responded with {% if response.response == '1' %}YES{% else %}NO{% endif %}
 				{% elif "10" in response.question.kind|string %}
 					Responded with {{response.response}} out of 10
 				{% elif "/assets/audio/" in response.response %}

@@ -128,9 +128,6 @@ def serve_sms_survey(task):
 def save_sms_survey(task, body):
 	# TODO: this function will allow us to specify a survey as one of the callback functions and to ask it. Think a template is overkill here though.
 	question, question_id, next_question, last_question = get_current_question(task)
-	if next_question == None:
-		_ = increment_iterator(task)
-		return (None, "Thank you for your responses. You're done!")
 	if question.kind != "text":
 		body = body.lower()
 		if question.kind == "numeric":
@@ -139,7 +136,16 @@ def save_sms_survey(task, body):
 		if question.kind == "yes-no":
 			if body not in ["yes", "y", "no", "n", "yes (y)", "no (n)"]:
 				return (task, "Please respond with only YES (y) or NO (n)")
+			else:
+				if body in ["yes", "y"]:
+					body = '1'
+				else:
+					body = '0'
+	sys.stderr.write("body: " + body)
 	save_basic_response(body, task.parent_id, question_id)
+	if next_question == None:
+		_ = increment_iterator(task)
+		return (None, "Thank you for your responses. You're done!")
 	new_task = increment_iterator(task)
 	return (new_task, None)
 
@@ -170,8 +176,10 @@ def get_current_question(task):
 	question_id = int(question_id)
 	curpos = question_ids[question_id]
 	question = Question.query.get_or_404(curpos)
-	next_question = question_id+1 if curpos+1 < len(question_ids) else None
-	last_question = question_id-1 if curpos-1 >= 0 else None
+	next_question = question_id+1 if question_id+1 < len(question_ids) else None
+	last_question = question_id-1 if question_id-1 >= 0 else None
+	sys.stderr.write("current: " + str(curpos) + " next: " + str(next_question) + " last: " + str(last_question))
+	sys.stderr.flush()
 	return question, curpos, next_question, last_question
 
 def increment_iterator(task):
@@ -251,16 +259,13 @@ def serve_voice_survey(task):
 		qlabel = "Please rate the question from one to 9 on your keypad now."
 		record = False
 	if question.kind == 'yes-no':
-		qlabel = "Please type 1 for yes and 2 for no."
+		qlabel = "Please type 1 for yes and 2 for no on your keypad now."
 		record = False
 	return question.body + " " + qlabel, record
 
 def save_voice_survey(task, message, digits):
 	# TODO: this function will allow us to specify a survey as one of the callback functions and to ask it. Think a template is overkill here though.
 	question, question_id, next_question, last_question = get_current_question(task)
-	if next_question == None:
-		_ = increment_iterator(task)
-		return (None, "Thank you for your responses. You're done!")
 	if question.kind != "text":
 		if question.kind == "numeric":
 			if digits not in [str(i) for i in range(1,9)]:
@@ -268,10 +273,18 @@ def save_voice_survey(task, message, digits):
 		if question.kind == "yes-no":
 			if digits not in ['1','2']:
 				return (task, "I'm sorry, I didn't get that. Please press 1 for yes and 2 for no on your keypad.")
-		body = int(digits)
+			else:
+				if digits == '1':
+					digits = '0'
+				else:
+					digits="1"
+		body = digits
 	else:
 		body = save_recording(message)
 	save_basic_response(body, task.parent_id, question_id)
+	if next_question == None:
+		_ = increment_iterator(task)
+		return (None, "Thank you for your responses. You're done!")
 	new_task = increment_iterator(task)
 	return (new_task, None)
 
