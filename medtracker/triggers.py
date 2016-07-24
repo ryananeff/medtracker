@@ -14,6 +14,7 @@ def run_trigger(question, response, current_user = None):
 		for ix,i in enumerate(split_message):
 			tag = re.findall('<(.+?)>',i) # look for tags we need to replace
 			if tag != []:
+				tag = tag.split("|")[0].strip() # so we can include descriptions
 				split_tag = tag[0].split(".")
 				if len(split_tag) == 2: # db type is the resource type (question, trigger, callback, etc.), while the ID is actually the position in the survey
 					db_type, db_id = split_tag
