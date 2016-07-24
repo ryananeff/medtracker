@@ -10,12 +10,33 @@ from flask_login import login_user, logout_user, current_user
 def run_trigger(question, response, current_user = None):
 	if question.trigger:
 		message = question.trigger.title
+		recipients = question.trigger.recipients
 		split_message = re.split('(<.+?>)',message)
+		split_recipients = re.split('(<.+?>)',recipients)
+		for ix,i in enumerate(split_recipients):
+			tag = re.findall('<(.+?)>',i) # look for tags we need to replace
+			if tag != []:
+				tag = tag[0].split("|")[1].strip() # so we can include descriptions
+				split_tag = tag.split(".")
+				if len(split_tag) == 2: # db type is the resource type (question, trigger, callback, etc.), while the ID is actually the position in the survey
+					db_type, db_id = split_tag
+					db_subtype = None # subtype is if the element is multi-part (e.g. questions have elements attached)
+				if len(split_tag) == 3:
+					db_type, db_id, db_subtype = split_tag
+				if db_type.lower() == 'question':
+					result = QuestionResponse.query.filter_by(question_id=int(db_id), uniq_id=response.uniq_id).first()
+					if result != None:
+						split_recipients[ix] = result.response.strip() # this is the default subtype (response)
+							#TODO: this needs to be fixed for things like yes or no questions or 1 to 10
+							#        * maybe in the models??
+					else:
+						split_recipients[ix] = "" # when there's nothing there
+		recipients = "".join(split_recipients)
 		for ix,i in enumerate(split_message):
 			tag = re.findall('<(.+?)>',i) # look for tags we need to replace
 			if tag != []:
-				tag = tag.split("|")[0].strip() # so we can include descriptions
-				split_tag = tag[0].split(".")
+				tag = tag[0].split("|")[1].strip() # so we can include descriptions
+				split_tag = tag.split(".")
 				if len(split_tag) == 2: # db type is the resource type (question, trigger, callback, etc.), while the ID is actually the position in the survey
 					db_type, db_id = split_tag
 					db_subtype = None # subtype is if the element is multi-part (e.g. questions have elements attached)
@@ -35,18 +56,19 @@ def run_trigger(question, response, current_user = None):
 						if len(surveys) != 0:
 							survey = surveys[0]
 						if question.trigger.kind == 'voice':
-							for r in question.trigger.recipients.split(";"):
+							for r in recipients.split(";"):
+								r = r.strip()
 								test_voice_out(survey.id, r, uniq_id = response.uniq_id)
 							return 0
 						if question.trigger.kind == 'sms':
-							for r in question.trigger.recipients.split(";"):
+							for r in recipients.split(";"):
+								r = r.strip()
 								test_sms_survey(survey.id, r, uniq_id = response.uniq_id)
 							return 0
 		message = "".join(split_message)
-		if question.trigger.recipients == None:
+		if recipients == "":
 			print "No valid recipients"
 			return 2
-		recipients = question.trigger.recipients
 		callback = None
 		if question.trigger.kind == 'voice':
 			# TODO: needs to check if the recipient type is actually valid or else internal server error!
@@ -104,7 +126,7 @@ def test_sms_survey(survey_id, phone_number, uniq_id = None):
 	db_session.add(task)
 	db_session.commit()
 	msg = serve_sms_survey(task)
-	hello = "Hello! You have a new incoming survey from Suretify!"
+	hello = "Hello! You have a new incoming survey from Suretify! Reply STOP to stop" #TODO: opt-in flow
 	sms_trigger(hello, phone_number, None)
 	sms_trigger(msg, phone_number, None)
 	return "Task successfully queued."
@@ -145,7 +167,7 @@ def save_sms_survey(task, body):
 	if question.kind != "text":
 		body = body.lower()
 		if question.kind == "numeric":
-			if body not in [str(i) for i in range(1,10)]:
+			if body not in [str(i) for i in range(1,11)]:
 				return (task, "Please choose a number from 1 to 10.")
 		if question.kind == "yes-no":
 			if body not in ["yes", "y", "no", "n", "yes (y)", "no (n)"]:

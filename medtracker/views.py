@@ -372,7 +372,7 @@ def add_trigger():
 		flash('Trigger added.')
 		return redirect(url_for('serve_triggers_index'))
 	#formobj.questions.choices = [(q.id, "(ID: %s) "% str(q.id) + q.body) for q in Question.query]
-	return render_template("form.html", action="Add", data_type="a trigger", form=formobj)
+	return render_template("form_trigger.html", action="Add", data_type="a trigger", form=formobj)
 
 @app.route('/triggers/edit/<int:_id>', methods=['GET', 'POST'])
 @flask_login.login_required
