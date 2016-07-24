@@ -8,6 +8,7 @@
 		<thead>
 			<tr>
 			<th> # </th>
+			<th> ID </th>
 			<th> Title </th>
 			<th> Actions </th>
 			</tr>
@@ -16,7 +17,7 @@
 		{% for question in survey.questions %}
 		<tr>
 			<th scope="row">{{ loop.index }}</th>
-			<td> {{ question.body }} <a href="/questions/edit/{{ question.id }}" class="btn btn-xs btn-secondary">Edit</a></td>
+			<td> {{ question.body }} <small style="color:grey"> (ID #:{{question.id}})</small> <a href="/questions/edit/{{ question.id }}" class="btn btn-xs btn-secondary">Edit</a></td>
 			<td>
 			<a href="/surveys/serve/{{survey.id}}?question={{ question.id }}" class="btn btn-xs btn-primary">View</a>
 			<a href="/questions/delete/{{ question.id }}" class="btn btn-xs btn-secondary">Delete</a> 
