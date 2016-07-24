@@ -1,0 +1,38 @@
+{% extends 'layout.html' %}
+{% import '_forms_trigger.html' as forms %}
+{% block body %}
+<link href="/assets/at/jquery.atwho.min.css" rel="stylesheet">
+<script src="/assets/at/jquery.caret.min.js"></script>
+<script src="/assets/at/jquery.atwho.min.js"></script>
+
+    <div class="container">
+		<div class="row">
+			<div class="col-lg-3">
+				</div>
+			<div class="col-lg-6">
+				{% block form %}
+				<section>
+				<h1>{{ action }} {{ data_type }}</h1>
+				<form action="{{ form_action }}" method="{{ method | d("POST") }}" enctype="multipart/form-data">
+				{{ forms.render(form) }}
+				{% if u %}
+					<input type="hidden" name="uniq_id" value="{{u}}">
+				{% endif %}
+				<input type="submit" value="Submit" class="btn btn-primary"> 
+				</form>
+				</section>
+				{% endblock form %}
+			  </div>
+			<div class="col-lg-6">
+			  </div> 
+		</div>
+    </div><!-- /.container -->
+    <script type="text/javascript">
+	$('.inputor').atwho({
+	    at: "<",
+	    data: 'https://suretify.co/autocomplete/triggers',
+	    insertTpl: "<${name}>", 
+	    displayTpl: "<li>${name} <small>${content}</li>"
+	})
+	</script>
+{% endblock %}

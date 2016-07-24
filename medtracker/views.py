@@ -400,7 +400,7 @@ def edit_trigger(_id):
 	else:
 		formout.kind.data = trigger.kind
 		formout.questions.data = Question.query.filter_by(trigger_id=trigger.id).first()
-	return render_template("form.html", action="Edit", data_type="trigger #" + str(_id), form=formout)
+	return render_template("form_trigger.html", action="Edit", data_type="trigger #" + str(_id), form=formout)
 
 @app.route('/triggers/delete/<int:_id>', methods=['GET', 'POST'])
 @flask_login.login_required

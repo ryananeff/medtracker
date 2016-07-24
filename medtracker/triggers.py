@@ -3,7 +3,8 @@ from medtracker.models import *
 from medtracker.forms import *
 from medtracker.email_helper import send_email
 import sys
-import urllib, re, random, string, requests
+import urllib, re, random, string, requests, json
+from flask_login import login_user, logout_user, current_user
 
 
 def run_trigger(question, response, current_user = None):
@@ -20,8 +21,7 @@ def run_trigger(question, response, current_user = None):
 				if len(split_tag) == 3:
 					db_type, db_id, db_subtype = split_tag
 				if db_type.lower() == 'question':
-					question_ids = [q.id for q in response.question.survey.questions]
-					result = QuestionResponse.query.filter_by(question_id=question_ids[int(db_id)-1], uniq_id=response.uniq_id).first() if question_ids != [] else None
+					result = QuestionResponse.query.filter_by(question_id=int(db_id), uniq_id=response.uniq_id).first()
 					if result != None:
 						split_message[ix] = result.response # this is the default subtype (response)
 							#TODO: this needs to be fixed for things like yes or no questions or 1 to 10
@@ -319,3 +319,14 @@ def url_trigger(message, recipients, callback):
 def randomword(length):
 	'''generate a random string of whatever length, good for filenames'''
 	return ''.join(random.choice(string.lowercase) for i in range(length))
+
+@app.route('/autocomplete/triggers', methods=["GET", "POST"])
+@flask_login.login_required
+def autocomplete_choices():
+	surveys = current_user.surveys
+	possible = []
+	for survey in surveys:
+		possible.append({"name": "survey." + str(survey.id), "content":survey.title})
+		for ix, question in enumerate(survey.questions):
+			possible.append({"name":"question." + str(question.id), "content":question.body})
+	return json.dumps(possible)
