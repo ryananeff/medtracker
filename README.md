@@ -10,4 +10,6 @@ Notes:
 * 6/10/2016: Triggers working to SMS, email, phone, and URLs (but no trigger data collection yet).
 * 7/23/2016: You can now take surveys by SMS and phone (as well as email of course as always).
 * 7/23/2016: Autocomplete now works!
+
+
 <img src="https://raw.githubusercontent.com/nosarcasm/medtracker/master/examples/autocomplete.PNG" height=500 />
