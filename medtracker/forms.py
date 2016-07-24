@@ -55,9 +55,9 @@ class TriggerForm(Form):
 	'''GUI: trigger build form used in views'''
 	kind = SelectField('Type', choices=TRIGGER_KIND_CHOICES)
 	criteria = TextField('Match criteria', [validators.Length(min=1, max=50)])
-	title = TextField('Message to send', [validators.Length(min=5, max=255)])
-	recipients = TextField('Recipients', [validators.Length(min=4, max=255)])
-	after_function = TextField('Callback', [validators.Length(min=2, max=255)])
+	title = TextAreaField('Message to send', [validators.Length(min=5, max=255)])
+	recipients = TextAreaField('Recipients', [validators.Length(min=4, max=255)])
+	after_function = TextAreaField('Callback', [validators.Length(min=2, max=255)])
 	questions = QuerySelectField("Attach to this question", 
 		get_pk=lambda a: a.id, get_label=lambda a: a.body)
 
