@@ -256,7 +256,7 @@ def serve_survey(survey_id):
 	else:
 		return render_template("serve_question.html", survey = survey, question = question, next_q = next_question, last_q = last_question, form=formobj, u=uniq_id)
 
-def save_response(formdata, question_id, session_id=None):
+def save_response(formdata, question_id, session_id=None, current_user = current_user):
 	_response = QuestionResponse(
 		formdata["response"],
 		formdata["uniq_id"],
@@ -270,7 +270,7 @@ def save_response(formdata, question_id, session_id=None):
 	question = _response._question
 	if _response.uniq_id != None:
 		sys.stderr.write('starting trigger')
-		run_trigger(question, _response)
+		run_trigger(question, _response, current_user)
 	return "Response saved."
 
 ### controller functions for questions
