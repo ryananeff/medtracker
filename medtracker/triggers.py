@@ -6,8 +6,7 @@ import sys
 import urllib, re, random, string, requests
 
 
-def run_trigger(question, response):
-	sys.stderr.write("triggering")
+def run_trigger(question, response, current_user = None):
 	if question.trigger:
 		message = question.trigger.title
 		split_message = re.split('(<.+?>)',message)
@@ -29,6 +28,19 @@ def run_trigger(question, response):
 							#        * maybe in the models??
 					else:
 						split_message[ix] = "" # when there's nothing there
+				if db_type.lower() == 'survey':
+					if current_user != None:
+						surveys = Survey.query.filter_by(id=int(db_id), user_id=current_user.id).all()
+						if len(surveys) != 0:
+							survey = surveys[0]
+						if question.trigger.kind == 'voice':
+							for r in question.trigger.recipients.split(";"):
+								test_voice_out(survey.id, r, uniq_id = response.uniq_id)
+							return 0
+						if question.trigger.kind == 'sms':
+							for r in question.trigger.recipients.split(";"):
+								test_sms_survey(survey.id, r, uniq_id = response.uniq_id)
+							return 0
 		message = "".join(split_message)
 		if question.trigger.recipients == None:
 			print "No valid recipients"
@@ -80,8 +92,9 @@ def sms_trigger(message, recipients, callback):
 	return None
 
 @app.route("/test_sms/<int:survey_id>/<phone_number>", methods=["GET", "POST"])
-def test_sms_survey(survey_id, phone_number):
-	uniq_id = randomword(64)
+def test_sms_survey(survey_id, phone_number, uniq_id = None):
+	if uniq_id == None:
+		uniq_id = randomword(64)
 	survey = Survey.query.get_or_404(survey_id)
 	task = Progress(
 		user = phone_number, 
@@ -90,7 +103,7 @@ def test_sms_survey(survey_id, phone_number):
 	db_session.add(task)
 	db_session.commit()
 	msg = serve_sms_survey(task)
-	hello = "Hello! You have a new incoming test survey from Suretify!"
+	hello = "Hello! You have a new incoming survey from Suretify!"
 	sms_trigger(hello, phone_number, None)
 	sms_trigger(msg, phone_number, None)
 	return "Task successfully queued."
@@ -161,7 +174,6 @@ def save_basic_response(message, uniq_id, question_id):
 	db_session.commit()
 	question = _response._question
 	if _response.uniq_id != None:
-		sys.stderr.write('starting trigger')
 		run_trigger(question, _response)
 	return True
 
@@ -203,7 +215,7 @@ def voice_gather_information():
 	digits = request.values.get("Digits", None)
 	current_tasks = Progress.query.filter_by(user=from_phone, complete=0).all()
 	if say_hello == 1:
-		resp.say("Hello! You have a new incoming test survey from Sure tiff eye!")
+		resp.say("Hello! You have a new incoming survey from Sure tiff eye!")
 	if len(current_tasks) == 0:
 		resp.say("You're already done responding!")
 	else:
@@ -226,8 +238,9 @@ def voice_gather_information():
 	return str(resp)
 
 @app.route("/test_voice/<int:survey_id>/<phone_number>", methods=["GET", "POST"])
-def test_voice_out(survey_id, phone_number):
-	uniq_id = randomword(64)
+def test_voice_out(survey_id, phone_number, uniq_id = None):
+	if uniq_id == None:
+		uniq_id = randomword(64)
 	survey = Survey.query.get_or_404(survey_id)
 	task = Progress(
 		user = phone_number, 
