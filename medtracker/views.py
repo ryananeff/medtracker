@@ -29,7 +29,9 @@ def user_loader(user_id):				# used by Flask internally to load logged-in user f
 def login():					# not logged-in callback
 	form = UsernamePasswordForm()
 	if form.validate_on_submit():
-		user = User.query.filter_by(email=form.username.data).first_or_404()
+		user = User.query.filter_by(email=form.username.data).first()
+		if user == None:
+			return str("Error: '" + form.username.data + "'")
 		if user.active == False:
 			msg = Markup('Please confirm your email to log in. <a href="/resend_confirmation?email=' + user.email + '">Resend Confirmation</a>')
 			flash(msg)
