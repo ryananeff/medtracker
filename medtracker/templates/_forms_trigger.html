@@ -1,34 +1,39 @@
 {% macro render(form) -%}
-
+<table style="width:100%">
 {% for field in form %}
-<fieldset class="form-group">
 {% if field.type in ['CSRFTokenField', 'HiddenField'] %}
   {{ field() }}
 {% else %}
-  <div class="clearfix {% if field.errors %}error{% endif %}">
+    <tr>
+    <td style="width:10em">
     {{ field.label }}
+    </td>
+    <td style="padding: 12px">
       {% if field.type == "RadioField" %}
-		{% for item in field %}
-		<div class="radio">
-			<label>
-			{{item|safe}} {{item.label.text|safe}}
-			</label>
-		</div>
-		{% endfor %}
+      		{% for item in field %}
+      		<div class="radio">
+      			<label>
+      			{{item|safe}} {{item.label.text|safe}}
+      			</label>
+      		</div>
+      		{% endfor %}
+      {% elif field.type=="TextAreaField" %}
+          {{ field(class="form-control inputor", rows=3) }}
       {% else %}
-		{{ field(class="form-control inputor") }}
-      {% endif %}
-      {% if field.errors or field.help_text %}
-        <span class="help-inline">
-        {% if field.errors %}
-          {{ field.errors|join(' ') }}
-        {% else %}
-          {{ field.help_text }}
-        {% endif %}
-        </span>	
-      {% endif %}
-  </div>
+      		{{ field(class="form-control inputor") }}
+            {% endif %}
+            {% if field.errors or field.help_text %}
+              <span class="help-inline">
+              {% if field.errors %}
+                {{ field.errors|join(' ') }}
+              {% else %}
+                {{ field.help_text }}
+              {% endif %}
+              </span>	
+            {% endif %}
 {% endif %}
-</fieldset>
+</td>
+</tr>
 {% endfor %}
+</table>
 {% endmacro %}
