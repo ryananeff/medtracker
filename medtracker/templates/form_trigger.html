@@ -11,16 +11,18 @@
 				</div>
 			<div class="col-lg-6">
 				{% block form %}
-				<section>
-				<h1>{{ action }} {{ data_type }}</h1>
+				<div class="form-group" style="background-color: lightgray; width:40em; padding:2em;margin-top:2em; border-radius: 1em 1em">
+				<h1 style="margin-top:0; margin-bottom:12px">{{ action }} {{ data_type }}</h1>
+				<hr>
 				<form action="{{ form_action }}" method="{{ method | d("POST") }}" enctype="multipart/form-data">
 				{{ forms.render(form) }}
 				{% if u %}
 					<input type="hidden" name="uniq_id" value="{{u}}">
 				{% endif %}
-				<input type="submit" value="Submit" class="btn btn-primary"> 
+				<hr>
+				<center><input type="submit" value="Submit" class="btn btn-primary"> </center>
 				</form>
-				</section>
+				</div>
 				{% endblock form %}
 			  </div>
 			<div class="col-lg-6">
@@ -30,7 +32,7 @@
     <script type="text/javascript">
 	$('.inputor').atwho({
 	    at: "<",
-	    data: 'https://suretify.co/autocomplete/triggers',
+	    data: '/autocomplete/triggers',
 	    insertTpl: "<${content} | ${name}>", 
 	    displayTpl: "<li>${content}<br><small> ${name}</small></li>",
 	    searchKey:"content",

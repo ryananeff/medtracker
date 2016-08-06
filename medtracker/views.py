@@ -75,7 +75,7 @@ def signup():
             confirm_url=confirm_url)
 
         # We'll assume that send_email has been defined in myapp/util.py
-        send_email(user.email, subject, html)
+        #send_email(user.email, subject, html)
 
         return redirect(url_for("login"))
 
@@ -426,9 +426,9 @@ def remove_response(_id):
 
 ### static files (only when not running under Apache)
 	
-#@app.route('/assets/<path:path>')
-#def send_js(path):
-#    return send_from_directory('/var/wsgiapps/suretify/assets', path)
+@app.route('/assets/<path:path>')
+def send_js(path):
+    return send_from_directory('/Users/ryanneff/suretify/medtracker/assets', path)
 
 #### other helpers
     
