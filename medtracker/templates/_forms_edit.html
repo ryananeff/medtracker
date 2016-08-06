@@ -1,0 +1,53 @@
+{% macro render(form) -%}
+<table style="width:100%">
+{% for field in form %}
+{% if field.type in ['CSRFTokenField', 'HiddenField'] %}
+  {{ field() }}
+{% else %}
+<tr style="height:50px">
+      {% if field.type == "RadioField" %}
+      		{% for item in field %}
+      		<div class="radio">
+          <td>
+          {{ field.label }}
+          </td>
+          <td>
+      			<label>
+      			{{item|safe}} {{item.label.text|safe}}
+      			</label>
+      		</div>
+      		{% endfor %}
+      {% elif field.type=="FileField" %}
+            <td>
+            {{ field.label }}
+            </td>
+            <td>
+            {{ field(class="input-sm")}}
+      {% elif field.type=="TextAreaField" %}
+          <td>
+      		{{ field.label}}
+          </td>
+          <td>
+          {{ field(class="form-control", rows=4) }}
+      {% else %}
+          <td>
+          {{ field.label}}
+          </td>
+          <td>
+          {{ field(class="form-control") }}
+      {% endif %}
+      {% if field.errors or field.help_text %}
+      <span class="help-inline">
+      {% if field.errors %}
+        {{ field.errors|join(' ') }}
+      {% else %}
+        {{ field.help_text }}
+      {% endif %}
+      </span> 
+    {% endif %}
+    </td>
+</tr>
+{% endif %}
+{% endfor %}
+</table>
+{% endmacro %}
