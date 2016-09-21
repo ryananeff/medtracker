@@ -11,8 +11,23 @@
 		{% endif %}
 		</div>
 		</div>
+		<div class="row" style="padding:20px">
+		{% if u == None %}
+		<form action="/surveys/serve/{{survey.id}}" method="get">
+			<label for="u">Choose a patient:</label>
+			<select name="u" id="u">
+			<option value="">--Select--</option>
+			{% for patient in patients %}
+			<option value="{{patient.id}}">{{patient.fullname}} ({{patient.mrn}})</option>
+			{% endfor %}
+			</select>
+			<br><br>
+			<input type="Submit" value="Begin Survey" class="btn btn-md btn-primary">
+		</form><br>
+		{% else %}
 		<div class="row" style="padding:10px">
 		<a href="/surveys/serve/{{survey.id}}?u={{u}}" class="btn btn-lg btn-primary" onclick='document.getElementById("serveSurvey").submit();'>Begin Survey</a><br><br>
+		{% endif %}
 	    <a href="/surveys">Go back</a>
 		</div>
 	    

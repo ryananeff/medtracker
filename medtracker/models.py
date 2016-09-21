@@ -101,7 +101,7 @@ class QuestionResponse(db.Model):
 	id = db.Column(db.Integer, primary_key=True)
 	response = db.Column(EncryptedType(db.String, flask_secret_key))
 	time = db.Column(EncryptedType(db.DateTime, flask_secret_key))
-	uniq_id = db.Column(EncryptedType(db.String, flask_secret_key))
+	uniq_id = db.Column(db.Integer, db.ForeignKey('patients.id'))
 	session_id = db.Column(EncryptedType(db.String, flask_secret_key))
 	question_id = db.Column(db.Integer, db.ForeignKey('question.id'))
 	user_id = db.Column(db.Integer, db.ForeignKey('user.id'))
@@ -192,3 +192,4 @@ class Patient(db.Model):
 	email = db.Column(EncryptedType(db.String, flask_secret_key))
 	notes = db.Column(EncryptedType(db.String, flask_secret_key))
 	user_id = db.Column(db.Integer, db.ForeignKey('user.id'))
+	responses = db.relationship("QuestionResponse", backref='patient', lazy='dynamic')

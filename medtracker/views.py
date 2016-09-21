@@ -156,7 +156,7 @@ def serve_responses_index():
 	responses = []
 	for q in questions:
 		responses.extend(q.responses)
-	responses = [[r.uniq_id, r.time, r] for r in responses]
+	responses = [[Patient.query.get(r.uniq_id), r.time, r] for r in responses]
 	responses = sorted(responses, key=lambda x:x[0])
 	for name,group in groupby(responses, key=lambda x:x[0]):
 		g = list(group)
@@ -227,9 +227,10 @@ def view_survey(_id):
 @app.route('/surveys/start/<int:survey_id>', methods=['GET', 'POST'])
 @flask_login.login_required
 def start_survey(survey_id):
-	uniq_id = randomword(64)
+	'''TODO: need to select the patient which will be taking the survey. This will make this starting block a form.'''
+	u = request.values.get('u', None)
 	survey = Survey.query.get_or_404(survey_id)
-	return render_template('start_survey.html', survey=survey, u = uniq_id)
+	return render_template('start_survey.html', survey=survey, u = u, patients=current_user.patients)
 	#return redirect(url_for(serve_survey), survey_id=_id, u=uniq_id)
 
 @app.route('/surveys/serve/<int:survey_id>', methods=['GET', 'POST'])
@@ -381,7 +382,7 @@ def add_edit_patient(id=None):
 
 @app.route("/patients/")
 def view_patients():
-	patients = Patient.query.filter_by(user_id=current_user.id)
+	patients = current_user.patients
 	return render_template("patients.html", patients=patients)
 
 @app.route("/patients/delete/<int:id>")
@@ -391,6 +392,16 @@ def delete_patient():
 	db_session.commit()
 	flash('Patient deleted.')
 	return redirect(url_for('view_patients'))
+
+@app.route('/patients/<int:id>/give_survey', methods=['GET'])
+@flask_login.login_required
+def patient_survey_selector(id):
+	'''GUI: serve the survey select page for a patient'''
+        surveys = current_user.surveys
+        patient = Patient.query.filter_by(mrn=id).first_or_404()
+        return render_template("surveys_selector.html",
+                                surveys = surveys, 
+                                patient = patient)
 
 ### controller for trigger functions
 

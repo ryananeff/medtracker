@@ -10,7 +10,7 @@
 			<div class="panel-heading" role="tab" id="headingOne">
 			  <h4 class="panel-title">
 				<a role="button" data-toggle="collapse" data-parent="#accordion" href="#collapse{{loop.index}}" aria-expanded="true" aria-controls="collapse{{loop.index}}">
-				  		Patient ID: {{ uniq_id[0][:8] }} <div class="pull-right">{{uniq_id[1]}}</div>
+				  		Patient: {{uniq_id[0].fullname}} ({{uniq_id[0].mrn}}) <div class="pull-right">{{uniq_id[1]}}</div>
 				</a>
 			  </h4>
 			</div>
