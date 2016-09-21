@@ -9,6 +9,7 @@ from werkzeug import secure_filename
 import pytz
 import sys
 from itertools import groupby
+import random
 
 from flask_login import login_user, logout_user, current_user
 
@@ -347,6 +348,38 @@ def remove_question(_id):
     db_session.commit()
     flash('Question removed.')
     return redirect(url_for('view_survey', _id=survey_id))
+
+### controller for patient functions
+
+@app.route('/patients/new/', methods=['GET', 'POST'])
+@app.route('/patients/edit/<int:id>', methods=['GET', 'POST'])
+@flask_login.login_required
+def add_edit_patient(id=None):
+	'''GUI: add a patient to the DB'''
+	mrn = None
+	if id:
+		patient = Patient.query.filter_by(user_id=current_user.id, mrn=id).first_or_404()
+		mrn = patient.mrn
+	else:
+		patient = Patient()
+	formobj = PatientForm(obj=patient)
+	if formobj.validate_on_submit():
+		formobj.populate_obj(patient)
+		if mrn == None:
+			mrn = random.randint(1000000,9999999)
+			while mrn in [p.mrn for p in Patient.query.all()]:
+				mrn = random.randint(1000000,9999999)
+		patient.mrn = mrn
+		patient.user_id = current_user.id
+		db_session.add(patient)
+		db_session.commit()
+		return redirect(url_for('view_patients'))
+	return render_template("form_trigger.html", action="Add", data_type="a patient", form=formobj)
+
+@app.route("/patients/")
+def view_patients():
+	patients = Patient.query.filter_by(user_id=current_user.id)
+	return render_template("patients.html", patients=patients)
 
 ### controller for trigger functions
 
