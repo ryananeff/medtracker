@@ -1,8 +1,8 @@
 {% extends "layout.html" %}
 {% block title %}{{survey.title}} | Suretify{% endblock %}
 {% block body %}
-	    <div class="page-header">
-		    <h3><span style="color: grey;">{{current_user.username}} / <a href="/surveys">surveys</a> /</span> {{ survey.title }} <span style="color: grey;font-size:16px">(#id: {{survey.id}})</span></h3>
+	    <div class="page-header" style="padding-bottom:20px">
+		    <h3><span style="color: grey;">{{current_user.username}} / <a href="/surveys">surveys</a> /</span> {{ survey.title }} <span style="color: grey;font-size:16px">(#id: {{survey.id}})</span><a href="/surveys/start/{{ survey.id }}" class="btn btn-lg btn-success" style="float:right;position:relative; top:-10px">Begin survey</a></h3>
 	    </div>
 	    <table class="table table-hover">
 		<thead>
@@ -33,7 +33,7 @@
 		<a href="/questions/new/?survey={{ survey.id }}">Add a new question to this survey</a>
 		</div></div>
 	    {% else %}
-	    <a href="/questions/new/?survey={{ survey.id }}" class="btn btn-lg btn-primary">Add more questions</a>
+	    <a href="/questions/new/?survey={{ survey.id }}" class="btn btn-sm btn-primary">Add more questions</a>
 	    {% endif %}
 	    </div>
     </div><!-- /.container -->

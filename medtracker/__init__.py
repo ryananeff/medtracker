@@ -27,9 +27,8 @@ client = TwilioRestClient(twilio_AccountSID, twilio_AuthToken)
 auth_combo=(twilio_AccountSID, twilio_AuthToken)
 
 from medtracker.database import db_session 	# to make sqlalchemy DB calls
-import medtracker.views				# web pages
-import medtracker.triggers
-import medtracker.sms_surveys
+from medtracker.views import *				# web pages
+from medtracker.triggers import *
 
 @app.teardown_appcontext
 def shutdown_session(exception=None):

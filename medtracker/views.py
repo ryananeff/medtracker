@@ -12,7 +12,7 @@ from itertools import groupby
 
 from flask_login import login_user, logout_user, current_user
 
-image_staticdir = '../assets/uploads/'
+image_staticdir = '/var/wsgiapps/suretify/assets/uploads/'
 
 #### logins
 

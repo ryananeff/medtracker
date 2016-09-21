@@ -2,6 +2,7 @@ from medtracker import *
 from medtracker.models import *
 from medtracker.forms import *
 from medtracker.email_helper import send_email
+from medtracker.views import *
 import sys
 import urllib, re, random, string, requests, json
 from flask_login import login_user, logout_user, current_user
