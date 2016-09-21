@@ -222,7 +222,11 @@ def remove_survey(_id):
 @flask_login.login_required
 def view_survey(_id):
     dbobj = Survey.query.get_or_404(_id)
-    return render_template("view_survey.html", survey = dbobj)
+    triggers = dict()
+    for question in dbobj.questions:
+    	if question.trigger_id != None:
+    		triggers[question.id] = Trigger.query.get(question.trigger_id)
+    return render_template("view_survey.html", survey = dbobj, triggers = triggers)
 
 @app.route('/surveys/start/<int:survey_id>', methods=['GET', 'POST'])
 @flask_login.login_required
@@ -383,7 +387,11 @@ def add_edit_patient(id=None):
 @app.route("/patients/")
 def view_patients():
 	patients = current_user.patients
-	return render_template("patients.html", patients=patients)
+	status = dict()
+	for p in patients:
+		incomplete = sum([1-i.complete for i in p.progress])
+		status[p.id] = incomplete
+	return render_template("patients.html", patients=patients, status = status)
 
 @app.route("/patients/delete/<int:id>")
 def delete_patient():

@@ -4,27 +4,46 @@
 	    <div class="page-header" style="padding-bottom:20px">
 		    <h3><span style="color: grey;">{{current_user.username}} / <a href="/surveys">surveys</a> /</span> {{ survey.title }} <span style="color: grey;font-size:16px">(#id: {{survey.id}})</span><a href="/surveys/start/{{ survey.id }}" class="btn btn-lg btn-success" style="float:right;position:relative; top:-10px">Begin survey</a></h3>
 	    </div>
-	    <table class="table table-hover">
-		<thead>
-			<tr>
-			<th> # </th>
-			<th> Title </th>
-			<th> Actions </th>
-			</tr>
-		</thead>
-		<tbody>
+	    
+	   <div class="row">
 		{% for question in survey.questions %}
-		<tr>
-			<th scope="row">{{ loop.index }}</th>
-			<td><a href="/surveys/serve/{{survey.id}}?question={{ question.id }}">{{ question.body }}</a><small style="color:grey"> (ID #:{{question.id}})</td>
-			<td>
-			<a href="/questions/edit/{{ question.id }}" class="btn btn-xs btn-primary">Edit</a>
-			<a href="/questions/delete/{{ question.id }}" class="btn btn-xs btn-secondary">Delete</a> 
-				</td>
-		</tr>
-		{% endfor %}			
-		</tbody>
-	    </table>
+		<div class="media">
+			<div class="media" style="max-width:500px; background-color:lightgrey; padding:10px">
+				<h4 class="media-heading"><a href="/surveys/serve/{{survey.id}}?question={{ question.id }}">{{ question.body }}</a><small style="color:grey"> (ID #:{{question.id}})</small>
+				<a href="/questions/edit/{{ question.id }}" class="btn btn-xs btn-primary">Edit</a>
+				<a href="/questions/delete/{{ question.id }}" class="btn btn-xs btn-secondary">Delete</a>
+				</h4></div>
+			</div>
+			{% if question.trigger_id != None %}
+			{% set trigger = triggers[question.id] %}
+			<div class="media" style="padding-left:80px; max-width:600px">
+			<div class="media-left">
+			  <a href="#">
+				  {% if "phone" in trigger.kind|string %}
+				<img class="media-object" src="/assets/images/phone-st.png" alt="..." style="height:64px">
+				{% elif "email" in trigger.kind|string %}
+				<img class="media-object" src="/assets/images/email-st.png" alt="..." style="height:64px">
+				{% elif "SMS" in trigger.kind|string %}
+				<img class="media-object" src="/assets/images/sms-st.png" alt="..." style="height:64px">
+				{% else %}
+				<img class="media-object" src="/assets/images/web-st.png" alt="..." style="height:64px">
+				{% endif %}
+			  </a>
+			</div>
+			<div class="media-body" style="background-color:lightgrey; padding:10px">
+			  <h4 class="media-heading">{{ trigger.kind }}</h4>
+			  <span style="font-weight:bold">"{{ trigger.title }}"</span><br><br>
+			  <h4 class="media-heading">To:</h4>
+			  <span style="font-weight:bold">{{trigger.recipients}}</span><br><br>
+			  <h4 class="media-heading">Return results to:</h4>
+			  <span style="font-weight:bold">{{trigger.after_function}}</span><br><br>
+			<a href="/triggers/edit/{{ trigger.id }}" class="btn btn-sm btn-primary">Edit</a>
+			<a href="/triggers/delete/{{ trigger.id }}" class="btn btn-sm btn-danger">Delete</a>
+			</div>
+			</div>
+			{% endif %}
+		{% endfor %}
+		</div>
 	    {% if survey.questions|length == 0 %}
 	    <div class="well">
 		<div class="starter-template">
