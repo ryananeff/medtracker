@@ -369,6 +369,9 @@ def add_edit_patient(id=None):
 			mrn = random.randint(1000000,9999999)
 			while mrn in [p.mrn for p in Patient.query.all()]:
 				mrn = random.randint(1000000,9999999)
+			flash('Patient added.')
+		else:
+			flash('Patient edited.')
 		patient.mrn = mrn
 		patient.user_id = current_user.id
 		db_session.add(patient)
@@ -380,6 +383,14 @@ def add_edit_patient(id=None):
 def view_patients():
 	patients = Patient.query.filter_by(user_id=current_user.id)
 	return render_template("patients.html", patients=patients)
+
+@app.route("/patients/delete/<int:id>")
+def delete_patient():
+	patient = Patient.query.filter_by(user_id=current_user.id, mrn=id).first_or_404()
+	db_session.delete(patient)
+	db_session.commit()
+	flash('Patient deleted.')
+	return redirect(url_for('view_patients'))
 
 ### controller for trigger functions
 
