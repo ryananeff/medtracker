@@ -156,6 +156,7 @@ class User(db.Model):
     surveys = db.relationship("Survey", backref='user', lazy='dynamic')
     triggers = db.relationship("Trigger", backref='user', lazy='dynamic')
     responses = db.relationship("QuestionResponse", backref='user', lazy='dynamic')
+    patients = db.relationship("Patient", backref='user', lazy='dynamic')
 
     def is_active(self):
         """True, as all users are active."""
@@ -178,3 +179,16 @@ class User(db.Model):
 
     def verify_password(self, password):
         return pwd_context.verify(password, self.password_hash)
+
+class Patient(db.Model):
+	'''A patient record capable of taking surveys'''
+	__tablename__= "patients"
+
+	id = db.Column(db.Integer, primary_key=True)
+	mrn = db.Column(EncryptedType(db.String, flask_secret_key))
+	fullname = db.Column(EncryptedType(db.String, flask_secret_key))
+	dob = db.Column(EncryptedType(db.Date, flask_secret_key))
+	phone = db.Column(EncryptedType(db.String, flask_secret_key))
+	email = db.Column(EncryptedType(db.String, flask_secret_key))
+	notes = db.Column(EncryptedType(db.String, flask_secret_key))
+	user_id = db.Column(db.Integer, db.ForeignKey('user.id'))

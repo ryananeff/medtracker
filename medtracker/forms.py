@@ -1,6 +1,7 @@
 from wtforms import *
 from flask_wtf import Form
-from wtforms.ext.sqlalchemy.fields import QuerySelectField
+from wtforms.ext.sqlalchemy.fields import *
+from wtforms.fields.html5 import DateField
 from wtforms.validators import DataRequired
 from medtracker.models import *
 from flask.views import MethodView
@@ -70,3 +71,11 @@ class NewUserForm(Form):
     password = PasswordField('Password', validators=[DataRequired()])
     username = StringField('Username', validators=[DataRequired()])
     name = StringField('Full Name', validators=[DataRequired()])
+
+class PatientForm(Form):
+	mrn = DisabledTextField('MRN')
+	fullname = StringField('Full Name', validators=[validators.Length(min=4, max=255)])
+	dob = DateField('Date of Birth', validators=[DataRequired()], format="%Y-%m-%d")
+	phone = StringField('Phone number', validators=[DataRequired()])
+	email = StringField('Email address', validators=[validators.Email()])
+	notes = StringField('Additional Notes')
