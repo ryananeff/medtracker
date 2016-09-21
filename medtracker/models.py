@@ -35,8 +35,9 @@ class Progress(db.Model):
 	id = db.Column(db.Integer, primary_key=True)
 	user = db.Column(EncryptedType(db.String, flask_secret_key))
 	task = db.Column(db.String)
+	time = db.Column(EncryptedType(db.DateTime, flask_secret_key))
 	iterator = db.Column(db.Integer)
-	parent_id = db.Column(db.String) # this is the uniq_id?
+	parent_id = db.Column(db.Integer, db.ForeignKey('patients.id')) # this is the uniq_id?
 	complete = db.Column(db.Integer)
 
 	def __init__(self, user='', task='', iterator=0, parent_id='', complete=0):
@@ -95,6 +96,14 @@ class QuestionMeta(db.Model):
 	def __init__(self, body=None, question=None):
 		self.body = body
 		self.question_id = question_id
+
+class Comment(db.Model):
+	__tablename__ = 'comment'
+	id = db.Column(db.Integer, primary_key=True)
+	body = db.Column(EncryptedType(db.String, flask_secret_key))
+	time = db.Column(EncryptedType(db.DateTime, flask_secret_key))
+	user_id = db.Column(db.Integer, db.ForeignKey('user.id'))
+	patient_id = db.Column(db.Integer, db.ForeignKey('patients.id'))
 
 class QuestionResponse(db.Model):
 	__tablename__ = 'question_response'
@@ -193,3 +202,4 @@ class Patient(db.Model):
 	notes = db.Column(EncryptedType(db.String, flask_secret_key))
 	user_id = db.Column(db.Integer, db.ForeignKey('user.id'))
 	responses = db.relationship("QuestionResponse", backref='patient', lazy='dynamic')
+	progress = db.relationship("Progress", backref='patient', lazy='dynamic')
