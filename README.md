@@ -11,5 +11,8 @@ Notes:
 * 7/23/2016: You can now take surveys by SMS and phone (as well as email of course as always).
 * 7/23/2016: Autocomplete now works!
 
-
 <img src="https://raw.githubusercontent.com/nosarcasm/medtracker/master/examples/autocomplete.PNG" height=500 />
+
+* 9/22/2016: Editor view improvements, patients table, and layout improvements to the forms are up
+
+<img src="https://github.com/nosarcasm/medtracker/blob/master/examples/editor_view.PNG?raw=true" height=500 />
