@@ -8,82 +8,118 @@ import urllib, re, random, string, requests, json
 from flask_login import login_user, logout_user, current_user
 
 
-def run_trigger(question, response, current_user = None):
-	if question.trigger:
-		message = question.trigger.title
-		recipients = question.trigger.recipients
-		split_message = re.split('(<.+?>)',message)
-		split_recipients = re.split('(<.+?>)',recipients)
-		for ix,i in enumerate(split_recipients):
-			tag = re.findall('<(.+?)>',i) # look for tags we need to replace
-			if tag != []:
-				tag = tag[0].split("|")[1].strip() # so we can include descriptions
-				split_tag = tag.split(".")
-				if len(split_tag) == 2: # db type is the resource type (question, trigger, callback, etc.), while the ID is actually the position in the survey
-					db_type, db_id = split_tag
-					db_subtype = None # subtype is if the element is multi-part (e.g. questions have elements attached)
-				if len(split_tag) == 3:
-					db_type, db_id, db_subtype = split_tag
-				if db_type.lower() == 'question':
-					result = QuestionResponse.query.filter_by(question_id=int(db_id), uniq_id=response.uniq_id).first()
-					if result != None:
-						split_recipients[ix] = result.response.strip() # this is the default subtype (response)
-							#TODO: this needs to be fixed for things like yes or no questions or 1 to 10
-							#        * maybe in the models??
-					else:
-						split_recipients[ix] = "" # when there's nothing there
-		recipients = "".join(split_recipients)
-		for ix,i in enumerate(split_message):
-			tag = re.findall('<(.+?)>',i) # look for tags we need to replace
-			if tag != []:
-				tag = tag[0].split("|")[1].strip() # so we can include descriptions
-				split_tag = tag.split(".")
-				if len(split_tag) == 2: # db type is the resource type (question, trigger, callback, etc.), while the ID is actually the position in the survey
-					db_type, db_id = split_tag
-					db_subtype = None # subtype is if the element is multi-part (e.g. questions have elements attached)
-				if len(split_tag) == 3:
-					db_type, db_id, db_subtype = split_tag
-				if db_type.lower() == 'question':
-					result = QuestionResponse.query.filter_by(question_id=int(db_id), uniq_id=response.uniq_id).first()
-					if result != None:
-						split_message[ix] = result.response # this is the default subtype (response)
-							#TODO: this needs to be fixed for things like yes or no questions or 1 to 10
-							#        * maybe in the models??
-					else:
-						split_message[ix] = "" # when there's nothing there
-				if db_type.lower() == 'survey':
-					if current_user != None:
-						surveys = Survey.query.filter_by(id=int(db_id), user_id=current_user.id).all()
-						if len(surveys) != 0:
-							survey = surveys[0]
-						if question.trigger.kind == 'voice':
-							for r in recipients.split(";"):
-								r = r.strip()
-								test_voice_out(survey.id, r, uniq_id = response.uniq_id)
-							return 0
-						if question.trigger.kind == 'sms':
-							for r in recipients.split(";"):
-								r = r.strip()
-								test_sms_survey(survey.id, r, uniq_id = response.uniq_id)
-							return 0
-		message = "".join(split_message)
-		if recipients == "":
-			print "No valid recipients"
-			return 2
-		callback = None
-		if question.trigger.kind == 'voice':
-			# TODO: needs to check if the recipient type is actually valid or else internal server error!
-			phone_trigger(message, recipients, callback)
-		elif question.trigger.kind == 'sms':
-			sms_trigger(message, recipients, callback)
-		elif question.trigger.kind == 'email':
-			email_trigger(message, recipients, callback)
-		elif question.trigger.kind == 'curl':
-			url_trigger(message, recipients, callback)
-		else:
-			print "ERROR: Not a valid trigger type."
-			return 1
-		print "Trigger sent successfully."
+def run_trigger(question, response, session_id = None, current_user = None):
+	if question.triggers:
+		for trigger in question.triggers:
+			message = trigger.title
+			recipients = trigger.recipients
+			split_message = re.split('(<.+?>)',message)
+			split_recipients = re.split('(<.+?>)',recipients)
+			criteria = trigger.criteria.lower().strip().encode()
+			print "To evaluate: " + response.response
+			# this code checks the criteria to see if it evaluates to true or false
+			if criteria != 'any':
+				print "Criteria is not any"
+				if question.kind.code == "numeric":
+					print "numeric code"
+					try:
+						if eval(response.response + " " + criteria) != True:
+							print "Trigger did not match criteria."
+							continue
+					except:
+						print "Can't determine if trigger matched criteria, failsafe stop."
+						continue
+				elif question.kind.code == "yes-no":
+					print "yes-no code"
+					try:
+						yes_no = {'0':"no", '1':"yes"}
+						if yes_no[response.response] != criteria:
+							print "Trigger did not match criteria"
+							continue
+					except:
+						print "Can't determine if trigger matched criteria, failsafe stop."
+						continue
+				else:
+					print "other/text code"
+					try:
+						if eval(criteria + " " + response.response) != True:
+							print "Trigger did not match criteria."
+							continue
+					except:
+						print "Can't determine if trigger matched criteria, failsafe stop."
+						continue
+
+			# this code replaces the recipients field with the response
+			for ix,i in enumerate(split_recipients):
+				tag = re.findall('<(.+?)>',i) # look for tags we need to replace
+				if tag != []:
+					tag = tag[0].split("|")[1].strip() # so we can include descriptions
+					split_tag = tag.split(".")
+					if len(split_tag) == 2: # db type is the resource type (question, trigger, callback, etc.), while the ID is actually the position in the survey
+						db_type, db_id = split_tag
+						db_subtype = None # subtype is if the element is multi-part (e.g. questions have elements attached)
+					if len(split_tag) == 3:
+						db_type, db_id, db_subtype = split_tag
+					if db_type.lower() == 'question':
+						result = QuestionResponse.query.filter_by(question_id=int(db_id), uniq_id=response.uniq_id, session_id=session_id).first()
+						if result != None:
+							split_recipients[ix] = result.response.strip() # this is the default subtype (response)
+								#TODO: this needs to be fixed for things like yes or no questions or 1 to 10
+								#        * maybe in the models??
+						else:
+							split_recipients[ix] = "" # when there's nothing there
+			recipients = "".join(split_recipients)
+
+			# this code replaces the message field with the response
+			for ix,i in enumerate(split_message):
+				tag = re.findall('<(.+?)>',i) # look for tags we need to replace
+				if tag != []:
+					tag = tag[0].split("|")[1].strip() # so we can include descriptions
+					split_tag = tag.split(".")
+					if len(split_tag) == 2: # db type is the resource type (question, trigger, callback, etc.), while the ID is actually the position in the survey
+						db_type, db_id = split_tag
+						db_subtype = None # subtype is if the element is multi-part (e.g. questions have elements attached)
+					if len(split_tag) == 3:
+						db_type, db_id, db_subtype = split_tag
+					if db_type.lower() == 'question':
+						result = QuestionResponse.query.filter_by(question_id=int(db_id), uniq_id=response.uniq_id, session_id=session_id).first()
+						if result != None:
+							split_message[ix] = result.response # this is the default subtype (response)
+								#TODO: this needs to be fixed for things like yes or no questions or 1 to 10
+								#        * maybe in the models??
+						else:
+							split_message[ix] = "" # when there's nothing there
+					if db_type.lower() == 'survey':
+						if current_user != None:
+							surveys = Survey.query.filter_by(id=int(db_id), user_id=current_user.id).all()
+							if len(surveys) != 0:
+								survey = surveys[0]
+							if trigger.kind == 'voice':
+								for r in recipients.split(";"):
+									r = r.strip()
+									test_voice_out(survey.id, r, uniq_id = response.uniq_id)
+							if trigger.kind == 'sms':
+								for r in recipients.split(";"):
+									r = r.strip()
+									test_sms_survey(survey.id, r, uniq_id = response.uniq_id)
+			message = "".join(split_message)
+			if recipients == "":
+				print "No valid recipients"
+				continue
+			callback = None
+			if trigger.kind == 'voice':
+				# TODO: needs to check if the recipient type is actually valid or else internal server error!
+				phone_trigger(message, recipients, callback)
+			elif trigger.kind == 'sms':
+				sms_trigger(message, recipients, callback)
+			elif trigger.kind == 'email':
+				email_trigger(message, recipients, callback)
+			elif trigger.kind == 'curl':
+				url_trigger(message, recipients, callback)
+			else:
+				print "ERROR: Not a valid trigger type."
+				continue
+			print "Trigger sent successfully."
 		return 0
 
 def phone_trigger(message, recipients, callback=None):

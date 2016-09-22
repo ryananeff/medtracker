@@ -59,7 +59,7 @@ class TriggerForm(Form):
 	title = TextAreaField('Message to send', [validators.Length(min=0, max=255)])
 	recipients = TextAreaField('Recipients', [validators.Length(min=4, max=255)])
 	after_function = TextAreaField('Callback', [validators.Length(min=2, max=255)])
-	questions = QuerySelectField("Attach to this question", 
+	question_id = QuerySelectField("Attach to this question", 
 		get_pk=lambda a: a.id, get_label=lambda a: a.body)
 
 class UsernamePasswordForm(Form):

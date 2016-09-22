@@ -224,19 +224,22 @@ def view_survey(_id):
     dbobj = Survey.query.get_or_404(_id)
     triggers = dict()
     for question in dbobj.questions:
-    	if question.trigger_id != None:
-    		trigger = Trigger.query.get(question.trigger_id)
-    		after = Survey.query.get(trigger.after_function) if trigger.after_function else None
-    		triggers[question.id] = (trigger, after) 
+    	if question.triggers != None:
+    		tlist=[]
+    		for trigger in question.triggers:
+	    		after = Survey.query.get(trigger.after_function) if trigger.after_function else None
+	    		tlist.append((trigger, after))
+	    	triggers[question.id] = tlist
     return render_template("view_survey.html", survey = dbobj, triggers = triggers)
 
 @app.route('/surveys/start/<int:survey_id>', methods=['GET', 'POST'])
 @flask_login.login_required
 def start_survey(survey_id):
 	'''TODO: need to select the patient which will be taking the survey. This will make this starting block a form.'''
+	session_id = randomword(64)
 	u = request.values.get('u', None)
 	survey = Survey.query.get_or_404(survey_id)
-	return render_template('start_survey.html', survey=survey, u = u, patients=current_user.patients)
+	return render_template('start_survey.html', survey=survey, u = u, s = session_id, patients=current_user.patients)
 	#return redirect(url_for(serve_survey), survey_id=_id, u=uniq_id)
 
 @app.route('/surveys/serve/<int:survey_id>', methods=['GET', 'POST'])
@@ -245,6 +248,7 @@ def serve_survey(survey_id):
 	survey = Survey.query.get_or_404(survey_id)
 	question_id = request.values.get("question", None)
 	uniq_id = request.values.get("u", None)
+	sess = request.values.get("s", None)
 	question_ids = [q.id for q in survey.questions]
 	if len(question_ids) == 0:
 			return render_template("view_survey.html", survey = survey)
@@ -259,7 +263,7 @@ def serve_survey(survey_id):
 	if request.method == 'POST':
 		if uniq_id:
 			print "saving..."
-			save_response(request.form, question_id)
+			save_response(request.form, question_id, session_id = sess)
 		if next_question == None:
 			return redirect(url_for('view_survey', _id=survey_id))
 		return redirect(url_for('serve_survey', survey_id=survey_id, question=next_question, u=uniq_id))
@@ -280,7 +284,7 @@ def save_response(formdata, question_id, session_id=None, current_user = current
 	question = _response._question
 	if _response.uniq_id != None:
 		sys.stderr.write('starting trigger')
-		run_trigger(question, _response, current_user)
+		run_trigger(question, _response, session_id, current_user)
 	return "Response saved."
 
 ### controller functions for questions
@@ -419,8 +423,14 @@ def patient_survey_selector(id):
 @flask_login.login_required
 def add_trigger():
 	'''GUI: add a trigger to the DB'''
+	q = request.values.get("question", None)
 	formobj = TriggerForm(request.form)
-	formobj.questions.query = Question.query.filter(Survey.user_id==current_user.id).all()
+	if q:
+		question = Question.query.get(q)
+	if question:
+		formobj.question_id.query = [question]
+	else:
+		formobj.question_id.query = Question.query.filter(Survey.user_id==current_user.id).all()
 	if request.method == 'POST' and formobj.validate():
 		trigger = Trigger(
 			formobj.title.data,
@@ -439,14 +449,14 @@ def add_trigger():
 					if dbtype == "survey":
 						trigger.after_function = db_id
 		trigger.user_id = current_user.id
+		trigger.question_id = formobj.question_id.data.id
 		db_session.add(trigger)
 		db_session.commit()
-		q = formobj.questions.data
-		q.trigger_id = trigger.id
-		db_session.add(q)
-		db_session.commit()
 		flash('Trigger added.')
-		return redirect(url_for('serve_triggers_index'))
+		if question:
+			return redirect(url_for('view_survey', _id=question.survey.id))
+		else:
+			return redirect(url_for('serve_survey_index'))
 	#formobj.questions.choices = [(q.id, "(ID: %s) "% str(q.id) + q.body) for q in Question.query]
 	return render_template("form_trigger.html", action="Add", data_type="a trigger", form=formobj)
 
@@ -456,7 +466,7 @@ def edit_trigger(_id):
 	'''GUI: edit a trigger in the DB'''
 	trigger = Trigger.query.get_or_404(_id)
 	formout = TriggerForm(request.form, obj=trigger)
-	formout.questions.query = Question.query.filter(Survey.user_id==current_user.id).all()
+	formout.question_id.query = Question.query.filter(Survey.user_id==current_user.id).all()
 	if request.method == 'POST' and formout.validate():
 		trigger.title = formout.title.data
 		trigger.kind = formout.kind.data
@@ -471,21 +481,14 @@ def edit_trigger(_id):
 					dbtype, db_id = t[0].split("|")[1].strip().split(".")
 					if dbtype == "survey":
 						trigger.after_function = db_id
+		trigger.question_id = formout.question_id.data.id
 		db_session.add(trigger)
 		db_session.commit()
-		for old_q in trigger.questions:
-			old_q = Question.query.get(old_q.id)
-			old_q.trigger_id = None
-			db_session.add(old_q)
-		q = formout.questions.data
-		q.trigger_id = trigger.id
-		db_session.add(q)
-		db_session.commit()
 		flash('Trigger edited.')
-		return redirect(url_for('serve_triggers_index'))
+		return redirect(url_for('view_survey', _id=Question.query.get(trigger.question_id).survey.id))
 	else:
 		formout.kind.data = trigger.kind
-		formout.questions.data = Question.query.filter_by(trigger_id=trigger.id).first()
+		formout.question_id.data = Question.query.get(trigger.question_id)
 	return render_template("form_trigger.html", action="Edit", data_type="trigger #" + str(_id), form=formout)
 
 @app.route('/triggers/delete/<int:_id>', methods=['GET', 'POST'])
