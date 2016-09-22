@@ -225,7 +225,9 @@ def view_survey(_id):
     triggers = dict()
     for question in dbobj.questions:
     	if question.trigger_id != None:
-    		triggers[question.id] = Trigger.query.get(question.trigger_id)
+    		trigger = Trigger.query.get(question.trigger_id)
+    		after = Survey.query.get(trigger.after_function) if trigger.after_function else None
+    		triggers[question.id] = (trigger, after) 
     return render_template("view_survey.html", survey = dbobj, triggers = triggers)
 
 @app.route('/surveys/start/<int:survey_id>', methods=['GET', 'POST'])
@@ -427,6 +429,15 @@ def add_trigger():
 			formobj.recipients.data,
 			formobj.after_function.data
 			)
+		trigger.after_function = None
+		after_func = re.split('(<.+?>)',formobj.after_function.data)
+		if len(after_func) != 0:
+			for tag in after_func:
+				t = re.findall('<(.+?)>',tag)
+				if t != []:
+					dbtype, db_id = t[0].split("|")[1].strip().split(".")
+					if dbtype == "survey":
+						trigger.after_function = db_id
 		trigger.user_id = current_user.id
 		db_session.add(trigger)
 		db_session.commit()
@@ -451,7 +462,15 @@ def edit_trigger(_id):
 		trigger.kind = formout.kind.data
 		trigger.criteria = formout.criteria.data
 		trigger.recipients = formout.recipients.data
-		trigger.after_function = formout.after_function.data
+		after_func = re.split('(<.+?>)',formout.after_function.data)
+		trigger.after_function = None
+		if len(after_func) != 0:
+			for tag in after_func:
+				t = re.findall('<(.+?)>',tag)
+				if t != []:
+					dbtype, db_id = t[0].split("|")[1].strip().split(".")
+					if dbtype == "survey":
+						trigger.after_function = db_id
 		db_session.add(trigger)
 		db_session.commit()
 		for old_q in trigger.questions:
