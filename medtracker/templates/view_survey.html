@@ -8,18 +8,23 @@
 	   <div class="row">
 		{% for question in survey.questions %}
 		<div class="media" style="padding:10px; margin-top:0px">
-			<div class="media" style="max-width:500px; background-color:white; padding:10px;box-shadow: 0px 2px 10px 0px rgba(0,0,0,0.2);">
+			<div class="media-container" style="max-width:500px; background-color:white;box-shadow: 0px 2px 10px 0px rgba(0,0,0,0.2);">
+			<div class="media" style="padding:10px;">
 				<small>Question #{{loop.index}}</small>
 				<h4 class="media-heading">{{ question.body }}</h4>
 				<a href="/surveys/serve/{{survey.id}}?question={{ question.id }}" style="padding-right:10px">Preview</a>
 				<a href="/questions/edit/{{ question.id }}" style="padding-right:10px">Edit</a>
 				<a href="/questions/delete/{{ question.id }}" style="color:darkred">Delete</a>
-				</div>
-			
+			</div>
+			<div class="add-triggers" style="border-style: solid none none none; border-width:0.5px; border-color:#dddddd; padding:5px 5px 5px 10px">
+			<a href="/triggers/new">Add a trigger</a>
+			</div>
+			</div>
 			{% if question.trigger_id != None %}
-			{% set trigger = triggers[question.id] %}
+			{% set trigger = triggers[question.id][0] %}
+			{% set after = triggers[question.id][1] %}
 			<div class="connector">
-				<div class="connector-line" style="border-style:none none none solid; margin-left:120px; padding:20px;"><span style="color: grey;">Answer is </span>{{trigger.criteria}}</div>
+				<div class="connector-line" style="border-style:none none none solid; margin-left:120px; padding:20px;">If<span style="color: grey;"> answer is </span>{{trigger.criteria}}</div>
 			</div>
 			<div class="media" style="margin-left:80px; max-width:600px;margin-top:0px;box-shadow: 0px 2px 10px 0px rgba(0,0,0,0.2);">
 			<div class="media-left" style="background-color:#e6e6ff; padding:10px;box-shadow: 0px 2px 10px 0px rgba(0,0,0,0.2);">
@@ -36,12 +41,25 @@
 			  </a>
 			</div>
 			<div class="media-body" style="padding:10px; background-color:white;padding:10px;">
+				<small>Trigger</small>
 			  <h4 class="media-heading">{{ trigger.kind }}<span style="color: grey;"> to </span>{{trigger.recipients}}</h4>
 			  <p><span style="font-weight:bold">"{{ trigger.title }}"</span></p>
 			<a href="/triggers/edit/{{ trigger.id }}" style="padding-right:10px">Edit</a>
 			<a href="/triggers/delete/{{ trigger.id }}" style="color:darkred">Delete</a>
 			</div>
 			</div>
+			{% if after %}
+			<div class="connector">
+				<div class="connector-line" style="border-style:none none none solid; margin-left:200px; padding:20px;"><span style="color: grey;">Then</span> begin</div>
+			</div>
+			<div class="media" style="margin-left:160px; max-width:600px;margin-top:0px;box-shadow: 0px 2px 10px 0px rgba(0,0,0,0.2);">
+			<div class="media-body" style="padding:10px; background-color:white;padding:10px;">
+				<small>Survey</small>
+			  <h4 class="media-heading"><a href="/surveys/view/{{after.id}}">{{ after.title }}</a></h4>
+			  <p>{{after.description}}</p>
+			</div>
+			</div>
+			{% endif %}
 			{% endif %}
 		</div>
 		{% endfor %}
