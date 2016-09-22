@@ -2,22 +2,27 @@
 {% block title %}{{survey.title}} | Suretify{% endblock %}
 {% block body %}
 	    <div class="page-header" style="padding-bottom:20px">
-		    <h3><span style="color: grey;">{{current_user.username}} / <a href="/surveys">surveys</a> /</span> {{ survey.title }} <span style="color: grey;font-size:16px">(#id: {{survey.id}})</span><a href="/surveys/start/{{ survey.id }}" class="btn btn-lg btn-success" style="float:right;position:relative; top:-10px">Begin survey</a></h3>
+		    <h3>Survey Editor / <span style="color: grey;">{{ survey.title }}</span><a href="/surveys/start/{{ survey.id }}" class="btn btn-lg btn-success" style="float:right;position:relative; top:-10px">Begin survey</a> <a href="/questions/new/?survey={{ survey.id }}" class="btn btn-lg btn-primary" style="float:right;position:relative; top:-10px; margin-right:10px">Add questions</a></h3>
 	    </div>
-	    
+	    <div class="container" style="background-color:rgb(238, 238, 238);">
 	   <div class="row">
 		{% for question in survey.questions %}
-		<div class="media">
-			<div class="media" style="max-width:500px; background-color:lightgrey; padding:10px">
-				<h4 class="media-heading"><a href="/surveys/serve/{{survey.id}}?question={{ question.id }}">{{ question.body }}</a><small style="color:grey"> (ID #:{{question.id}})</small>
-				<a href="/questions/edit/{{ question.id }}" class="btn btn-xs btn-primary">Edit</a>
-				<a href="/questions/delete/{{ question.id }}" class="btn btn-xs btn-secondary">Delete</a>
-				</h4></div>
-			</div>
+		<div class="media" style="padding:10px; margin-top:0px">
+			<div class="media" style="max-width:500px; background-color:white; padding:10px;box-shadow: 0px 2px 10px 0px rgba(0,0,0,0.2);">
+				<small>Question #{{loop.index}}</small>
+				<h4 class="media-heading">{{ question.body }}</h4>
+				<a href="/surveys/serve/{{survey.id}}?question={{ question.id }}" style="padding-right:10px">Preview</a>
+				<a href="/questions/edit/{{ question.id }}" style="padding-right:10px">Edit</a>
+				<a href="/questions/delete/{{ question.id }}" style="color:darkred">Delete</a>
+				</div>
+			
 			{% if question.trigger_id != None %}
 			{% set trigger = triggers[question.id] %}
-			<div class="media" style="padding-left:80px; max-width:600px">
-			<div class="media-left">
+			<div class="connector">
+				<div class="connector-line" style="border-style:none none none solid; margin-left:120px; padding:20px;"><span style="color: grey;">Answer is </span>{{trigger.criteria}}</div>
+			</div>
+			<div class="media" style="margin-left:80px; max-width:600px;margin-top:0px;box-shadow: 0px 2px 10px 0px rgba(0,0,0,0.2);">
+			<div class="media-left" style="background-color:#e6e6ff; padding:10px;box-shadow: 0px 2px 10px 0px rgba(0,0,0,0.2);">
 			  <a href="#">
 				  {% if "phone" in trigger.kind|string %}
 				<img class="media-object" src="/assets/images/phone-st.png" alt="..." style="height:64px">
@@ -30,20 +35,17 @@
 				{% endif %}
 			  </a>
 			</div>
-			<div class="media-body" style="background-color:lightgrey; padding:10px">
-			  <h4 class="media-heading">{{ trigger.kind }}</h4>
-			  <span style="font-weight:bold">"{{ trigger.title }}"</span><br><br>
-			  <h4 class="media-heading">To:</h4>
-			  <span style="font-weight:bold">{{trigger.recipients}}</span><br><br>
-			  <h4 class="media-heading">Return results to:</h4>
-			  <span style="font-weight:bold">{{trigger.after_function}}</span><br><br>
-			<a href="/triggers/edit/{{ trigger.id }}" class="btn btn-sm btn-primary">Edit</a>
-			<a href="/triggers/delete/{{ trigger.id }}" class="btn btn-sm btn-danger">Delete</a>
+			<div class="media-body" style="padding:10px; background-color:white;padding:10px;">
+			  <h4 class="media-heading">{{ trigger.kind }}<span style="color: grey;"> to </span>{{trigger.recipients}}</h4>
+			  <p><span style="font-weight:bold">"{{ trigger.title }}"</span></p>
+			<a href="/triggers/edit/{{ trigger.id }}" style="padding-right:10px">Edit</a>
+			<a href="/triggers/delete/{{ trigger.id }}" style="color:darkred">Delete</a>
 			</div>
 			</div>
 			{% endif %}
-		{% endfor %}
 		</div>
+		{% endfor %}
+		</div></div>
 	    {% if survey.questions|length == 0 %}
 	    <div class="well">
 		<div class="starter-template">
@@ -51,9 +53,8 @@
 		<h1>:(</h1>
 		<a href="/questions/new/?survey={{ survey.id }}">Add a new question to this survey</a>
 		</div></div>
-	    {% else %}
-	    <a href="/questions/new/?survey={{ survey.id }}" class="btn btn-sm btn-primary">Add more questions</a>
 	    {% endif %}
 	    </div>
+	</div>
     </div><!-- /.container -->
 {% endblock %}

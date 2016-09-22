@@ -8,10 +8,10 @@
 	    <div class="row">
 		{% for survey in surveys %}
 			<div class="card card--medium col-xs-4">
-			  <h2 class="card__title"><a href="/surveys/start/{{ survey.id }}">{{ survey.title }}</a></h2><span class="card__subtitle">(ID: {{survey.id}})</span>
+			  <h2 class="card__title"><a href="/surveys/view/{{ survey.id }}">{{ survey.title }}</a></h2><span class="card__subtitle">(ID: {{survey.id}})</span>
 			  <p class="card__text">{{survey.description}}</p>
 			  <div class="card__action-bar">
-				<button class="card__button"><a href="/surveys/view/{{ survey.id }}">EDIT</a></button>
+				<button class="card__button"><a href="/surveys/start/{{ survey.id }}">BEGIN</a></button>
 				<button class="card__button"><a href="/surveys/edit/{{ survey.id }}">PROPERTIES</a></button>
 				<button class="card__button"><a href="/surveys/delete/{{ survey.id }}" style="color:red">DELETE</a></button>
 			  </div>
