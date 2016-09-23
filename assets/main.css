@@ -57,3 +57,35 @@ text-align:center;
     margin-top: 40px;
     border-top: 1px solid #eee;
 }
+
+.sidebar ul li a {
+    background-color:#dddddd;
+    color:#000000;
+
+}
+
+.nav li a:hover,
+.sidebar ul li a.active,
+.nav li a:focus{
+    background-color:#ffffff;
+    color:#111111;
+}
+
+.sidebar .nav-second-level li a{
+    color:#111111;
+    background-color:#eeeeee;
+}
+
+.sidebar .nav-second-level li a:hover{
+    background-color:#ffffff;
+    color:#111111;
+}
+
+#wrapper{
+    background-color:#dddddd;
+}
+
+#user-login{
+    background-color: #333333;
+    color:#eee;
+}

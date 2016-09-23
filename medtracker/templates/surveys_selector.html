@@ -1,0 +1,28 @@
+{% extends "layout_sidebar.html" %}
+{% block title %}Select a survey | Suretify {% endblock %}
+{% block body %}
+	    <div class="page-header">
+		    <h2>Select a survey</h2>
+	    </div>
+	    
+	    <div class="row">
+		{% for survey in surveys %}
+			<div class="card card--medium col-xs-4">
+			  <h2 class="card__title"><a href="/surveys/start/{{ survey.id }}?u={{patient.id}}">{{ survey.title }}</a></h2><span class="card__subtitle">(ID: {{survey.id}})</span>
+			  <p class="card__text">{{survey.description}}</p>
+			</div>		
+		{% endfor %}
+		</div>
+		
+	    {% if surveys.first() == None %}
+	    <div class="well">
+		<div class="starter-template">
+		No surveys yet.
+	    {% else %}
+	    <div class="row" style="padding-top:20px;">
+	    
+	    </div>
+	    {% endif %}
+	    </div>
+    </div><!-- /.container -->
+{% endblock %}

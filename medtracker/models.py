@@ -38,6 +38,7 @@ class Progress(db.Model):
 	time = db.Column(EncryptedType(db.DateTime, flask_secret_key))
 	iterator = db.Column(db.Integer)
 	parent_id = db.Column(db.Integer, db.ForeignKey('patients.id')) # this is the uniq_id?
+	session_id = db.Column(db.String)
 	complete = db.Column(db.Integer)
 
 	def __init__(self, user='', task='', iterator=0, parent_id='', complete=0):

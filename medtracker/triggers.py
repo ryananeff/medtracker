@@ -16,6 +16,8 @@ def run_trigger(question, response, session_id = None, current_user = None):
 			split_message = re.split('(<.+?>)',message)
 			split_recipients = re.split('(<.+?>)',recipients)
 			criteria = trigger.criteria.lower().strip().encode()
+			callback = Survey.query.filter_by(id=trigger.after_function, user_id=current_user.id).first()
+
 			print "To evaluate: " + response.response
 			# this code checks the criteria to see if it evaluates to true or false
 			if criteria != 'any':
@@ -106,7 +108,6 @@ def run_trigger(question, response, session_id = None, current_user = None):
 			if recipients == "":
 				print "No valid recipients"
 				continue
-			callback = None
 			if trigger.kind == 'voice':
 				# TODO: needs to check if the recipient type is actually valid or else internal server error!
 				phone_trigger(message, recipients, callback)
@@ -120,6 +121,21 @@ def run_trigger(question, response, session_id = None, current_user = None):
 				print "ERROR: Not a valid trigger type."
 				continue
 			print "Trigger sent successfully."
+
+			if callback:
+				if trigger.kind == 'voice':
+					# TODO: needs to check if the recipient type is actually valid or else internal server error!
+					test_voice_out(callback.id, recipients, uniq_id = response.uniq_id)
+				elif trigger.kind == 'sms':
+					test_sms_survey(callback.id, recipients, uniq_id = response.uniq_id)
+				elif trigger.kind == 'email':
+					#TODO - need to generate the URL to send out
+					email_trigger(message, recipients, callback)
+					pass
+				elif trigger.kind == 'curl':
+					# TODO - need to generate the URL to send out
+					#url_trigger(message, recipients, callback)
+					pass
 		return 0
 
 def phone_trigger(message, recipients, callback=None):
@@ -140,7 +156,7 @@ def read_phone_trigger_message():
 		resp.pause(length=1)
 		resp.say(message)
 	else:
-		resp.say("Hello, you have a new message from Suretify, but at this time we are having trouble playing it. Goodbye.")
+		resp.say("Hello, you have a new message from Sure tiff fy, but at this time we are having trouble playing it. Goodbye.")
 	return str(resp)
 
 def sms_trigger(message, recipients, callback):
@@ -215,18 +231,18 @@ def save_sms_survey(task, body):
 				else:
 					body = '0'
 	sys.stderr.write("body: " + body)
-	save_basic_response(body, task.parent_id, question_id)
+	save_basic_response(body, task.parent_id, question_id, session_id = task.session_id)
 	if next_question == None:
 		_ = increment_iterator(task)
 		return (None, "Thank you for your responses. You're done!")
 	new_task = increment_iterator(task)
 	return (new_task, None)
 
-def save_basic_response(message, uniq_id, question_id):
+def save_basic_response(message, uniq_id, question_id, session_id = None):
 	_response = QuestionResponse(
 		message,
 		uniq_id,
-		None,
+		session_id,
 		question_id
 	)
 	_response.user_id = None
@@ -354,7 +370,7 @@ def save_voice_survey(task, message, digits):
 		body = digits
 	else:
 		body = save_recording(message)
-	save_basic_response(body, task.parent_id, question_id)
+	save_basic_response(body, task.parent_id, question_id, session_id=task.session_id)
 	if next_question == None:
 		_ = increment_iterator(task)
 		return (None, "Thank you for your responses. You're done!")

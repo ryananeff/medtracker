@@ -3,7 +3,7 @@
 {{ body }}
 
 Thanks, 
-MedTracker
+Suretify
 
 ---
 Notice a bug? Let us know
