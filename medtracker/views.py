@@ -80,7 +80,7 @@ def signup():
 
         return redirect(url_for("login"))
 
-    return render_template('form.html', form=form, action="Sign up for Suretify", data_type="")
+    return render_template('form_signup.html', form=form, action="Sign up for Suretify", data_type="")
 
 @app.route('/resend_confirmation', methods=["GET", "POST"])
 def resend_confirmation():
