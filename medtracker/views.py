@@ -376,7 +376,7 @@ def add_edit_patient(id=None):
 		db_session.add(patient)
 		db_session.commit()
 		return redirect(url_for('view_patients'))
-	return render_template("form_trigger.html", action="Add", data_type="a patient", form=formobj)
+	return render_template("form.html", action="Add", data_type="a patient", form=formobj)
 
 @app.route("/patients/")
 def view_patients():
