@@ -10,6 +10,7 @@
 			  <th>#</th>
 			  <th>Time</th>
 			  <th>Patient</th>
+			  <th>Survey</th>
 			  <th>Question</th>
 			  <th>Response</th>
 			  <th>Actions</th>
@@ -20,7 +21,8 @@
 			  <td>{{loop.index}}</td>
 			  <td>{{momentjs(response.time).calendar()}}</td>
 			  <td>{{response.patient.fullname}} ({{response.patient.mrn}})</td>
-			  <td>{{response.question.body}}</h4></td>
+			  <td>{{response.question.survey.title}}</td>
+			  <td>{{response.question.body}}</td>
 			<td>
 			{% if "YES" in response.question.kind|string %}
 				Responded with {% if response.response == '1' %}YES{% else %}NO{% endif %}
