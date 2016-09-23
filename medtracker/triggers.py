@@ -200,6 +200,7 @@ def sms_trigger(message, recipients, callback=None):
 	return None
 
 @app.route("/test_sms/<int:survey_id>/<phone_number>", methods=["GET", "POST"])
+@flask_login.login_required
 def test_sms_survey(survey_id, phone_number, uniq_id = None):
 	if uniq_id == None:
 		uniq_id = randomword(64)
@@ -346,6 +347,7 @@ def voice_gather_information():
 	return str(resp)
 
 @app.route("/test_voice/<int:survey_id>/<phone_number>", methods=["GET", "POST"])
+@flask_login.login_required
 def test_voice_out(survey_id, phone_number, uniq_id = None):
 	if uniq_id == None:
 		uniq_id = randomword(64)
@@ -440,6 +442,7 @@ def autocomplete_choices():
 	return json.dumps(possible)
 
 @app.route("/prod/<prod_type>/<int:patient_id>", methods=["GET", "POST"])
+@flask_login.login_required
 def prod_patient(prod_type, patient_id):
 	# TODO: this function needs to connect to a database that has a list of phone numbers, the current task that they are on, the iterator, and the initiator ID.
 	# this will then allow us to handle survey answers and ask the next question
@@ -476,4 +479,42 @@ def prod_patient(prod_type, patient_id):
 			db_session.commit()
 		else:
 			return "Couldn't find prod type, not implemented.", 400
+	return redirect(redirect_url())
+
+@app.route("/send_survey/<method_type>/<int:patient_id>/<int:survey_id>", methods=["GET", "POST"])
+@flask_login.login_required
+def send_survey(method_type,patient_id, survey_id):
+	survey = Survey.query.filter_by(id=survey_id, user_id=current_user.id).first_or_404()
+	patient = Patient.query.filter_by(id=patient_id, user_id=current_user.id).first_or_404()
+	if method_type == 'voice':
+		# TODO: needs to check if the recipient type is actually valid or else internal server error!
+		try:
+			test_voice_out(survey.id, patient.phone, uniq_id = patient.id)
+			flash("Calling %s" % patient.phone)
+		except:
+			print "No recipient definedfor sending."
+			pass					
+	elif method_type == 'sms':
+		try:
+			test_sms_survey(survey.id, patient.phone, uniq_id = patient.id)
+			flash("Sent SMS to %s" % patient.phone)
+		except:
+			print "No recipient defined for sending."
+			pass
+	elif method_type == 'email':
+		#TODO - need to generate the URL to send out
+		try:
+			url = "https://suretify.co" + url_for('start_survey', survey_id = survey.id) + "?u=%s" % patient.id
+			message = "Please complete the following survey at this link: %s" % url
+			task = Progress(
+				user = patient.email, 
+				task = survey.id,
+				parent_id = patient.id)
+			db_session.add(task)
+			db_session.commit()
+			email_trigger(message, patient.email, None)
+			flash("Sent email to %s" % patient.email)
+		except:
+			print "Error in sending survey by email"
+			pass
 	return redirect(redirect_url())

@@ -30,7 +30,22 @@
 			  </button>
 			  <ul class="dropdown-menu" aria-labelledby="dropdownMenu1">
 			  	<li class="dropdown-header">Actions</li>
-			  	<li><a href="/patients/{{patient.mrn}}/give_survey">Give Survey</a></li>
+			  	<li class="dropdown-submenu"><a tabindex="-1" href="#">Give Survey</a>
+			  	<ul class="dropdown-menu">
+                  <li class="dropdown-submenu">
+                  {% for s in current_user.surveys %}
+                    <li class="dropdown-submenu"><a tabindex="-1" href="#">{{s.title}}</a>
+                    <ul tabindex="-1" class="dropdown-menu">
+                        <li><a href="/surveys/start/{{s.id}}?u={{patient.id}}">Web</a></li>
+                        <li><a href="/send_survey/voice/{{patient.id}}/{{s.id}}">Phone</a></li>
+                        <li><a href="/send_survey/sms/{{patient.id}}/{{s.id}}">SMS</a></li>
+                        <li><a href="/send_survey/email/{{patient.id}}/{{s.id}}">Email</a></li>
+                    </ul>
+                    </li>
+                  {% endfor %}
+                  </li>
+                </ul>
+			  	</li>
 			  </ul>
 			</div>
 			{% else %}
