@@ -125,13 +125,29 @@ def run_trigger(question, response, session_id = None, current_user = None):
 			if callback:
 				if trigger.kind == 'voice':
 					# TODO: needs to check if the recipient type is actually valid or else internal server error!
-					test_voice_out(callback.id, recipients, uniq_id = response.uniq_id)
+					try:
+						recipients = Patient.query.get(response.uniq_id).phone
+						test_voice_out(callback.id, recipients, uniq_id = response.uniq_id)
+					except:
+						print "No recipient defined for callback."
+						pass					
 				elif trigger.kind == 'sms':
-					test_sms_survey(callback.id, recipients, uniq_id = response.uniq_id)
+					try:
+						recipients = Patient.query.get(response.uniq_id).phone
+						test_sms_survey(callback.id, recipients, uniq_id = response.uniq_id)
+					except:
+						print "No recipient defined for callback."
+						pass
 				elif trigger.kind == 'email':
 					#TODO - need to generate the URL to send out
-					email_trigger(message, recipients, callback)
-					pass
+					try:
+						url = "https://suretify.co" + url_for('start_survey', survey_id = callback.id) + "?u=%s" % response.uniq_id
+						message = "Please complete the following survey at this link: %s" % url
+						recipients = Patient.query.get(response.uniq_id).email
+						email_trigger(message, recipients, callback)
+					except:
+						print "Error in sending email callback"
+						pass
 				elif trigger.kind == 'curl':
 					# TODO - need to generate the URL to send out
 					#url_trigger(message, recipients, callback)

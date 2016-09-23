@@ -13,9 +13,7 @@ SELECT = 'select'
 QUESTION_KIND_CHOICES = (
 	(TEXT, 'Type your answer'),
 	(YES_NO, 'Choose YES (Y) or NO (N)'),
-	(NUMERIC, 'Choose 1 - 10'),
-	(RADIO, 'Select one'),
-	(SELECT, 'Select one or more')
+	(NUMERIC, 'Choose 1 - 10')
 )
 
 VOICE = 'voice'
@@ -24,10 +22,10 @@ EMAIL = 'email'
 CURL = 'curl'
 
 TRIGGER_KIND_CHOICES = (
-	(VOICE, 'Call a phone number'),
+	(VOICE, 'Make a call'),
 	(SMS, 'Send a text or picture message'),
 	(EMAIL, 'Send an email'),
-	(CURL, 'POST to a URL')
+	(CURL, 'Push data')
 )
 
 class Progress(db.Model):
@@ -104,6 +102,12 @@ class Comment(db.Model):
 	user_id = db.Column(db.Integer, db.ForeignKey('user.id'))
 	patient_id = db.Column(db.Integer, db.ForeignKey('patients.id'))
 
+	def __init__(self, body, patient_id, user_id):
+		self.body = body
+		self.patient_id = patient_id
+		self.user_id = user_id
+		self.time = datetime.utcnow()
+
 class QuestionResponse(db.Model):
 	__tablename__ = 'question_response'
 	id = db.Column(db.Integer, primary_key=True)
@@ -165,6 +169,7 @@ class User(db.Model):
     triggers = db.relationship("Trigger", backref='user', lazy='dynamic')
     responses = db.relationship("QuestionResponse", backref='user', lazy='dynamic')
     patients = db.relationship("Patient", backref='user', lazy='dynamic')
+    comments = db.relationship("Comment", backref='user', lazy='dynamic')
 
     def is_active(self):
         """True, as all users are active."""

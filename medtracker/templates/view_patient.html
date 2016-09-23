@@ -39,19 +39,20 @@
 	<div class="panel-heading"></div>
 		<div class="panel-body" style="height:100%">
                 <ul class="chat">
-                	{% for time, question, response in patients_feed %}
+                	{% for time, type, question, response in patients_feed %}
+                		{% if type=="patient" %}
                     	<li class="left clearfix">
                         <span class="chat-img pull-left">
                             <i class="fa fa-user"></i>
                         </span>
                         <div class="chat-body clearfix">
                             <div class="header">
-                                <strong class="primary-font"><span style="color: grey;">{{patient.fullname}} {% if question %}answered {{question.body}}{% else %} commented{% endif %} </span></strong>
+                                <strong class="primary-font" style="font-size:18px">{{patient.fullname}} <span style="color: grey; font-size:14px">{% if question %}answered </span><br><span style="color: grey; font-size:12px">{{question.body}}{% else %} commented{% endif %} </span></strong>
                                 <small class="pull-right text-muted">
-                                    <i class="fa fa-clock-o fa-fw"></i>{{time}}
+                                    <i class="fa fa-clock-o fa-fw"></i>{{momentjs(time).calendar()}}<a href="/responses/delete/{{response.id}}" class="btn btn-xs btn-secondary">Delete</a>
                                 </small>
                             </div>
-                            <p>
+                            <p style="font-size:16px">
                                 {% if "YES" in response.question.kind|string %}
 									{% if response.response == '1' %}Yes{% else %}No{% endif %}
 								{% elif "10" in response.question.kind|string %}
@@ -64,19 +65,40 @@
                             </p>
 	                        </div>
 	                    </li>
+	                    {% elif type=="comment" %}
+	                    {% set commenter = response.user %}
+	                    <li class="left clearfix">
+                        <span class="chat-img pull-left">
+                            <i class="fa fa-comment"></i>
+                        </span>
+                        <div class="chat-body clearfix">
+                            <div class="header" >
+                                <strong class="primary-font" style="font-size:18px">{{commenter.username}} <span style="color: grey; font-size:14px">commented</span></strong>
+                                <small class="pull-right text-muted">
+                                    <i class="fa fa-clock-o fa-fw"></i>{{momentjs(time).calendar()}}<a href="/comment/delete/{{response.id}}" class="btn btn-xs btn-secondary">Delete</a>
+                                </small>
+                            </div>
+                            <p style="font-weight: normal;">
+                            	{{response.body}}
+                            </p>
+	                        </div>
+	                    </li>
+	                    {% endif %}
 	                {% endfor %}
                 </ul>
         </div>
             <!-- /.panel-body -->
         <div class="panel-footer">
+        	<form action="/comment/add/{{patient.id}}/" method="POST">
                 <div class="input-group">
-                    <input id="btn-input" type="text" class="form-control input-sm" placeholder="Type your message here..." />
+                    <input id="body" name="body" type="text" class="form-control input-sm" placeholder="Type your message here..." />
                     <span class="input-group-btn">
-                        <button class="btn btn-warning btn-sm" id="btn-chat">
+                        <input type="submit" value="Send" class="btn btn-warning btn-sm" id="btn-chat">
                             Send
                         </button>
                     </span>
                 </div>
+            </form>
         </div>
             <!-- /.panel-footer -->
     </div>

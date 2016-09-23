@@ -234,17 +234,19 @@ def view_survey(_id):
     return render_template("view_survey.html", survey = dbobj, triggers = triggers)
 
 @app.route('/surveys/start/<int:survey_id>', methods=['GET', 'POST'])
-@flask_login.login_required
 def start_survey(survey_id):
 	'''TODO: need to select the patient which will be taking the survey. This will make this starting block a form.'''
 	session_id = randomword(64)
 	u = request.values.get('u', None)
 	survey = Survey.query.get_or_404(survey_id)
-	return render_template('start_survey.html', survey=survey, u = u, s = session_id, patients=current_user.patients)
+	if current_user.is_authenticated == False:
+		patients = None
+	else:
+		patients = current_user.patients
+	return render_template('start_survey.html', survey=survey, u = u, s = session_id, patients=patients)
 	#return redirect(url_for(serve_survey), survey_id=_id, u=uniq_id)
 
 @app.route('/surveys/serve/<int:survey_id>', methods=['GET', 'POST'])
-@flask_login.login_required
 def serve_survey(survey_id):
 	survey = Survey.query.get_or_404(survey_id)
 	question_id = request.values.get("question", None)
@@ -432,23 +434,19 @@ def add_trigger():
 		formobj.question_id.query = [question]
 	else:
 		formobj.question_id.query = Question.query.filter(Survey.user_id==current_user.id).all()
+	formobj.after_function.query = Survey.query.filter_by(user_id=current_user.id).all()
 	if request.method == 'POST' and formobj.validate():
+		if formobj.after_function.data:
+			af = formobj.after_function.data.id
+		else:
+			af = None
 		trigger = Trigger(
 			formobj.title.data,
 			formobj.kind.data,
 			formobj.criteria.data,
 			formobj.recipients.data,
-			formobj.after_function.data
+			af
 			)
-		trigger.after_function = None
-		after_func = re.split('(<.+?>)',formobj.after_function.data)
-		if len(after_func) != 0:
-			for tag in after_func:
-				t = re.findall('<(.+?)>',tag)
-				if t != []:
-					dbtype, db_id = t[0].split("|")[1].strip().split(".")
-					if dbtype == "survey":
-						trigger.after_function = db_id
 		trigger.user_id = current_user.id
 		trigger.question_id = formobj.question_id.data.id
 		db_session.add(trigger)
@@ -468,20 +466,17 @@ def edit_trigger(_id):
 	trigger = Trigger.query.get_or_404(_id)
 	formout = TriggerForm(request.form, obj=trigger)
 	formout.question_id.query = Question.query.filter(Survey.user_id==current_user.id).all()
+	formout.after_function.query = Survey.query.filter_by(user_id=current_user.id).all()
 	if request.method == 'POST' and formout.validate():
+		if formout.after_function.data:
+			af = formout.after_function.data.id
+		else:
+			af = None
 		trigger.title = formout.title.data
 		trigger.kind = formout.kind.data
 		trigger.criteria = formout.criteria.data
 		trigger.recipients = formout.recipients.data
-		after_func = re.split('(<.+?>)',formout.after_function.data)
-		trigger.after_function = None
-		if len(after_func) != 0:
-			for tag in after_func:
-				t = re.findall('<(.+?)>',tag)
-				if t != []:
-					dbtype, db_id = t[0].split("|")[1].strip().split(".")
-					if dbtype == "survey":
-						trigger.after_function = db_id
+		trigger.after_function = af
 		trigger.question_id = formout.question_id.data.id
 		db_session.add(trigger)
 		db_session.commit()
@@ -490,6 +485,8 @@ def edit_trigger(_id):
 	else:
 		formout.kind.data = trigger.kind
 		formout.question_id.data = Question.query.get(trigger.question_id)
+		if trigger.after_function:
+			formout.after_function.data = Survey.query.get(trigger.after_function)
 	return render_template("form_trigger.html", action="Edit", data_type="trigger #" + str(_id), form=formout)
 
 @app.route('/triggers/delete/<int:_id>', methods=['GET', 'POST'])
@@ -505,10 +502,11 @@ def remove_trigger(_id):
 @flask_login.login_required
 def remove_response(_id):
     dbobj = QuestionResponse.query.get_or_404(_id)
+    patient_id = dbobj.uniq_id
     db_session.delete(dbobj)
     db_session.commit()
     flash('Response removed.')
-    return redirect(url_for('serve_responses_index'))
+    return redirect(url_for('view_patient', id=patient_id))
 
 ### static files (only when not running under Apache)
 	
@@ -551,9 +549,38 @@ def view_patient(id):
 	for r in responses:
 		if r.question_id != None:
 			question = Question.query.get(r.question_id) 
-			patients_feed.append((r.time.strftime("%Y-%m-%d %H:%M:%S"),question, r))
+			patients_feed.append((r.time.strftime("%Y-%m-%d %H:%M:%S"),"patient", question, r))
 		else:
-			patients_feed.append((r.time.strftime("%Y-%m-%d %H:%M:%S"), None, r))
+			patients_feed.append((r.time.strftime("%Y-%m-%d %H:%M:%S"),"patient", None, r))
+	comments = Comment.query.filter_by(patient_id=p.id)
+	for c in comments:
+		patients_feed.append((c.time.strftime("%Y-%m-%d %H:%M:%S"), "comment", None, c))
 	patients_feed = sorted(patients_feed, key=lambda x:x[0])
 	status = sum([1-i.complete for i in p.progress])
 	return render_template('view_patient.html', patients_feed = patients_feed, patient=p, status=status)
+
+@app.route('/comment/add/<int:patient_id>/', methods=["GET", "POST"])
+@flask_login.login_required
+def add_comment(patient_id):
+	user_id = current_user.id
+	if patient_id not in [i.id for i in current_user.patients]:
+		return "Not Found", 404
+	if request.method == 'POST':
+		body = request.form["body"] if request.form["body"] != "" else None
+	if body:
+		comment = Comment(body, patient_id, user_id)
+		db_session.add(comment)
+		db_session.commit()
+		return redirect(url_for('view_patient', id=patient_id))
+	else:
+		return "Failure.", 400
+
+@app.route('/comment/delete/<int:_id>', methods=['GET', 'POST'])
+@flask_login.login_required
+def remove_comment(_id):
+    dbobj = Comment.query.get_or_404(_id)
+    patient_id = dbobj.patient_id
+    db_session.delete(dbobj)
+    db_session.commit()
+    flash('Comment removed.')
+    return redirect(url_for('view_patient', id=patient_id))
