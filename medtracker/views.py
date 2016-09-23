@@ -336,7 +336,7 @@ def edit_question(_id):
 		formout.image.data = question.image
 	question_ids = [q.id for q in question.survey.questions]
 	curpos = str(question_ids.index(_id)+1)
-	return render_template("form.html", action="Edit", data_type="question " + curpos + "(ID #: " + str(_id) + ")", form=formout)
+	return render_template("form.html", action="Edit", data_type="question " + curpos, form=formout)
 
 @app.route('/questions/delete/<int:_id>', methods=['GET', 'POST'])
 @flask_login.login_required
