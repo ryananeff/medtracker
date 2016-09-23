@@ -104,6 +104,12 @@ def run_trigger(question, response, session_id = None, current_user = None):
 								for r in recipients.split(";"):
 									r = r.strip()
 									test_sms_survey(survey.id, r, uniq_id = response.uniq_id)
+							if trigger.kind == 'email':
+								for r in recipients.split(";"):
+									r = r.strip()
+									url = "https://suretify.co" + url_for('start_survey', survey_id = callback.id) + "?u=%s" % response.uniq_id
+									message = "Please complete the following survey at this link: %s" % url
+									test_sms_survey(survey.id, r, uniq_id = response.uniq_id)
 			message = "".join(split_message)
 			if recipients == "":
 				print "No valid recipients"
@@ -261,7 +267,7 @@ def save_basic_response(message, uniq_id, question_id, session_id = None):
 		session_id,
 		question_id
 	)
-	_response.user_id = None
+	_response.user_id = Patient.query.get(uniq_id).user_id
 	db_session.add(_response)
 	db_session.commit()
 	question = _response._question

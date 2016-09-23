@@ -149,24 +149,9 @@ def serve_survey_index():
 @flask_login.login_required
 def serve_responses_index():
 	'''GUI: serve the response index page'''
-	outdict = []
-	surveys = Survey.query.filter(Survey.user_id==current_user.id)
-	questions = []
-	for s in surveys:
-		questions.extend(s.questions)
-	responses = []
-	for q in questions:
-		responses.extend(q.responses)
-	responses = [[Patient.query.get(r.uniq_id), r.time, r] for r in responses]
-	responses = sorted(responses, key=lambda x:x[0])
-	for name,group in groupby(responses, key=lambda x:x[0]):
-		g = list(group)
-		outdict.append([[name, g[0][1]], [r[2] for r in g]])
-	outdict = sorted(outdict, key=lambda x:x[0][1], reverse=True)
-	for g in outdict:
-		g[0][1] = pytz.utc.localize(g[0][1]).astimezone(pytz.timezone('US/Eastern')).strftime('at %-I:%M %P on %h %d, %Y')
+	responses = current_user.responses
 	return render_template("responses.html",
-							responses = outdict)
+							responses = responses)
 
 @app.route('/triggers', methods=['GET'])
 @flask_login.login_required
@@ -281,7 +266,7 @@ def save_response(formdata, question_id, session_id=None, current_user = current
 		question_id
 	)
 	print formdata["response"]
-	_response.user_id = None
+	_response.user_id = Patient.query.get(uniq_id).user_id
 	db_session.add(_response)
 	db_session.commit()
 	question = _response._question
