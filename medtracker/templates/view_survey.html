@@ -32,11 +32,11 @@
 					<div class="media" style="margin-left:80px; max-width:600px;margin-top:0px;box-shadow: 0px 2px 10px 0px rgba(0,0,0,0.2);">
 					<div class="media-left" style="background-color:#e6e6ff; padding:10px;box-shadow: 0px 2px 10px 0px rgba(0,0,0,0.2);">
 					  <a href="#">
-						  {% if "phone" in trigger.kind|string %}
+						  {% if "voice" in trigger.kind.code|string %}
 						<img class="media-object" src="/assets/images/phone-st.png" alt="..." style="height:64px">
-						{% elif "email" in trigger.kind|string %}
+						{% elif "email" in trigger.kind.code|string %}
 						<img class="media-object" src="/assets/images/email-st.png" alt="..." style="height:64px">
-						{% elif "SMS" in trigger.kind|string %}
+						{% elif "sms" in trigger.kind.code|string %}
 						<img class="media-object" src="/assets/images/sms-st.png" alt="..." style="height:64px">
 						{% else %}
 						<img class="media-object" src="/assets/images/web-st.png" alt="..." style="height:64px">
