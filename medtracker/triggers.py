@@ -7,6 +7,10 @@ import sys
 import urllib, re, random, string, requests, json
 from flask_login import login_user, logout_user, current_user
 
+def redirect_url():
+    return request.args.get('next') or \
+           request.referrer or \
+           url_for('index')
 
 def run_trigger(question, response, session_id = None, current_user = None):
 	if question.triggers:
@@ -150,6 +154,12 @@ def run_trigger(question, response, session_id = None, current_user = None):
 						url = "https://suretify.co" + url_for('start_survey', survey_id = callback.id) + "?u=%s" % response.uniq_id
 						message = "Please complete the following survey at this link: %s" % url
 						recipients = Patient.query.get(response.uniq_id).email
+						task = Progress(
+							user = recipients, 
+							task = callback.id,
+							parent_id = response.uniq_id)
+						db_session.add(task)
+						db_session.commit()
 						email_trigger(message, recipients, callback)
 					except:
 						print "Error in sending email callback"
@@ -181,7 +191,7 @@ def read_phone_trigger_message():
 		resp.say("Hello, you have a new message from Sure tiff fy, but at this time we are having trouble playing it. Goodbye.")
 	return str(resp)
 
-def sms_trigger(message, recipients, callback):
+def sms_trigger(message, recipients, callback=None):
 	for r in recipients.split(";"):
 		call = client.messages.create(body=message,
 		to = r,
@@ -399,7 +409,7 @@ def save_voice_survey(task, message, digits):
 	new_task = increment_iterator(task)
 	return (new_task, None)
 
-def email_trigger(message, recipients, callback):
+def email_trigger(message, recipients, callback=None):
 	for r in recipients.split(";"):
 		subject = "Request for information from Suretify"
 		with app.app_context():
@@ -428,3 +438,42 @@ def autocomplete_choices():
 		for ix, question in enumerate(survey.questions):
 			possible.append({"name":"question." + str(question.id), "content":question.body})
 	return json.dumps(possible)
+
+@app.route("/prod/<prod_type>/<int:patient_id>", methods=["GET", "POST"])
+def prod_patient(prod_type, patient_id):
+	# TODO: this function needs to connect to a database that has a list of phone numbers, the current task that they are on, the iterator, and the initiator ID.
+	# this will then allow us to handle survey answers and ask the next question
+	patient = Patient.query.get_or_404(patient_id)
+	current_tasks = Progress.query.filter_by(parent_id=patient.id, complete=0).all()
+	if len(current_tasks) == 0:
+		return "No incomplete tasks found - all tasks complete.", 404
+	else:
+		last_task = current_tasks[0]
+		recipients = last_task.user
+		# now we need to save the response if correct
+		if prod_type == "sms":
+			resp = twilio.twiml.Response()
+			msg = serve_sms_survey(last_task)
+			try:
+				sms_trigger(msg, last_task.user, None)
+			except:
+				return "Error sending SMS prod.", 500
+		elif prod_type == "voice":
+			call = client.calls.create(url="https://suretify.co/triggers/voice?say_hello=1",
+			to = recipients,
+			from_ = twilio_number,
+			)
+		elif prod_type == "email":
+			questions = [i.id for i in Survey.query.get_or_404(last_task.task).questions]
+			url = "https://suretify.co/surveys/serve/%s?question=%s&u=%s" % last_task.task, questions[last_task.iterator], last_task.parent_id
+			message = "Please continue the following survey at this link: %s" % url
+			email_trigger(message, recipients, None)
+		elif prod_type == "clear":
+			# mark all complete
+			for i in current_tasks:
+				i.complete = 1
+				db_session.add(i)
+			db_session.commit()
+		else:
+			return "Couldn't find prod type, not implemented.", 400
+	return redirect(redirect_url())

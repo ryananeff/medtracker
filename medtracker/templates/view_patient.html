@@ -22,9 +22,32 @@
 			<td> {{patient.dob}}</td>
 			<td> {{patient.phone}}</td>
 			<td> {{patient.email}}</td>
-			<td> {% if status == 0%}<a href="#" class="btn btn-xs btn-success">Ready</a>
+			<td> {% if status == 0%}
+			<div class="dropdown">
+			  <button class="btn btn-xs btn-success dropdown-toggle" type="button" id="dropdownMenu1" data-toggle="dropdown" aria-haspopup="true" aria-expanded="true">
+			    Ready 
+			    <span class="caret"></span>
+			  </button>
+			  <ul class="dropdown-menu" aria-labelledby="dropdownMenu1">
+			  	<li class="dropdown-header">Actions</li>
+			  	<li><a href="/patients/{{patient.mrn}}/give_survey">Give Survey</a></li>
+			  </ul>
+			</div>
 			{% else %}
-			<a href="#" class="btn btn-xs btn-warning">Waiting<span class="badge">{{status}}</span></a>
+			<div class="dropdown">
+			  <button class="btn btn-xs btn-warning dropdown-toggle" type="button" id="dropdownMenu1" data-toggle="dropdown" aria-haspopup="true" aria-expanded="true">
+			    Waiting <span class="badge">{{status}}</span>
+			    <span class="caret"></span>
+			  </button>
+			  <ul class="dropdown-menu" aria-labelledby="dropdownMenu1">
+			  	<li class="dropdown-header">Remind by</li>
+			    <li><a href="/prod/sms/{{patient.id}}">SMS</a></li>
+			    <li><a href="/prod/voice/{{patient.id}}">Phone call</a></li>
+			    <li><a href="/prod/email/{{patient.id}}">Email</a></li>
+			    <li role="separator" class="divider"></li>
+			    <li><a href="/prod/clear/{{patient.id}}">Clear status</a></li>
+			  </ul>
+			</div>
 			{% endif %}
 			</td>
 			<td> <a href="/patients/{{patient.mrn}}/give_survey" class="btn btn-xs btn-default">Give Survey</a>

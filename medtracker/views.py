@@ -266,7 +266,7 @@ def save_response(formdata, question_id, session_id=None, current_user = current
 		question_id
 	)
 	print formdata["response"]
-	_response.user_id = Patient.query.get(uniq_id).user_id
+	_response.user_id = Patient.query.get(formdata["uniq_id"]).user_id
 	db_session.add(_response)
 	db_session.commit()
 	question = _response._question
