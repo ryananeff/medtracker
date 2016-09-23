@@ -1,0 +1,28 @@
+{% extends 'layout.html' %}
+{% import '_forms_edit.html' as forms %}
+{% block body %}
+    <div class="container">
+		<div class="row">
+			<div class="col-lg-3">
+				</div>
+			<div class="col-lg-8">
+				{% block form %}
+				<div class="form-group" style="background-color: lightgray; width:40em; padding:2em;margin-top:2em; border-radius: 1em 1em">
+				<h1 style="margin-top:0; margin-bottom:12px">{{ action }} {{ data_type }}</h1>
+				<hr>
+				<form action="{{ form_action }}" method="{{ method | d("POST") }}" enctype="multipart/form-data">
+				{{ forms.render(form) }}
+				{% if u %}
+					<input type="hidden" name="uniq_id" value="{{u}}">
+				{% endif %}
+				<hr>
+				<center><input type="submit" value="Submit" class="btn btn-primary"> </center>
+				</form>
+				</div>
+				{% endblock form %}
+			  </div>
+			<div class="col-lg-6">
+			  </div> 
+		</div>
+    </div><!-- /.container -->
+{% endblock %}
