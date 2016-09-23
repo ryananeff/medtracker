@@ -21,6 +21,6 @@ Notes:
 
 <img src="https://github.com/nosarcasm/medtracker/blob/master/examples/survey_editor.PNG?raw=true" height=500 />
 
-<img src="https://github.com/nosarcasm/medtracker/blob/master/examples/patient_view.PNG?raw=true" height=500 />
+<img src="https://github.com/nosarcasm/medtracker/blob/master/examples/patient_view.PNG?raw=true" height=400 />
 
 <img src="https://github.com/nosarcasm/medtracker/blob/master/examples/trigger_edit.PNG?raw=true" height=500 />
