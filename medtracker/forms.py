@@ -57,8 +57,9 @@ class TriggerForm(Form):
 	kind = SelectField('Type', choices=TRIGGER_KIND_CHOICES)
 	criteria = TextField('Match criteria', [validators.Length(min=1, max=50)])
 	title = TextAreaField('Message to send', [validators.Length(min=0, max=255)])
-	recipients = TextAreaField('Recipients', [validators.Length(min=4, max=255)])
-	after_function = TextAreaField('Callback', [validators.Length(min=2, max=255)])
+	recipients = TextField('Recipients', [validators.Length(min=4, max=255)])
+	after_function = QuerySelectField("Callback", 
+		get_pk=lambda a: a.id, get_label=lambda a: a.title, allow_blank=True)
 	question_id = QuerySelectField("Attach to this question", 
 		get_pk=lambda a: a.id, get_label=lambda a: a.body)
 

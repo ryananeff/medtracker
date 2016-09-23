@@ -12,6 +12,8 @@
     <title>{% block title %}Suretify{% endblock %}</title>
 
     <!-- Bootstrap Core CSS -->
+    <script src="/assets/bootstrap/js/vendor/jquery.min.js"></script>
+    <script src="/assets/bootstrap/js/vendor/jquery-ui.min.js"></script>
     <link href="/assets/bootstrap/css/bootstrap.min.css" rel="stylesheet">
 
     <!-- MetisMenu CSS -->
@@ -37,6 +39,7 @@
     <!--[if lt IE 9]><script src="/assets/bootstrap/js/ie8-responsive-file-warning.js"></script><![endif]-->
     <script src="/assets/bootstrap/js/ie-emulation-modes-warning.js"></script>
     <link href="/assets/main.css" rel="stylesheet">
+    <script src="/assets/momentjs/moment.min.js"></script>
     <script>
   (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
   (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
@@ -122,6 +125,15 @@
         <!-- Page Content -->
         <div id="page-wrapper">
             <div class="container-fluid">
+            {% with messages = get_flashed_messages() %}
+              {% if messages %}
+                <div class="alert alert-info" role="alert"><ul>
+                {% for message in messages %}
+                    <li>{{ message }}</li>
+                {% endfor %}
+                </ul></div>
+              {% endif %}
+            {% endwith %}
                 {%block body%}{%endblock%}
             </div>
             <!-- /.container-fluid -->

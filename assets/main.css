@@ -89,3 +89,8 @@ text-align:center;
     background-color: #333333;
     color:#eee;
 }
+
+.transparent-input {
+   background-color: rgba(0, 0, 0, 0);
+   border-style:hidden hidden solid hidden;
+}
