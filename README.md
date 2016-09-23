@@ -16,3 +16,11 @@ Notes:
 * 9/22/2016: Editor view improvements, patients table, and layout improvements to the forms are up
 
 <img src="https://github.com/nosarcasm/medtracker/blob/master/examples/editor_view.PNG?raw=true" height=500 />
+
+* 9/23/2016: New dashboard layout, patient view, so much success!
+
+<img src="https://github.com/nosarcasm/medtracker/blob/master/examples/survey_editor.PNG?raw=true" height=500 />
+
+<img src="https://github.com/nosarcasm/medtracker/blob/master/examples/patient_view.PNG?raw=true" height=500 />
+
+<img src="https://github.com/nosarcasm/medtracker/blob/master/examples/trigger_edit.PNG?raw=true" height=500 />
