@@ -1,13 +1,14 @@
-{% extends "layout.html" %}
+{% extends "layout_sidebar.html" %}
 {% block title %}{{survey.title}} | Suretify{% endblock %}
 {% block body %}
 	    <div class="page-header" style="padding-bottom:20px">
-		    <h3>Survey Editor / <span style="color: grey;">{{ survey.title }}</span><a href="/surveys/start/{{ survey.id }}" class="btn btn-lg btn-success" style="float:right;position:relative; top:-10px">Begin survey</a> <a href="/questions/new/?survey={{ survey.id }}" class="btn btn-lg btn-primary" style="float:right;position:relative; top:-10px; margin-right:10px">Add questions</a></h3>
+		    <h3>Survey Editor / <span style="color: grey;">{{ survey.title }}</span></h3>
+		    <a href="/surveys/start/{{ survey.id }}" class="btn btn-md btn-success" style="top:-10px">Begin survey</a> <a href="/questions/new/?survey={{ survey.id }}" class="btn btn-md btn-primary" style="top:-10px; margin-right:10px">Add questions</a></h3>
 	    </div>
-	    <div class="container" style="background-color:rgb(238, 238, 238);">
+	    <div class="col col-12" style="background-color:rgb(238, 238, 238);padding:15px">
 	   <div class="row">
 		{% for question in survey.questions %}
-		<div class="media" style="padding:10px; margin-top:0px">
+		<div class="media" style="padding:10px; margin-top:0px;">
 			<div class="media-container" style="max-width:500px; background-color:white;box-shadow: 0px 2px 10px 0px rgba(0,0,0,0.2);">
 			<div class="media" style="padding:10px;">
 				<small>Question #{{loop.index}}</small>

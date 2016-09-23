@@ -1,0 +1,82 @@
+{% extends "layout_sidebar.html" %}
+{% block title %}Patients | Suretify {% endblock %}
+{% block sidebar %}
+<div id="sidebar-wrapper">
+    <ul class="sidebar-nav">
+    <li class="active sidebar-brand">
+        <a href="#">
+            Patients
+        </a>
+    </li>
+{% for patient in current_user.patients %}
+    <li>
+        <a href="#">{{patient.fullname}} ({{patient.mrn}})</a>
+    </li>              
+{% endfor %}
+	<li class="active sidebar-brand">
+        <a href="/patients/">
+            View All
+        </a>
+    </li>
+    </ul>
+</div>
+{% endblock %}
+{% block body %}
+	    <div class="page-header">
+		    <h2><span style="color: grey;">{{current_user.username}} /</span> Patients <a href="/patients/new/" class="btn btn-sm btn-primary">Add a new patient</a></h2>
+	    </div>
+	    
+	    <div class="row">
+	    {% if patients.first() != None %}
+	    <table class="table table-hover" id="activesort">
+		<thead>
+			<tr>
+			<th> MRN </th>
+			<th> Name </th>
+			<th> DOB </th>
+			<th> Phone </th>
+			<th> Email </th>
+			<th> Status </th>
+			<th> Actions </th>
+			<th> Notes </th>
+			</tr>
+		</thead>
+		<tbody>
+		{% for patient in patients %}
+		  <tr>
+			<td> {{patient.mrn}}</td>
+			<td> {{patient.fullname}}</td>
+			<td> {{patient.dob}}</td>
+			<td> {{patient.phone}}</td>
+			<td> {{patient.email}}</td>
+			<td> {% if status[patient.id] == 0%}<a href="#" class="btn btn-xs btn-success">Ready</a>
+			{% else %}
+			<a href="#" class="btn btn-xs btn-warning">Waiting <span class="badge">{{status[patient.id]}}</span></a>
+			{% endif %}
+			</td>
+			<td> <a href="/patients/{{patient.mrn}}/give_survey" class="btn btn-xs btn-default">Give Survey</a>
+			<a href="/patients/edit/{{patient.mrn}}" class="btn btn-xs btn-default">Edit</a>
+			<a href="/patients/delete/{{patient.mrn}}" class="btn btn-xs btn-danger">Delete</a></td>
+			<td>{{patient.notes}}</td>
+		  </tr>
+		{% endfor %}
+		</tbody>
+		</table>
+		{% endif %}
+		</div>
+		
+	    {% if patients.first() == None %}
+	    <div class="well">
+		<div class="starter-template">
+		No patients yet.
+		<h1>:(</h1>
+		<a href="/surveys/new/">How about adding a new patient?</a>
+		</div></div>
+	    {% else %}
+	    <div class="row" style="padding-top:20px;">
+	    
+	    </div>
+	    {% endif %}
+	    </div>
+    </div><!-- /.container -->
+{% endblock %}

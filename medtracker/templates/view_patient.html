@@ -1,0 +1,83 @@
+{% extends "layout_sidebar.html" %}
+{% block title %}Patients | Suretify {% endblock %}
+{% block body %}
+	<div class="header">
+	    <table class="table" id="activesort">
+		<thead>
+			<tr>
+			<th style="font-size:28px">{{patient.fullname}}</th>
+			<th> </th>
+			<th> DOB </th>
+			<th> Phone </th>
+			<th> Email </th>
+			<th> Status </th>
+			<th> Actions </th>
+			<th> Notes </th>
+			</tr>
+		</thead>
+		<tbody>
+		  <tr>
+			<td> MRN: {{patient.mrn}}</td>
+			<td> </td>
+			<td> {{patient.dob}}</td>
+			<td> {{patient.phone}}</td>
+			<td> {{patient.email}}</td>
+			<td> {% if status == 0%}<a href="#" class="btn btn-xs btn-success">Ready</a>
+			{% else %}
+			<a href="#" class="btn btn-xs btn-warning">Waiting<span class="badge">{{status}}</span></a>
+			{% endif %}
+			</td>
+			<td> <a href="/patients/{{patient.mrn}}/give_survey" class="btn btn-xs btn-default">Give Survey</a>
+			<a href="/patients/edit/{{patient.mrn}}" class="btn btn-xs btn-default">Edit</a>
+			<a href="/patients/delete/{{patient.mrn}}" class="btn btn-xs btn-danger">Delete</a></td>
+			<td>{{patient.notes}}</td>
+		  </tr>
+		</tbody>
+		</table>
+	</div>
+	<div class="panel panel-default">
+	<div class="panel-heading"></div>
+		<div class="panel-body" style="height:100%">
+                <ul class="chat">
+                	{% for time, question, response in patients_feed %}
+                    	<li class="left clearfix">
+                        <span class="chat-img pull-left">
+                            <i class="fa fa-user"></i>
+                        </span>
+                        <div class="chat-body clearfix">
+                            <div class="header">
+                                <strong class="primary-font"><span style="color: grey;">{{patient.fullname}} {% if question %}answered {{question.body}}{% else %} commented{% endif %} </span></strong>
+                                <small class="pull-right text-muted">
+                                    <i class="fa fa-clock-o fa-fw"></i>{{time}}
+                                </small>
+                            </div>
+                            <p>
+                                {% if "YES" in response.question.kind|string %}
+									{% if response.response == '1' %}Yes{% else %}No{% endif %}
+								{% elif "10" in response.question.kind|string %}
+									{{response.response}} out of 10
+								{% elif "/assets/audio/" in response.response %}
+									<audio controls preload="none" style="width:200px"><source src="{{response.response}}"></audio>
+								{% else %}
+									{{response.response}}
+								{% endif %}
+                            </p>
+	                        </div>
+	                    </li>
+	                {% endfor %}
+                </ul>
+        </div>
+            <!-- /.panel-body -->
+        <div class="panel-footer">
+                <div class="input-group">
+                    <input id="btn-input" type="text" class="form-control input-sm" placeholder="Type your message here..." />
+                    <span class="input-group-btn">
+                        <button class="btn btn-warning btn-sm" id="btn-chat">
+                            Send
+                        </button>
+                    </span>
+                </div>
+        </div>
+            <!-- /.panel-footer -->
+    </div>
+{% endblock %}

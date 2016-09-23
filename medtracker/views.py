@@ -129,6 +129,7 @@ def confirm_email(token):
 #### index pages
 
 @app.route("/", methods=['GET'])
+@app.route("/index.html", methods=['GET'])
 def index():
 	return render_template("index.html")
 
@@ -520,3 +521,39 @@ def send_js(path):
 def randomword(length):
 	'''generate a random string of whatever length, good for filenames'''
 	return ''.join(random.choice(string.lowercase) for i in range(length))
+
+@app.route('/patient_feed/', methods=["GET", "POST"])
+@app.route('/patient_feed/<int:id>/', methods=["GET", "POST"])
+@flask_login.login_required
+def patient_feed(id=None):
+	if id:
+		patients = Patient.query.filter_by(id=id, user_id=current_user.id)
+	else:
+		patients = current_user.patients
+	patients_feed = []
+	for p in patients:
+		responses = p.responses
+		for r in responses:
+			if r.question_id != None:
+				question = Question.query.get(r.question_id) 
+				patients_feed.append((r.time.strftime("%Y-%m-%d %H:%M:%S"), p.id, r.session_id, question.body, question.kind.code, r.response))
+			else:
+				patients_feed.append((r.time.strftime("%Y-%m-%d %H:%M:%S"), p.id, r.session_id, None, None, r.response))
+	patients_feed = sorted(patients_feed, key=lambda x:x[0])
+	return json.dumps(patients_feed)
+
+@app.route('/patients/<int:id>', methods=["GET", "POST"])
+@flask_login.login_required
+def view_patient(id):
+	p = Patient.query.filter_by(id=id, user_id=current_user.id).first()
+	patients_feed = []
+	responses = p.responses
+	for r in responses:
+		if r.question_id != None:
+			question = Question.query.get(r.question_id) 
+			patients_feed.append((r.time.strftime("%Y-%m-%d %H:%M:%S"),question, r))
+		else:
+			patients_feed.append((r.time.strftime("%Y-%m-%d %H:%M:%S"), None, r))
+	patients_feed = sorted(patients_feed, key=lambda x:x[0])
+	status = sum([1-i.complete for i in p.progress])
+	return render_template('view_patient.html', patients_feed = patients_feed, patient=p, status=status)
