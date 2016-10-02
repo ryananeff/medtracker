@@ -1,1 +1,7 @@
 # examples for how to set up a config file
+sqlalchemy_db = ''
+flask_secret_key = ''
+
+twilio_number = ''
+twilio_AccountSID = ''
+twilio_AuthToken = ''
