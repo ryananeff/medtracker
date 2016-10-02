@@ -64,7 +64,7 @@ class TriggerForm(Form):
 		get_pk=lambda a: a.id, get_label=lambda a: a.body)
 
 class UsernamePasswordForm(Form):
-    username = StringField('Username', validators=[DataRequired()])
+    username = StringField('E-mail', validators=[DataRequired()])
     password = PasswordField('Password', validators=[DataRequired()])
 
 class NewUserForm(Form):
