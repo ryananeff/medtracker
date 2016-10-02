@@ -192,29 +192,32 @@ def read_phone_trigger_message():
 	return str(resp)
 
 def sms_trigger(message, recipients, callback=None):
+	formatted_recipients = []
 	for r in recipients.split(";"):
 		call = client.messages.create(body=message,
 		to = r,
 		from_ = twilio_number,
 		)
-	return None
+		formatted_recipients.append(call.to)
+	return formatted_recipients
 
 @app.route("/test_sms/<int:survey_id>/<phone_number>", methods=["GET", "POST"])
 @flask_login.login_required
 def test_sms_survey(survey_id, phone_number, uniq_id = None):
+	hello = "Hello! You have a new incoming survey from Suretify! Reply STOP to stop" #TODO: opt-in flow
+	r_out = sms_trigger(hello, phone_number, None)
 	if uniq_id == None:
 		uniq_id = randomword(64)
 	survey = Survey.query.get_or_404(survey_id)
-	task = Progress(
-		user = phone_number, 
-		task = survey.id,
-		parent_id = uniq_id)
-	db_session.add(task)
+	for r in r_out:
+		task = Progress(
+			user = r, 
+			task = survey.id,
+			parent_id = uniq_id)
+		db_session.add(task)
 	db_session.commit()
 	msg = serve_sms_survey(task)
-	hello = "Hello! You have a new incoming survey from Suretify! Reply STOP to stop" #TODO: opt-in flow
-	sms_trigger(hello, phone_number, None)
-	sms_trigger(msg, phone_number, None)
+	recipients = sms_trigger(msg, phone_number, None)
 	return "Task successfully queued."
 
 
@@ -223,7 +226,6 @@ def sms_gather_information():
 	# TODO: this function needs to connect to a database that has a list of phone numbers, the current task that they are on, the iterator, and the initiator ID.
 	# this will then allow us to handle survey answers and ask the next question
 	from_phone = request.values.get("From", "+10000000000")
-	from_phone = from_phone[-10:]
 	message = request.values.get("Body", None)
 	current_tasks = Progress.query.filter_by(user=from_phone, complete=0).all()
 	resp = twilio.twiml.Response()
@@ -492,7 +494,7 @@ def send_survey(method_type,patient_id, survey_id):
 			test_voice_out(survey.id, patient.phone, uniq_id = patient.id)
 			flash("Calling %s" % patient.phone)
 		except:
-			print "No recipient definedfor sending."
+			print "No recipient defined for sending."
 			pass					
 	elif method_type == 'sms':
 		try:

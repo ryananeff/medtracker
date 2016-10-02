@@ -1,5 +1,5 @@
 {% extends "layout_sidebar.html" %}
-{% block title %}Patients | Suretify {% endblock %}
+{% block title %}Patient Detail | Suretify {% endblock %}
 {% block body %}
 	<div class="header">
 	    <table class="table">
@@ -58,9 +58,26 @@
 			  	<li class="dropdown-header">Remind by</li>
 			    <li><a href="/prod/sms/{{patient.id}}">SMS</a></li>
 			    <li><a href="/prod/voice/{{patient.id}}">Phone call</a></li>
-			    <li><a href="/prod/email/{{patient.id}}">Email</a></li>
+			    <li><a href="/prod/email/{{patient.id}}">Email</a></li>			    
 			    <li role="separator" class="divider"></li>
+			    <li class="dropdown-header">Actions</li>
 			    <li><a href="/prod/clear/{{patient.id}}">Clear status</a></li>
+			  	<li class="dropdown-submenu"><a tabindex="-1" href="#">Give Survey</a>
+			  	<ul class="dropdown-menu">
+                  <li class="dropdown-submenu">
+                  {% for s in current_user.surveys %}
+                    <li class="dropdown-submenu"><a tabindex="-1" href="#">{{s.title}}</a>
+                    <ul tabindex="-1" class="dropdown-menu">
+                        <li><a href="/surveys/start/{{s.id}}?u={{patient.id}}">Web</a></li>
+                        <li><a href="/send_survey/voice/{{patient.id}}/{{s.id}}">Phone</a></li>
+                        <li><a href="/send_survey/sms/{{patient.id}}/{{s.id}}">SMS</a></li>
+                        <li><a href="/send_survey/email/{{patient.id}}/{{s.id}}">Email</a></li>
+                    </ul>
+                    </li>
+                  {% endfor %}
+                  </li>
+                </ul>
+			  	</li>
 			  </ul>
 			</div>
 			{% endif %}
@@ -107,11 +124,11 @@
 	                    {% set commenter = response.user %}
 	                    <li class="left clearfix">
                         <span class="chat-img pull-left">
-                            <i class="fa fa-comment"></i>
+                            <i class="fa fa-comment" style="color:#f0ad4e"></i>
                         </span>
                         <div class="chat-body clearfix">
                             <div class="header" >
-                                <strong class="primary-font" style="font-size:18px">{{commenter.username}} <span style="color: grey; font-size:14px">commented</span></strong>
+                                <strong class="primary-font" style="font-size:18px; color:#f0ad4e">{{commenter.username}} <span style="font-size:14px">commented</span></strong>
                                 <small class="pull-right text-muted">
                                     <i class="fa fa-clock-o fa-fw"></i>{{momentjs(time).calendar()}}<a href="/comment/delete/{{response.id}}" class="btn btn-xs btn-secondary">Delete</a>
                                 </small>
