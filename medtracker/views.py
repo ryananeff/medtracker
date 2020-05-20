@@ -209,7 +209,7 @@ def remove_survey(_id):
 def view_survey(_id):
     dbobj = Survey.query.get_or_404(_id)
     triggers = dict()
-    for question in dbobj.questions:
+    for question in dbobj.questions():
     	if question.triggers != None:
     		tlist=[]
     		for trigger in question.triggers:
@@ -234,40 +234,54 @@ def start_survey(survey_id):
 @app.route('/surveys/serve/<int:survey_id>', methods=['GET', 'POST'])
 def serve_survey(survey_id):
 	survey = Survey.query.get_or_404(survey_id)
+	survey_response_id = request.values.get("sr", None)
 	question_id = request.values.get("question", None)
 	uniq_id = request.values.get("u", None)
 	sess = request.values.get("s", None)
-	question_ids = [q.id for q in survey.questions]
-	if len(question_ids) == 0:
-			return render_template("view_survey.html", survey = survey)
+
+	if survey.head == None:
+		return render_template("view_survey.html", survey = survey)
 	if question_id == None:
-		question_id = question_ids[0]
+		question_id = survey.head.id
 	question_id = int(question_id)
 	question = Question.query.get_or_404(question_id)
-	curpos = question_ids.index(question_id)
-	next_question = question_ids[curpos+1] if curpos+1 < len(question_ids) else None
-	last_question = question_ids[curpos-1] if curpos-1 >= 0 else None
+	next_question = question.next_q.id if question.next_q != None else None
+	last_question = question.prev_q.id if question.prev_q != None else None
+
+	if survey_response_id==None:
+		curuser = current_user.id if current_user else None
+		survey_response = SurveyResponse(survey_id=survey.id, uniq_id=uniq_id, session_id=sess, user_id=curuser)
+		db_session.add(survey_response)
+		db_session.commit()
+	else:
+		survey_response = SurveyResponse.query.get_or_404(survey_response_id)
 	formobj = QuestionView().get(question)
 	if request.method == 'POST':
 		if uniq_id:
 			print("saving...")
-			trigger_survey = save_response(request.form, question_id, session_id = sess)
+			trigger_survey = save_response(request.form, question_id, session_id = sess, survey_response_id = survey_response.id)
 			if trigger_survey != None:
-				return redirect(url_for('start_survey', survey_id=trigger_survey, u=uniq_id))
+				return redirect(url_for('start_survey', survey_id=trigger_survey, u=uniq_id, s = sess))
 		if next_question == None:
+			survey_response.complete()
+			db_session.add(survey_response)
+			db_session.commit()
 			return redirect(url_for('view_survey', _id=survey_id))
-		return redirect(url_for('serve_survey', survey_id=survey_id, question=next_question, u=uniq_id))
+		return redirect(url_for('serve_survey', survey_id=survey_id, question=next_question, u=uniq_id, s=sess, sr = survey_response.id))
 	else:
-		return render_template("serve_question.html", survey = survey, question = question, next_q = next_question, last_q = last_question, form=formobj, u=uniq_id)
+		return render_template("serve_question.html", survey = survey, question = question, 
+		                       next_q = next_question, last_q = last_question, form=formobj, u=uniq_id, s = sess, sr = survey_response.id)
 
-def save_response(formdata, question_id, session_id=None, current_user = current_user):
+def save_response(formdata, question_id, session_id=None, current_user = None, survey_response_id = None):
+	question = Question.query.get_or_404(question_id)
+	survey_response = SurveyResponse.query.get_or_404(survey_response_id)
 	_response = QuestionResponse(
 		formdata.getlist("response"),
 		formdata["uniq_id"],
 		session_id,
-		question_id
+		question_id, 
+		survey_response_id
 	)
-	question = Question.query.get_or_404(question_id)
 	if (question.kind =="select") | (question.kind=="radio" ):
 			try:
 				choices = json.loads(question.choices)
@@ -317,6 +331,10 @@ def add_question():
 			imgfile.save(image_staticdir + filename)
 			dbobj.image = filename
 		db_session.add(dbobj)
+		db_session.commit()
+		survey, question = Survey.push(survey,dbobj)
+		db_session.add(survey)
+		db_session.add(question)
 		db_session.commit()
 		flash('Question added.')
 		return redirect(url_for('view_survey', _id=survey_id))

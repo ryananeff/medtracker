@@ -7,7 +7,8 @@
 	    </div>
 	    <div class="col col-12" style="background-color:rgb(238, 238, 238);padding:15px">
 	   <div class="row">
-		{% for question in survey.questions %}
+		{% set questions = survey.questions() %}
+		{% for question in questions %}
 		<div class="media" style="padding:10px; margin-top:0px;">
 			<div class="media-container" style="max-width:500px; background-color:white;box-shadow: 0px 2px 10px 0px rgba(0,0,0,0.2);">
 			<div class="media" style="padding:10px;">
@@ -83,7 +84,7 @@
 		</div>
 		{% endfor %}
 		</div></div>
-	    {% if survey.questions|length == 0 %}
+	    {% if questions|length == 0 %}
 	    <div class="well">
 		<div class="starter-template">
 		No questions for this survey yet.

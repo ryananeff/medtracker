@@ -53,10 +53,30 @@ class Survey(db.Model):
 	id = db.Column(db.Integer, primary_key=True)
 	title = db.Column(db.String)
 	description = db.Column(db.Text)
-	questions = db.relationship("Question", backref='survey', cascade="all, delete-orphan")
+	head_id = db.Column(db.Integer, db.ForeignKey('question.id'))
+	head = db.relationship("Question",uselist=False, foreign_keys=[head_id])
 	user_id = db.Column(db.Integer, db.ForeignKey('user.id'))
 	read_public = db.Column(db.Boolean)
 	edit_public = db.Column(db.Boolean)
+
+	def push(survey, question):
+		if survey.head==None:
+			survey.head = question
+			q = question
+		else:
+			q = survey.head
+			while q.next_q!=None:
+				q = q.next_q
+			q.next_q = question
+		return survey, question
+
+	def questions(self):
+		out = []
+		q = self.head
+		while q!=None:
+			out.append(q)
+			q = q.next_q
+		return out
 
 	def __str__(self):
 		return '%s' % self.title
@@ -76,7 +96,9 @@ class Question(db.Model):
 	choices = db.Column(db.Text)
 	survey_id = db.Column(db.Integer, db.ForeignKey('survey.id'))
 	triggers = db.relationship("Trigger", backref='question')
-	survey_pos = db.column(db.Integer)
+	next_id = db.Column(db.Integer, db.ForeignKey('question.id'))
+	next_q = db.relationship("Question", uselist=False, remote_side = [id], back_populates='prev_q')
+	prev_q = db.relationship("Question", uselist=False, post_update=True)
 	responses = db.relationship("QuestionResponse", backref='question')
 
 	def __str__(self):
@@ -123,21 +145,24 @@ class QuestionResponse(db.Model):
 	uniq_id = db.Column(db.Integer, db.ForeignKey('patients.id'))
 	session_id = db.Column(EncryptedType(db.String, flask_secret_key))
 	question_id = db.Column(db.Integer, db.ForeignKey('question.id'))
+	survey_response_id = db.Column(db.Integer, db.ForeignKey('survey_response.id'))
 	user_id = db.Column(db.Integer, db.ForeignKey('user.id'))
 	_question = db.relationship("Question", backref='_response')
+	parent_session = db.relationship("SurveyResponse",backref="responses")
 
 	def __str__(self):
 		return '%s' % self.response
 	
-	def __init__(self, response=None, uniq_id=None, session_id=None, question_id=None):
+	def __init__(self, response=None, uniq_id=None, session_id=None, question_id=None, survey_response_id = None):
 		self.response = response
 		self.uniq_id = uniq_id
 		self.session_id = session_id
 		self.question_id = question_id
+		self.survey_response_id = survey_response_id
 		self.time = datetime.utcnow()
 
 class SurveyResponse(db.Model):
-	__tablename__ = 'question_response'
+	__tablename__ = 'survey_response'
 	id = db.Column(db.Integer, primary_key=True)
 	survey_id = db.Column(db.Integer, db.ForeignKey('survey.id'))
 	uniq_id = db.Column(db.Integer, db.ForeignKey('patients.id'))
@@ -145,20 +170,22 @@ class SurveyResponse(db.Model):
 	session_id = db.Column(EncryptedType(db.String, flask_secret_key))
 	start_time = db.Column(EncryptedType(db.DateTime, flask_secret_key))
 	end_time = db.Column(EncryptedType(db.DateTime, flask_secret_key))
-	last_question = db.Column(db.Integer, db.ForeignKey('question.id'))
 	completed = db.Column(db.Boolean, default=False)
-	survey = db.relationship("Survey", backref='_responses')
-	last_question = db.relationship("Question")
+	survey = db.relationship("Survey", backref='response_sessions')
 
 	def __str__(self):
-		return '%s' % self.response
+		return '%s' % self.session_id
 	
-	def __init__(self, response=None, uniq_id=None, session_id=None, survey_id=None):
-		self.response = response
+	def __init__(self, survey_id=None, uniq_id=None, session_id=None, user_id=None):
+		self.survey_id = survey_id
 		self.uniq_id = uniq_id
 		self.session_id = session_id
-		self.survey_id = question_id
+		self.user_id = user_id
 		self.start_time = datetime.utcnow()
+
+	def complete(self):
+		self.end_time = datetime.utcnow()
+		self.completed = True
 
 class Trigger(db.Model):
 	__tablename__ = 'trigger'

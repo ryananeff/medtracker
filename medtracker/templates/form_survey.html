@@ -9,9 +9,9 @@
 				<section>
 				<form action="{{ form_action }}" method='{{ method | d("POST") }}' id="serveSurvey">
 				{{ forms.render(form) }}
-				{% if u %}
-					<input type="hidden" name="uniq_id" value="{{u}}">
-				{% endif %}
+				{% if u %} <input type="hidden" name="uniq_id" value="{{u}}"> {% endif %}
+				{% if s %} <input type="hidden" name="s" value="{{s}}"> {% endif %}
+				{% if sr %} <input type="hidden" name="sr" value="{{sr}}"> {% endif %}
 				</form>
 				</section>
 				{% endblock form %}
