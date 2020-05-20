@@ -143,3 +143,58 @@ text-align:center;
     -moz-border-radius: 6px 0 6px 6px;
     border-radius: 6px 0 6px 6px;
 }
+
+datalist {
+    width: 100%;
+    display: -webkit-box;
+    display: -webkit-flex;
+    display: -ms-flexbox;
+    display: flex;
+}
+
+datalist option {
+    -webkit-box-flex: 1;
+    -webkit-flex-grow: 1;
+        -ms-flex-positive: 1;
+            flex-grow: 1;
+    -webkit-flex-basis: 0;
+        -ms-flex-preferred-size: 0;
+            flex-basis: 0;
+}
+.form-checkbox {
+display: flex;
+}
+
+.radio{
+display: flex;
+}
+
+.form-control[type=checkbox]{
+    width: 20px;
+    margin-right:20px;
+}
+
+label{
+    vertical-align: middle;
+    margin: auto 0;
+}
+
+.btn-group{
+    display:flex;
+}
+
+.delete {
+    position: absolute;
+    right: 5px;
+    top: 0;
+    bottom: 0;
+    height: 14px;
+    margin: auto;
+    font-size: 14px;
+    cursor: pointer;
+    color: #ccc;
+}
+
+.form-center{
+    display:inline-block;
+}

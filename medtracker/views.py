@@ -13,7 +13,7 @@ import random
 
 from flask_login import login_user, logout_user, current_user
 
-image_staticdir = '/var/wsgiapps/suretify/assets/uploads/'
+image_staticdir = 'assets/uploads/'
 
 #### logins
 
@@ -141,9 +141,9 @@ def about():
 @flask_login.login_required
 def serve_survey_index():
 	'''GUI: serve the survey index page'''
-        surveys = current_user.surveys
-        return render_template("surveys.html",
-                                surveys = surveys)
+	surveys = current_user.surveys
+	return render_template("surveys.html",
+	                        surveys = surveys)
 
 @app.route('/responses', methods=['GET'])
 @flask_login.login_required
@@ -186,7 +186,7 @@ def edit_survey(_id):
 	survey = Survey.query.get_or_404(_id)
 	formout = SurveyForm(obj=survey)
 	formobj = SurveyForm(request.form)
-	if request.method == 'POST' and formobj.validate():
+	if request.method == 'POST':
 		survey.title = formobj.title.data
 		survey.description = formobj.description.data
 		db_session.add(survey)
@@ -250,8 +250,10 @@ def serve_survey(survey_id):
 	formobj = QuestionView().get(question)
 	if request.method == 'POST':
 		if uniq_id:
-			print "saving..."
-			save_response(request.form, question_id, session_id = sess)
+			print("saving...")
+			trigger_survey = save_response(request.form, question_id, session_id = sess)
+			if trigger_survey != None:
+				return redirect(url_for('start_survey', survey_id=trigger_survey, u=uniq_id))
 		if next_question == None:
 			return redirect(url_for('view_survey', _id=survey_id))
 		return redirect(url_for('serve_survey', survey_id=survey_id, question=next_question, u=uniq_id))
@@ -260,19 +262,29 @@ def serve_survey(survey_id):
 
 def save_response(formdata, question_id, session_id=None, current_user = current_user):
 	_response = QuestionResponse(
-		formdata["response"],
+		formdata.getlist("response"),
 		formdata["uniq_id"],
 		session_id,
 		question_id
 	)
-	print formdata["response"]
+	question = Question.query.get_or_404(question_id)
+	if (question.kind =="select") | (question.kind=="radio" ):
+			try:
+				choices = json.loads(question.choices)
+				for ix,r in enumerate(_response.response):
+					_response.response[ix] = choices[r]
+			except:
+				print("ERROR: can't convert response ID to choice")
+				pass
+	_response.response = _response.response[0] if len(_response.response)==1 else _response.response
+	print(_response.response)
 	_response.user_id = Patient.query.get(formdata["uniq_id"]).user_id
 	db_session.add(_response)
 	db_session.commit()
 	question = _response._question
 	if _response.uniq_id != None:
 		sys.stderr.write('starting trigger')
-		run_trigger(question, _response, session_id, current_user)
+		return run_trigger(question, _response, "web", session_id, current_user)
 	return "Response saved."
 
 ### controller functions for questions
@@ -285,13 +297,15 @@ def add_question():
 	if _id == None:
 		return "could not find survey", 404
 	survey = Survey.query.get_or_404(_id)
-        survey_id = survey.id
+	survey_id = survey.id
 	formobj = QuestionForm(request.form, survey_id=survey_id)
 	formobj.survey_id.choices = [(s.id, s.title) for s in Survey.query]
 	formobj.survey_id.data = survey.id
 	if request.method == 'POST' and formobj.validate():
 		dbobj = Question(
 				formobj.body.data,
+				formobj.description.data,
+				formobj.choices.data,
 				None,
 				formobj.kind.data,
 				formobj.survey_id.data
@@ -313,14 +327,16 @@ def add_question():
 def edit_question(_id):
 	'''GUI: edit a question in the DB'''
 	question = Question.query.get_or_404(_id)
-        survey = Survey.query.get_or_404(question.survey_id)
-        survey_id = survey.id
+	survey = Survey.query.get_or_404(question.survey_id)
+	survey_id = survey.id
 	formout = QuestionForm(formdata=request.form, obj=question)
 	formout.survey_id.choices = [(s.id, s.title) for s in Survey.query]
 	if request.method == 'POST' and formout.validate():
 		question.kind = formout.kind.data
 		question.survey_id = formout.survey_id.data
 		question.body = formout.body.data
+		question.description = formout.description.data
+		question.choices = json.dumps({str(ix):a for ix,a in enumerate(request.form.getlist("choices"))})
 		if request.files["image"]:
 			imgfile = request.files["image"]
 			filename = secure_filename(imgfile.filename)
@@ -399,11 +415,11 @@ def delete_patient():
 @flask_login.login_required
 def patient_survey_selector(id):
 	'''GUI: serve the survey select page for a patient'''
-        surveys = current_user.surveys
-        patient = Patient.query.filter_by(mrn=id).first_or_404()
-        return render_template("surveys_selector.html",
-                                surveys = surveys, 
-                                patient = patient)
+	surveys = current_user.surveys
+	patient = Patient.query.filter_by(mrn=id).first_or_404()
+	return render_template("surveys_selector.html",
+	                    surveys = surveys, 
+	                    patient = patient)
 
 ### controller for trigger functions
 
@@ -503,7 +519,7 @@ def send_js(path):
     
 def randomword(length):
 	'''generate a random string of whatever length, good for filenames'''
-	return ''.join(random.choice(string.lowercase) for i in range(length))
+	return ''.join(random.choice(string.ascii_lowercase) for i in range(length))
 
 @app.route('/patient_feed/', methods=["GET", "POST"])
 @app.route('/patient_feed/<int:id>/', methods=["GET", "POST"])
@@ -540,7 +556,7 @@ def view_patient(id):
 	comments = Comment.query.filter_by(patient_id=p.id)
 	for c in comments:
 		patients_feed.append((c.time.strftime("%Y-%m-%d %H:%M:%S"), "comment", None, c))
-	patients_feed = sorted(patients_feed, key=lambda x:x[0])
+	patients_feed = sorted(patients_feed, key=lambda x:x[0],reverse=True)
 	status = sum([1-i.complete for i in p.progress])
 	return render_template('view_patient.html', patients_feed = patients_feed, patient=p, status=status)
 

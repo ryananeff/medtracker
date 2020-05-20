@@ -13,7 +13,9 @@ SELECT = 'select'
 QUESTION_KIND_CHOICES = (
 	(TEXT, 'Type your answer'),
 	(YES_NO, 'Choose YES (Y) or NO (N)'),
-	(NUMERIC, 'Choose 1 - 10')
+	(NUMERIC, 'Choose 1 - 10'),
+	(SELECT, 'Select one or more options'),
+	(RADIO, 'Choose one option')
 )
 
 VOICE = 'voice'
@@ -50,7 +52,7 @@ class Survey(db.Model):
 	__tablename__ = 'survey'
 	id = db.Column(db.Integer, primary_key=True)
 	title = db.Column(db.String)
-	description = db.Column(db.String)
+	description = db.Column(db.Text)
 	questions = db.relationship("Question", backref='survey', cascade="all, delete-orphan")
 	user_id = db.Column(db.Integer, db.ForeignKey('user.id'))
 	read_public = db.Column(db.Boolean)
@@ -68,8 +70,10 @@ class Question(db.Model):
 	
 	id = db.Column(db.Integer, primary_key=True)
 	body = db.Column(db.String)
+	description = db.Column(db.Text)
 	image = db.Column(db.String)
 	kind = db.Column(ChoiceType(QUESTION_KIND_CHOICES))
+	choices = db.Column(db.Text)
 	survey_id = db.Column(db.Integer, db.ForeignKey('survey.id'))
 	triggers = db.relationship("Trigger", backref='question')
 	survey_pos = db.column(db.Integer)
@@ -78,8 +82,11 @@ class Question(db.Model):
 	def __str__(self):
 		return '%s' % self.body
 	
-	def __init__(self, body=None, image=None, kind=None, survey_id=None):
+	def __init__(self, body=None, description=None,
+	             choices = None, image=None, kind=None, survey_id=None):
 		self.body = body
+		self.description = description
+		self.choices = choices
 		self.image = image
 		self.kind = kind
 		self.survey_id = survey_id
@@ -129,6 +136,30 @@ class QuestionResponse(db.Model):
 		self.question_id = question_id
 		self.time = datetime.utcnow()
 
+class SurveyResponse(db.Model):
+	__tablename__ = 'question_response'
+	id = db.Column(db.Integer, primary_key=True)
+	survey_id = db.Column(db.Integer, db.ForeignKey('survey.id'))
+	uniq_id = db.Column(db.Integer, db.ForeignKey('patients.id'))
+	user_id = db.Column(db.Integer, db.ForeignKey('user.id'))
+	session_id = db.Column(EncryptedType(db.String, flask_secret_key))
+	start_time = db.Column(EncryptedType(db.DateTime, flask_secret_key))
+	end_time = db.Column(EncryptedType(db.DateTime, flask_secret_key))
+	last_question = db.Column(db.Integer, db.ForeignKey('question.id'))
+	completed = db.Column(db.Boolean, default=False)
+	survey = db.relationship("Survey", backref='_responses')
+	last_question = db.relationship("Question")
+
+	def __str__(self):
+		return '%s' % self.response
+	
+	def __init__(self, response=None, uniq_id=None, session_id=None, survey_id=None):
+		self.response = response
+		self.uniq_id = uniq_id
+		self.session_id = session_id
+		self.survey_id = question_id
+		self.start_time = datetime.utcnow()
+
 class Trigger(db.Model):
 	__tablename__ = 'trigger'
 	
@@ -163,6 +194,8 @@ class User(db.Model):
     name = db.Column(EncryptedType(db.String, flask_secret_key))
     password_hash = db.Column(db.String(256))
     active = db.Column(db.Boolean, default=False)
+    admin = db.Column(db.Boolean, default=False)
+    superadmin = db.Column(db.Boolean, default=False)
     google_token = db.Column(EncryptedType(db.String, flask_secret_key))
     authenticated = db.Column(db.Boolean, default=False)
     surveys = db.relationship("Survey", backref='user', lazy='dynamic')
@@ -203,6 +236,7 @@ class Patient(db.Model):
 	dob = db.Column(EncryptedType(db.Date, flask_secret_key))
 	phone = db.Column(EncryptedType(db.String, flask_secret_key))
 	email = db.Column(EncryptedType(db.String, flask_secret_key))
+	location = db.Column(EncryptedType(db.String, flask_secret_key))
 	notes = db.Column(EncryptedType(db.String, flask_secret_key))
 	user_id = db.Column(db.Integer, db.ForeignKey('user.id'))
 	responses = db.relationship("QuestionResponse", backref='patient', lazy='dynamic')

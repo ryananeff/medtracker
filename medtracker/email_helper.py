@@ -14,5 +14,5 @@ def send_email(address, subject, html):
 	msg.subject = subject
 	msg.html = html
 	mail.send(msg)
-	print "Sent email."
+	print("Sent email.")
 	return None
