@@ -12,7 +12,7 @@ def redirect_url():
            request.referrer or \
            url_for('index')
 
-def run_trigger(question, response, session_id = None, current_user = None):
+def run_trigger(question, response, from_type = None, session_id = None, current_user = None):
 	if question.triggers:
 		for trigger in question.triggers:
 			message = trigger.title
@@ -20,39 +20,39 @@ def run_trigger(question, response, session_id = None, current_user = None):
 			split_message = re.split('(<.+?>)',message)
 			split_recipients = re.split('(<.+?>)',recipients)
 			criteria = trigger.criteria.lower().strip().encode()
-			callback = Survey.query.filter_by(id=trigger.after_function, user_id=current_user.id).first()
+			callback = Survey.query.filter_by(id=trigger.after_function).first()
 
-			print "To evaluate: " + response.response
+			print("To evaluate: " + response.response)
 			# this code checks the criteria to see if it evaluates to true or false
 			if criteria != 'any':
-				print "Criteria is not any"
+				print("Criteria is not any")
 				if question.kind.code == "numeric":
-					print "numeric code"
+					print("numeric code")
 					try:
 						if eval(response.response + " " + criteria) != True:
-							print "Trigger did not match criteria."
+							print("Trigger did not match criteria.")
 							continue
 					except:
-						print "Can't determine if trigger matched criteria, failsafe stop."
+						print("Can't determine if trigger matched criteria, failsafe stop.")
 						continue
 				elif question.kind.code == "yes-no":
-					print "yes-no code"
+					print("yes-no code")
 					try:
 						yes_no = {'0':"no", '1':"yes"}
-						if yes_no[response.response] != criteria:
-							print "Trigger did not match criteria"
+						if yes_no[response.response] != criteria.decode():
+							print("Trigger did not match criteria, (criteria: %s, response: %s)"%(criteria,yes_no[response.response]))
 							continue
 					except:
-						print "Can't determine if trigger matched criteria, failsafe stop."
+						print("Can't determine if trigger matched criteria, failsafe stop.")
 						continue
 				else:
-					print "other/text code"
+					print("other/text code")
 					try:
 						if eval(criteria + " " + response.response) != True:
-							print "Trigger did not match criteria."
+							print("Trigger did not match criteria.")
 							continue
 					except:
-						print "Can't determine if trigger matched criteria, failsafe stop."
+						print("Can't determine if trigger matched criteria, failsafe stop.")
 						continue
 
 			# this code replaces the recipients field with the response
@@ -116,7 +116,7 @@ def run_trigger(question, response, session_id = None, current_user = None):
 									test_sms_survey(survey.id, r, uniq_id = response.uniq_id)
 			message = "".join(split_message)
 			if recipients == "":
-				print "No valid recipients"
+				print("No valid recipients")
 				continue
 			if trigger.kind == 'voice':
 				# TODO: needs to check if the recipient type is actually valid or else internal server error!
@@ -128,27 +128,27 @@ def run_trigger(question, response, session_id = None, current_user = None):
 			elif trigger.kind == 'curl':
 				url_trigger(message, recipients, callback)
 			else:
-				print "ERROR: Not a valid trigger type."
+				print("ERROR: Not a valid trigger type.")
 				continue
-			print "Trigger sent successfully."
+			print("Trigger sent successfully.")
 
 			if callback:
-				if trigger.kind == 'voice':
+				if from_type == 'voice':
 					# TODO: needs to check if the recipient type is actually valid or else internal server error!
 					try:
 						recipients = Patient.query.get(response.uniq_id).phone
 						test_voice_out(callback.id, recipients, uniq_id = response.uniq_id)
 					except:
-						print "No recipient defined for callback."
+						print("No recipient defined for callback.")
 						pass					
-				elif trigger.kind == 'sms':
+				elif from_type == 'sms':
 					try:
 						recipients = Patient.query.get(response.uniq_id).phone
 						test_sms_survey(callback.id, recipients, uniq_id = response.uniq_id)
 					except:
-						print "No recipient defined for callback."
+						print("No recipient defined for callback.")
 						pass
-				elif trigger.kind == 'email':
+				elif from_type == 'email':
 					#TODO - need to generate the URL to send out
 					try:
 						url = "https://suretify.co" + url_for('start_survey', survey_id = callback.id) + "?u=%s" % response.uniq_id
@@ -162,13 +162,15 @@ def run_trigger(question, response, session_id = None, current_user = None):
 						db_session.commit()
 						email_trigger(message, recipients, callback)
 					except:
-						print "Error in sending email callback"
+						print("Error in sending email callback")
 						pass
-				elif trigger.kind == 'curl':
+				elif from_type == 'curl':
 					# TODO - need to generate the URL to send out
 					#url_trigger(message, recipients, callback)
 					pass
-		return 0
+				elif from_type == "web":
+					return callback.id
+		return None
 
 def phone_trigger(message, recipients, callback=None):
 	'''send a trigger message at a certain time'''
@@ -494,14 +496,14 @@ def send_survey(method_type,patient_id, survey_id):
 			test_voice_out(survey.id, patient.phone, uniq_id = patient.id)
 			flash("Calling %s" % patient.phone)
 		except:
-			print "No recipient defined for sending."
+			print("No recipient defined for sending.")
 			pass					
 	elif method_type == 'sms':
 		try:
 			test_sms_survey(survey.id, patient.phone, uniq_id = patient.id)
 			flash("Sent SMS to %s" % patient.phone)
 		except:
-			print "No recipient defined for sending."
+			print("No recipient defined for sending.")
 			pass
 	elif method_type == 'email':
 		#TODO - need to generate the URL to send out
@@ -517,6 +519,6 @@ def send_survey(method_type,patient_id, survey_id):
 			email_trigger(message, patient.email, None)
 			flash("Sent email to %s" % patient.email)
 		except:
-			print "Error in sending survey by email"
+			print("Error in sending survey by email")
 			pass
 	return redirect(redirect_url())

@@ -91,7 +91,18 @@
 		</table>
 	</div>
 	<div class="panel panel-default">
-	<div class="panel-heading"></div>
+	<div class="panel-heading">
+        	<form action="/comment/add/{{patient.id}}/" method="POST">
+                <div class="input-group">
+                    <input id="body" name="body" type="text" class="form-control input-sm" placeholder="Type your message here..." />
+                    <span class="input-group-btn">
+                        <input type="submit" value="Send" class="btn btn-warning btn-sm" id="btn-chat">
+                            Send
+                        </button>
+                    </span>
+                </div>
+            </form>
+        </div>
 		<div class="panel-body" style="height:100%">
                 <ul class="chat">
                 	{% for time, type, question, response in patients_feed %}
@@ -143,18 +154,7 @@
                 </ul>
         </div>
             <!-- /.panel-body -->
-        <div class="panel-footer">
-        	<form action="/comment/add/{{patient.id}}/" method="POST">
-                <div class="input-group">
-                    <input id="body" name="body" type="text" class="form-control input-sm" placeholder="Type your message here..." />
-                    <span class="input-group-btn">
-                        <input type="submit" value="Send" class="btn btn-warning btn-sm" id="btn-chat">
-                            Send
-                        </button>
-                    </span>
-                </div>
-            </form>
-        </div>
+        
             <!-- /.panel-footer -->
     </div>
 {% endblock %}

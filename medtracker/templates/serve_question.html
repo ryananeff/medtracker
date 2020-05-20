@@ -5,10 +5,23 @@
 		    <h3><span style="color: grey;">{{current_user.username}} / <a href="/surveys">surveys</a> /</span> {{ survey.title }} </h3>
 	    </div>
 	    <div class="jumbotron">
+	    <div class="container">
+	    	<div class="col-lg-2"></div>
+	    	<div class="col-lg-8">
 	    <h2 style="color:gray">{{question.body}}</h2>
+
 	    {% if question.image %}
 	    <img src="/assets/uploads/{{question.image}}" style="max-height:300px; max-width:300px">
 	    {% endif %}
+	    {% set desclist  = question.description.split("\n") %}
+	    <p>
+	    {% for para in desclist %}
+	    	{{para}}<br/>
+	    {% endfor %}
+		</p>	
+	    </div>
+	    <div class="col-lg-2"></div>
+	</div>
 	    {% include 'form_survey.html' %}
 	    <script>
 	    var form = document.getElementById("serveSurvey");

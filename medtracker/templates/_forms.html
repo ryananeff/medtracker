@@ -5,17 +5,30 @@
 {% if field.type in ['CSRFTokenField', 'HiddenField'] %}
   {{ field() }}
 {% else %}
-  <div class="clearfix {% if field.errors %}error{% endif %}">
-    {{ field.label }}
+  <div class="clearfix form-center {% if field.errors %}error{% endif %}">
       {% if field.type == "RadioField" %}
-		{% for item in field %}
-		<div class="radio">
-			<label>
-			{{item|safe}} {{item.label.text|safe}}
-			</label>
-		</div>
-		{% endfor %}
-      {% else %}
+    		{% for item in field %}
+    		<div class="radio">
+    			<label>
+    			{{item|safe}} {{item.label.text|safe}}
+    			</label>
+    		</div>
+		  {% endfor %}
+      {% elif field.type == "IntegerRangeField" %}
+        {{ field(class="form-control", min = 1, max=9,**{"list":"responselist","height":"50px"}) }}
+        <datalist id="responselist">
+          <option label="None">1</option>
+          <option label=" ">2</option>
+          <option label="Mild">3</option>
+          <option label=" ">4</option>
+          <option label="Moderate">5</option>
+          <option label=" ">6</option>
+          <option label="Severe">7</option>
+          <option label=" ">8</option>
+          <option label="Extreme">9</option>
+        </datalist>
+ 
+    {% else %}
 		{{ field(class="form-control") }}
       {% endif %}
       {% if field.errors or field.help_text %}

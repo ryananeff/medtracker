@@ -7,8 +7,7 @@
 			<div class="col-lg-6">
 				{% block form %}
 				<section>
-				<h1>{{ action }} {{ data_type }}</h1>
-				<form action="{{ form_action }}" method="{{ method | d("POST") }}" id="serveSurvey">
+				<form action="{{ form_action }}" method='{{ method | d("POST") }}' id="serveSurvey">
 				{{ forms.render(form) }}
 				{% if u %}
 					<input type="hidden" name="uniq_id" value="{{u}}">
@@ -21,4 +20,5 @@
 			  </div> 
 		</div>
     </div><!-- /.container -->
+
 {% endblock %}
