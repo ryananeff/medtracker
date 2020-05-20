@@ -1,7 +1,7 @@
 # Suretify
 <img src="https://github.com/nosarcasm/medtracker/blob/master/assets/images/suretify-logo.png?raw=true" height=100 />
 
-Discharge tracking app.
+Discharge tracking app. No longer current as of July 2018.
 
 Notes:
 * 2/10/2016: This is just a skeleton at the moment. It won't be able to run.
