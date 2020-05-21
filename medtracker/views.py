@@ -10,6 +10,8 @@ import pytz
 import sys
 from itertools import groupby
 import random
+import urllib.parse
+from delta import html as delta_html #https://github.com/forgeworks/quill-delta-python
 
 from flask_login import login_user, logout_user, current_user
 
@@ -195,8 +197,6 @@ def edit_survey(_id):
 		return redirect(url_for('serve_survey_index'))
 	return render_template("form.html", action="Edit", data_type="survey #" + str(_id), form=formout)
 
-import urllib.parse
-
 @app.route('/surveys/<int:survey_id>/questions/sort', methods=["POST"])
 @flask_login.login_required
 def resort_survey(survey_id):
@@ -293,6 +293,10 @@ def serve_survey(survey_id):
 			return redirect(url_for('view_survey', _id=survey_id))
 		return redirect(url_for('serve_survey', survey_id=survey_id, question=next_question, u=uniq_id, s=sess, sr = survey_response.id))
 	else:
+		try:
+			question.description_html = delta_html.render(json.loads(question.description)["ops"])
+		except:
+			question.description_html = '<p>' + question.description + '</p>'
 		return render_template("serve_question.html", survey = survey, question = question, 
 		                       next_q = next_question, last_q = last_question, form=formobj, u=uniq_id, s = sess, sr = survey_response.id)
 
