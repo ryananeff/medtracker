@@ -97,9 +97,10 @@ class Question(db.Model):
 	survey_id = db.Column(db.Integer, db.ForeignKey('survey.id'))
 	triggers = db.relationship("Trigger", backref='question')
 	next_id = db.Column(db.Integer, db.ForeignKey('question.id'))
-	next_q = db.relationship("Question", uselist=False, remote_side = [id], back_populates='prev_q')
+	next_q = db.relationship("Question", uselist=False, remote_side = [id], back_populates='prev_q', post_update=True)
 	prev_q = db.relationship("Question", uselist=False, post_update=True)
 	responses = db.relationship("QuestionResponse", backref='question')
+	survey = db.relationship("Survey",foreign_keys=[survey_id])
 
 	def __str__(self):
 		return '%s' % self.body
