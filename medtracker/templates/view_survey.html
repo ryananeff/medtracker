@@ -6,10 +6,11 @@
 		    <a href="/surveys/start/{{ survey.id }}" class="btn btn-md btn-success" style="top:-10px">Begin survey</a> <a href="/questions/new/?survey={{ survey.id }}" class="btn btn-md btn-primary" style="top:-10px; margin-right:10px">Add questions</a></h3>
 	    </div>
 	    <div class="col col-12" style="background-color:rgb(238, 238, 238);padding:15px">
-	   <div class="row">
+	   	<div class="row" id="sortMe">
 		{% set questions = survey.questions() %}
 		{% for question in questions %}
-		<div class="media" style="padding:10px; margin-top:0px;">
+		
+		<div id ="question_{{question.id}}" class="media" style="padding:10px; margin-top:0px;">
 			<div class="media-container" style="max-width:500px; background-color:white;box-shadow: 0px 2px 10px 0px rgba(0,0,0,0.2);">
 			<div class="media" style="padding:10px;">
 				<small>Question #{{loop.index}}</small>
@@ -95,4 +96,23 @@
 	    </div>
 	</div>
     </div><!-- /.container -->
+{% endblock %}
+{% block scripts %}
+<script>
+    $(function(){
+        $('#sortMe').sortable({
+            update: function(event, ui) {
+                var postData = $(this).sortable('serialize');
+
+                $.ajax({
+                    type: 'POST',
+                    contentType: 'application/json',
+                    data: JSON.stringify(postData),
+                    dataType: 'json',
+                    url: '/surveys/{{survey.id}}/questions/sort'
+                });
+            }
+        });
+    });
+</script>
 {% endblock %}

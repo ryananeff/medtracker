@@ -195,6 +195,30 @@ def edit_survey(_id):
 		return redirect(url_for('serve_survey_index'))
 	return render_template("form.html", action="Edit", data_type="survey #" + str(_id), form=formout)
 
+import urllib.parse
+
+@app.route('/surveys/<int:survey_id>/questions/sort', methods=["POST"])
+@flask_login.login_required
+def resort_survey(survey_id):
+	question_order = urllib.parse.parse_qs(request.json)["question[]"]
+	question_order = [Question.query.get(int(q)) for q in question_order]
+	survey = Survey.query.get(question_order[0].survey_id)
+	for ix,q in enumerate(question_order):
+		if ix==0:
+			survey.head = question_order[ix]
+			db_session.add(survey)
+			print("head:",survey.head.id)
+		else:
+			question_order[ix-1].next_q = question_order[ix]
+			db_session.add(question_order[ix-1])
+			print(question_order[ix-1].next_q.id)
+		if ix == len(question_order)-1:
+			question_order[ix].next_q = None
+			db_session.add(question_order[ix])
+			print("last:",question_order[ix].next_q)
+	db_session.commit()
+	return b'Updated'
+
 @app.route('/surveys/delete/<int:_id>', methods=['GET', 'POST'])
 @flask_login.login_required
 def remove_survey(_id):
@@ -368,7 +392,7 @@ def edit_question(_id):
 		formout.survey_id.data = survey.id
 		formout.kind.data = question.kind
 		formout.image.data = question.image
-	question_ids = [q.id for q in question.survey.questions]
+	question_ids = [q.id for q in question.survey.questions()]
 	curpos = str(question_ids.index(_id)+1)
 	return render_template("form.html", action="Edit", data_type="question " + curpos, form=formout)
 

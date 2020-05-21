@@ -40,6 +40,7 @@
     <!--[if lt IE 9]><script src="/assets/bootstrap/js/ie8-responsive-file-warning.js"></script><![endif]-->
     <link href="/assets/main.css" rel="stylesheet">
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.3/jquery.min.js"></script>
+    <script src="/assets/jquery-ui.js"></script>
     <script src="/assets/bootstrap/js/bootstrap.min.js"></script>
     <script src="/assets/momentjs/moment.min.js"></script>
     <script>
@@ -53,6 +54,7 @@
   ga('send', 'pageview');
 
   </script>
+  {% block scripts %}{% endblock %}
 </head>
 
 <body>
@@ -159,7 +161,6 @@
                  $('#activesort').DataTable();
              });
     </script>
-    {% block scripts %}{% endblock %}
 
 </body>
 
