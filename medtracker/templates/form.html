@@ -2,16 +2,12 @@
 {% block title %}{{ action }} {{ data_type }} | Suretify{% endblock%}
 {% import '_forms_edit.html' as forms %}
 {% block body %}
-    <div class="container">
 		<div class="row">
-			<div class="col-lg-3">
-				</div>
-			<div class="col-lg-8">
 				{% block form %}
-				<div class="form-group" style="background-color: lightgray; width:40em; padding:2em;margin-top:2em; border-radius: 1em 1em">
-				<h1 style="margin-top:0; margin-bottom:12px">{{ action }} {{ data_type }}</h1>
+				<div class="form-group">
+				<h1>{{ action }} {{ data_type }}</h1>
 				<hr>
-				<form action="{{ form_action }}" method="{{ method | d("POST") }}" enctype="multipart/form-data">
+				<form class="form" action="{{ form_action }}" method="{{ method | d("POST") }}" enctype="multipart/form-data">
 				{{ forms.render(form) }}
 				{% if u %}
 					<input type="hidden" name="uniq_id" value="{{u}}">
@@ -21,11 +17,7 @@
 				</form>
 				</div>
 				{% endblock form %}
-			  </div>
-			<div class="col-lg-6">
-			  </div> 
 		</div>
-    </div><!-- /.container -->
 {% endblock %}
 {% block scripts %}
 <script type="text/javascript">
@@ -57,5 +49,61 @@ deleteParent = function(obj){
 	console.log(obj);
     $(obj).parent('div').remove();
 }
+</script>
+<!-- Include the Quill library -->
+<script src="https://cdn.quilljs.com/1.3.6/quill.js"></script>
+
+<script>
+   // Initialize the Quill editor
+   $(document).ready(function() {
+	  $('.quill-edit').each(function(){
+	  	  var hidden_id = "#"+$(this).attr('db');
+	  	  var delta = $("#"+$(this).attr('id')).text();
+		  var quill = new Quill("#"+$(this).attr('id'), {
+		    theme: 'snow'
+		  });
+		  try {
+		  	quill.setContents(JSON.parse(delta));
+		  }
+		  catch(e) {
+		  	quill.setText(delta);
+		  }
+		  $(this).show();
+		  
+
+		  // When the submit button is pressed, retrieve several pieces of info
+		  // from the QuillJS API (https://quilljs.com/docs/api/#content), copy
+		  // them into to WTForms hidden fields, and submit the form
+		  $('.form').on('submit',function(event){
+		  
+		    // Get the contents of the text editor
+		    var hidden_text_field = $(hidden_id);
+		    hidden_text_field.val(JSON.stringify(quill.getContents()));
+		  });
+
+		  // Attach the onclick function to the submit button Flask-WTF creates
+		  
+		});
+	});
+</script>
+<script>
+	$(document).ready(function() {
+		
+		var val = $("#kind").val()
+		if (val=="radio" || val=="select"){
+			$(".choices").show();
+		}else{
+			$(".choices").hide();
+		}
+
+		$("#kind").change(function(){
+			var val = $(this).val()
+			if (val=="radio" || val=="select"){
+				$(".choices").show();
+			}else{
+				$(".choices").hide();
+			}
+		});
+	});
 </script>
 {% endblock %}

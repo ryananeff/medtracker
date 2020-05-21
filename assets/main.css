@@ -47,8 +47,8 @@
 text-align:center;
 }
 
-.jumbotron {
-text-align:center;
+.jumbotron .survey-question {
+text-align:left;
 }
 
 .footer {
@@ -197,4 +197,12 @@ label{
 
 .form-center{
     display:inline-block;
+}
+
+.form-group{
+    max-width:150rem;
+}
+
+th.row_index{
+    width:15rem;
 }

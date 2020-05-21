@@ -55,10 +55,10 @@ class QuestionForm(Form):
 	'''GUI: question build form used in views'''
 	body = TextField('Question', [validators.Length(min=5, max=255)])
 	description = TextAreaField('Description')
-	choices = TextField('choices',widget=input_choices)
 	image = FileField('Upload an image')
 	kind = SelectField('Type', choices=QUESTION_KIND_CHOICES)
-	survey_id = SelectField("Survey", choices=[], coerce=int)
+	choices = TextField('Options',widget=input_choices)
+	survey_id = HiddenField("Survey")
 
 class QuestionView(MethodView):
 	def get(self, question):
@@ -74,7 +74,7 @@ class QuestionView(MethodView):
 		qtype = "response"
 		if kind == "text":
 			qlabel = "Write your response below."
-			return qtype, TextField(qlabel)
+			return qtype, TextField(qlabel,render_kw={"placeholder":"Your answer"})
 		if kind == "yes-no":
 			return qtype, RadioField(qlabel, choices=[(1,"Yes"), (0, "No")], coerce=int)
 		if kind == "numeric":
@@ -96,7 +96,7 @@ class QuestionView(MethodView):
 			return qtype, RadioField(qlabel, choices=[(a,b) for a,b in choices.items()], coerce=int)
 		else: #if something is wrong
 			qlabel = "Write your response below."
-			return qtype, TextField(qlabel)
+			return qtype, TextField(qlabel,render_kw={"placeholder":"Your answer"})
 		# can extend if clauses at every new fieldtype
     
 class TriggerForm(Form):				

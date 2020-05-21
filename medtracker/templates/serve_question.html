@@ -4,7 +4,7 @@
 	    <div class="page-header">
 		    <h3><span style="color: grey;">{{current_user.username}} / <a href="/surveys">surveys</a> /</span> {{ survey.title }} </h3>
 	    </div>
-	    <div class="jumbotron">
+	    <div class="jumbotron survey-question">
 	    <div class="container">
 	    	<div class="col-lg-2"></div>
 	    	<div class="col-lg-8">
@@ -13,19 +13,9 @@
 	    {% if question.image %}
 	    <img src="/assets/uploads/{{question.image}}" style="max-height:300px; max-width:300px">
 	    {% endif %}
-	    {% set desclist  = question.description.split("\n") %}
-	    <p>
-	    {% for para in desclist %}
-	    	{{para}}<br/>
-	    {% endfor %}
-		</p>	
-	    </div>
-	    <div class="col-lg-2"></div>
-	</div>
+	    {{ question.description_html | safe }}	
+	    
 	    {% include 'form_survey.html' %}
-	    <script>
-	    var form = document.getElementById("serveSurvey");
-	    </script>
 	    {% if last_q != None %}
 	    <a href="#" class="btn btn-sm btn-primary" onclick='form.submit();'>Back</a>
 	    {% endif %}
@@ -34,6 +24,12 @@
 	    {% else %}
 	    <a href="#" class="btn btn-sm btn-primary" onclick='form.submit();'>Finish and submit</a>
 	    {% endif %}
+	    </div>
+	    <div class="col-lg-2"></div>
+		</div>
+	    <script>
+	    var form = document.getElementById("serveSurvey");
+	    </script>
 	    </div>
     </div><!-- /.container -->
 {% endblock %}

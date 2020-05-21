@@ -1,10 +1,17 @@
 {% macro render(form) -%}
 <table style="width:100%">
+  <thead>
+    <tr>
+      <th class="row_index"></th>
+      <th class="row_value"></th>
+    </tr>
+  </thead>
 {% for field in form %}
 {% if field.type in ['CSRFTokenField', 'HiddenField'] %}
   {{ field() }}
 {% else %}
-<tr style="height:50px">
+<tbody>
+<tr style="height:50px" class="{{field.id}}">
       {% if field.type == "RadioField" %}
       		{% for item in field %}
       		<div class="radio">
@@ -28,10 +35,14 @@
       		{{ field.label}}
           </td>
           <td>
-          {{ field(class="form-control", rows=4) }}
+          <div id="quill-{{ field.id }}" class="quill-edit" style="display:none" db="{{field.id}}">
+              {{field.data}}
+          </div>
+          {{field(**{'style':'display:none'})}}
+          </td>
       {% else %}
           <td>
-          {{ field.label}}
+          {{ field.label }}
           </td>
           <td>
           {{ field(class="form-control") }}
@@ -49,5 +60,6 @@
 </tr>
 {% endif %}
 {% endfor %}
+</tbody>
 </table>
 {% endmacro %}
