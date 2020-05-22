@@ -5,13 +5,11 @@
 {% if field.type in ['CSRFTokenField', 'HiddenField'] %}
   {{ field() }}
 {% else %}
-  <div class="clearfix form-center {% if field.errors %}error{% endif %}">
       {% if field.type == "RadioField" %}
     		{% for item in field %}
     		<div class="radio">
-    			<label>
-    			{{item|safe}} {{item.label.text|safe}}
-    			</label>
+    			<label for="{{item.id}}">{{item.label.text|safe}} </label>
+          {{item(class="form-control")}}
     		</div>
 		  {% endfor %}
       {% elif field.type == "IntegerRangeField" %}
@@ -40,7 +38,6 @@
         {% endif %}
         </span>	
       {% endif %}
-  </div>
 {% endif %}
 </fieldset>
 {% endfor %}

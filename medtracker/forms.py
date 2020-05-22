@@ -9,7 +9,7 @@ from flask.views import MethodView
 from medtracker.models import QUESTION_KIND_CHOICES, TRIGGER_KIND_CHOICES
 import re, json
 
-def select_multi_checkbox(field, ul_class='', **kwargs):
+def select_multi_checkbox(field, ul_class='response-multi', **kwargs):
     kwargs.setdefault('type', 'checkbox')
     field_id = kwargs.pop('id', field.id)
     html = [u'<ul %s>' % html_params(id=field_id, class_=ul_class)]
@@ -18,14 +18,16 @@ def select_multi_checkbox(field, ul_class='', **kwargs):
         options = dict(kwargs, name=field.name, value=value, id=choice_id)
         if checked:
             options['checked'] = 'checked'
-        html.append(u'<li class="form-checkbox"><input %s /> ' % html_params(**options))
-        html.append(u'<label for="%s">%s</label></li>' % (choice_id, label))
+        html.append(u'<li class="form-checkbox">')
+        html.append(u'<label for="%s">%s</label>' % (choice_id, label))
+        html.append(u'<input %s /> ' % html_params(**options))
+        html.append(u'</li>')
     html.append(u'</ul>')
     return HTMLString(u''.join(html))
 
 def input_choices(field, ul_class='', **kwargs):
     field_id = kwargs.pop('id', field.id)
-    html = []
+    html = [u'<label>Options</label>']
     try:
     	choices = json.loads(field.data)
     except:
@@ -53,11 +55,11 @@ class SurveyForm(Form):
 
 class QuestionForm(Form):				
 	'''GUI: question build form used in views'''
-	body = TextField('Question', [validators.Length(min=5, max=255)])
+	body = TextField('Title', [validators.Length(min=5, max=255)])
 	description = TextAreaField('Description')
 	image = FileField('Upload an image')
 	kind = SelectField('Type', choices=QUESTION_KIND_CHOICES)
-	choices = TextField('Options',widget=input_choices)
+	choices = TextField('',widget=input_choices)
 	survey_id = HiddenField("Survey")
 
 class QuestionView(MethodView):
@@ -74,7 +76,7 @@ class QuestionView(MethodView):
 		qtype = "response"
 		if kind == "text":
 			qlabel = "Write your response below."
-			return qtype, TextField(qlabel,render_kw={"placeholder":"Your answer"})
+			return qtype, TextAreaField(qlabel,render_kw={"placeholder":"Your answer"})
 		if kind == "yes-no":
 			return qtype, RadioField(qlabel, choices=[(1,"Yes"), (0, "No")], coerce=int)
 		if kind == "numeric":
@@ -96,7 +98,7 @@ class QuestionView(MethodView):
 			return qtype, RadioField(qlabel, choices=[(a,b) for a,b in choices.items()], coerce=int)
 		else: #if something is wrong
 			qlabel = "Write your response below."
-			return qtype, TextField(qlabel,render_kw={"placeholder":"Your answer"})
+			return qtype, TextAreaField(qlabel,render_kw={"placeholder":"Your answer"})
 		# can extend if clauses at every new fieldtype
     
 class TriggerForm(Form):				

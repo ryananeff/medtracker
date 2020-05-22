@@ -47,7 +47,11 @@
 text-align:center;
 }
 
-.jumbotron .survey-question {
+.jumbotron{
+    text-align:center;
+}
+
+.jumbotron.survey-question {
 text-align:left;
 }
 
@@ -162,21 +166,73 @@ datalist option {
             flex-basis: 0;
 }
 .form-checkbox {
-display: flex;
+    display: flex;
+    border-width: 1px !important;
+    border-color: #bfbfbf;
+    border-style: solid;
+    border-radius: 5px;
+    padding: 5px;
+    margin-bottom: 10px;
+    margin-top: 10px;
+    background-color: #fdfdfd;
+}
+
+input[type="checkbox"] {
+  outline: none;
+  box-shadow: none;
+}
+
+input[type="checkbox"]:focus {
+  outline: none;
+  box-shadow: none;
+}
+
+input[type="radio"] {
+  outline: none;
+  box-shadow: none;
+}
+
+input[type="radio"]:focus {
+  outline: none;
+  box-shadow: none;
 }
 
 .radio{
-display: flex;
+    display: flex;
+    vertical-align: middle;
+    border-width: 1px !important;
+    border-color: #bfbfbf;
+    border-style: solid;
+    border-radius: 5px;
+    padding: 5px;
+    margin-bottom: 10px;
+    margin-top: 10px;
+    background-color: #fdfdfd;
 }
 
 .form-control[type=checkbox]{
-    width: 20px;
-    margin-right:20px;
+    position: relative;
+    width: 25px;
+    margin-left:auto;
+    margin-right:0;
+}
+
+.form-control[type=radio]{
+    position: relative !important;
+    width: 25px !important;
+    margin-left:auto !important;
+    margin-right:0 !important;
 }
 
 label{
     vertical-align: middle;
-    margin: auto 0;
+    text-align: left;
+    width: 100%;
+    margin: auto 0px auto 0px !important;
+    font-weight: 700 !important;
+    padding-left: 10px !important;
+    padding-top: 12px;
+    padding-bottom: 12px;
 }
 
 .btn-group{
@@ -205,4 +261,22 @@ label{
 
 th.row_index{
     width:15rem;
+}
+
+.row{
+    margin:0px;
+}
+
+.response-multi{
+    padding-left:0px;
+}
+
+.btn-group > .form-control {
+    margin-bottom: 5px;
+    margin-top: 5px;
+}
+
+form tr {
+    margin-bottom:5px;
+    margin-top:5px;
 }
