@@ -164,6 +164,7 @@ datalist option {
     -webkit-flex-basis: 0;
         -ms-flex-preferred-size: 0;
             flex-basis: 0;
+    text-align: center;
 }
 .form-checkbox {
     display: flex;
@@ -215,6 +216,9 @@ input[type="radio"]:focus {
     width: 25px;
     margin-left:auto;
     margin-right:0;
+    margin-top: auto;
+    margin-bottom: auto;
+    vertical-align: middle;
 }
 
 .form-control[type=radio]{
@@ -222,6 +226,9 @@ input[type="radio"]:focus {
     width: 25px !important;
     margin-left:auto !important;
     margin-right:0 !important;
+    margin-top: auto;
+    margin-bottom: auto;
+    vertical-align: middle;
 }
 
 label{
