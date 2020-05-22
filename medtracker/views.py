@@ -144,6 +144,11 @@ def about():
 def serve_survey_index():
 	'''GUI: serve the survey index page'''
 	surveys = current_user.surveys
+	for s in surveys:
+		try:
+			s.description_html = delta_html.render(json.loads(s.description)["ops"])
+		except:
+			s.description_html = '<p>' + s.description + '</p>'
 	return render_template("surveys.html",
 	                        surveys = surveys)
 
@@ -207,15 +212,12 @@ def resort_survey(survey_id):
 		if ix==0:
 			survey.head = question_order[ix]
 			db_session.add(survey)
-			print("head:",survey.head.id)
 		else:
 			question_order[ix-1].next_q = question_order[ix]
 			db_session.add(question_order[ix-1])
-			print(question_order[ix-1].next_q.id)
 		if ix == len(question_order)-1:
 			question_order[ix].next_q = None
 			db_session.add(question_order[ix])
-			print("last:",question_order[ix].next_q)
 	db_session.commit()
 	return b'Updated'
 
@@ -252,6 +254,10 @@ def start_survey(survey_id):
 		patients = None
 	else:
 		patients = current_user.patients
+	try:
+		survey.description_html = delta_html.render(json.loads(survey.description)["ops"])
+	except:
+		survey.description_html = '<p>' + survey.description + '</p>'
 	return render_template('start_survey.html', survey=survey, u = u, s = session_id, patients=patients)
 	#return redirect(url_for(serve_survey), survey_id=_id, u=uniq_id)
 
@@ -404,11 +410,14 @@ def edit_question(_id):
 @flask_login.login_required
 def remove_question(_id):
     dbobj = Question.query.get_or_404(_id)
-    survey_id = dbobj.survey_id
+    survey = dbobj.survey
+    edited = Survey.remove(survey,dbobj)
+    for e in edited:
+    	db_session.add(e)
     db_session.delete(dbobj)
     db_session.commit()
     flash('Question removed.')
-    return redirect(url_for('view_survey', _id=survey_id))
+    return redirect(url_for('view_survey', _id=survey.id))
 
 ### controller for patient functions
 
@@ -462,6 +471,11 @@ def delete_patient():
 def patient_survey_selector(id):
 	'''GUI: serve the survey select page for a patient'''
 	surveys = current_user.surveys
+	for s in surveys:
+		try:
+			s.description_html = delta_html.render(json.loads(s.description)["ops"])
+		except:
+			s.description_html = '<p>' + s.description + '</p>'
 	patient = Patient.query.filter_by(mrn=id).first_or_404()
 	return render_template("surveys_selector.html",
 	                    surveys = surveys, 

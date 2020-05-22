@@ -58,6 +58,7 @@ class Survey(db.Model):
 	user_id = db.Column(db.Integer, db.ForeignKey('user.id'))
 	read_public = db.Column(db.Boolean)
 	edit_public = db.Column(db.Boolean)
+	responses = db.relationship("SurveyResponse", backref='survey', cascade="all, delete-orphan")
 
 	def push(survey, question):
 		if survey.head==None:
@@ -69,6 +70,27 @@ class Survey(db.Model):
 				q = q.next_q
 			q.next_q = question
 		return survey, question
+
+	def remove(survey,question):
+		qlist = survey.questions()
+		edited = []
+		for ix,q in enumerate(qlist):
+			if q.id==question.id:
+				if ix==0:
+					if ix != (len(qlist)-1):
+						survey.head = qlist[ix+1]
+					else:
+						survey.head = None
+					edited.append(survey)
+				else:
+					if ix != (len(qlist)-1):
+						qlist[ix-1].next_q = qlist[ix+1]
+						edited.extend([qlist[ix-1],qlist[ix+1]])
+					else:
+						qlist[ix-1].next_q = None
+						edited.append(qlist[ix-1])
+				break
+		return edited
 
 	def questions(self):
 		out = []
@@ -99,7 +121,7 @@ class Question(db.Model):
 	next_id = db.Column(db.Integer, db.ForeignKey('question.id'))
 	next_q = db.relationship("Question", uselist=False, remote_side = [id], back_populates='prev_q', post_update=True)
 	prev_q = db.relationship("Question", uselist=False, post_update=True)
-	responses = db.relationship("QuestionResponse", backref='question')
+	responses = db.relationship("QuestionResponse", backref='question', cascade="all, delete-orphan")
 	survey = db.relationship("Survey",foreign_keys=[survey_id])
 
 	def __str__(self):
@@ -172,7 +194,6 @@ class SurveyResponse(db.Model):
 	start_time = db.Column(EncryptedType(db.DateTime, flask_secret_key))
 	end_time = db.Column(EncryptedType(db.DateTime, flask_secret_key))
 	completed = db.Column(db.Boolean, default=False)
-	survey = db.relationship("Survey", backref='response_sessions')
 
 	def __str__(self):
 		return '%s' % self.session_id
