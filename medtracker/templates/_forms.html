@@ -27,7 +27,7 @@
         </datalist>
  
     {% else %}
-		{{ field(class="form-control") }}
+		{{ field(class="form-control",**{"placeholder":field.label.text}) }}
       {% endif %}
       {% if field.errors or field.help_text %}
         <span class="help-inline">

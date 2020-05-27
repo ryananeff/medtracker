@@ -3,7 +3,9 @@
 {% block body %}
 	    <div class="page-header" style="padding-bottom:20px">
 		    <h3>Survey Editor / <span style="color: grey;">{{ survey.title }}</span></h3>
-		    <a href="/surveys/start/{{ survey.id }}" class="btn btn-md btn-success" style="top:-10px">Begin survey</a> <a href="/questions/new/?survey={{ survey.id }}" class="btn btn-md btn-primary" style="top:-10px; margin-right:10px">Add questions</a></h3>
+		    <a href="/surveys/start/{{ survey.id }}" class="btn btn-md btn-success" style="top:-10px">Begin survey</a>
+		    <a href="/questions/new/?survey={{ survey.id }}" class="btn btn-md btn-primary" style="top:-10px">Add questions</a></h3>
+		    <a href="/user/{{current_user.id}}/patients/signup" class="btn btn-md btn-success" style="top:-10px">Share link</a>
 	    </div>
 	    <div class="col col-12" style="background-color:rgb(238, 238, 238);padding:15px">
 	   	<div class="row" id="sortMe">

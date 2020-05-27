@@ -279,7 +279,7 @@ def serve_survey(survey_id):
 	last_question = question.prev_q.id if question.prev_q != None else None
 
 	if survey_response_id==None:
-		curuser = current_user.id if current_user else None
+		curuser = current_user.id if id in current_user.__dict__ else None
 		survey_response = SurveyResponse(survey_id=survey.id, uniq_id=uniq_id, session_id=sess, user_id=curuser)
 		db_session.add(survey_response)
 		db_session.commit()
@@ -383,12 +383,17 @@ def edit_question(_id):
 	survey_id = survey.id
 	formout = QuestionForm(formdata=request.form, obj=question)
 	formout.survey_id.choices = [(s.id, s.title) for s in Survey.query]
+	if question.image == None:
+		del formout.image_delete
 	if request.method == 'POST' and formout.validate():
 		question.kind = formout.kind.data
 		question.survey_id = formout.survey_id.data
 		question.body = formout.body.data
 		question.description = formout.description.data
 		question.choices = json.dumps({str(ix):a for ix,a in enumerate(request.form.getlist("choices"))})
+		if formout.image_delete != None:
+			if formout.image_delete.data==True:
+				question.image = None
 		if request.files["image"]:
 			imgfile = request.files["image"]
 			filename = secure_filename(imgfile.filename)
@@ -420,7 +425,25 @@ def remove_question(_id):
     return redirect(url_for('view_survey', _id=survey.id))
 
 ### controller for patient functions
+@app.route('/user/<int:id>/patients/signup/', methods=['GET', 'POST'])
+def patient_signup(id):
+	'''GUI: add a patient to the DB via user sign up'''
+	patient = Patient()
+	formobj = PatientSignupForm(obj=patient)
+	if formobj.validate_on_submit():
+		formobj.populate_obj(patient)
+		link_user = User.query.get_or_404(id)
+		patient.user = link_user
+		mrn = random.randint(1000000,9999999)
+		while mrn in [p.mrn for p in Patient.query.all()]:
+			mrn = random.randint(1000000,9999999)
+		patient.mrn = mrn
+		db_session.add(patient)
+		db_session.commit()
+		return redirect(url_for("patient_survey_selector",id=patient.id))
+	return render_template('form_signup_min.html', action="New", data_type="student sign-up", form=formobj)
 
+##
 @app.route('/patients/new/', methods=['GET', 'POST'])
 @app.route('/patients/edit/<int:id>', methods=['GET', 'POST'])
 @flask_login.login_required
@@ -459,24 +482,23 @@ def view_patients():
 	return render_template("patients.html", patients=patients, status = status)
 
 @app.route("/patients/delete/<int:id>")
-def delete_patient():
-	patient = Patient.query.filter_by(user_id=current_user.id, mrn=id).first_or_404()
+def delete_patient(id):
+	patient = Patient.query.filter_by(mrn=id).first_or_404()
 	db_session.delete(patient)
 	db_session.commit()
 	flash('Patient deleted.')
 	return redirect(url_for('view_patients'))
 
 @app.route('/patients/<int:id>/give_survey', methods=['GET'])
-@flask_login.login_required
 def patient_survey_selector(id):
 	'''GUI: serve the survey select page for a patient'''
-	surveys = current_user.surveys
+	patient = Patient.query.get_or_404(id)
+	surveys = patient.user.surveys
 	for s in surveys:
 		try:
 			s.description_html = delta_html.render(json.loads(s.description)["ops"])
 		except:
 			s.description_html = '<p>' + s.description + '</p>'
-	patient = Patient.query.filter_by(mrn=id).first_or_404()
 	return render_template("surveys_selector.html",
 	                    surveys = surveys, 
 	                    patient = patient)
