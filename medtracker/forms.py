@@ -57,6 +57,7 @@ class QuestionForm(Form):
 	'''GUI: question build form used in views'''
 	body = TextField('Title', [validators.Length(min=5, max=255)])
 	description = TextAreaField('Description')
+	image_delete = BooleanField('Delete current image')
 	image = FileField('Upload an image')
 	kind = SelectField('Type', choices=QUESTION_KIND_CHOICES)
 	choices = TextField('',widget=input_choices)
@@ -129,3 +130,9 @@ class PatientForm(Form):
 	phone = StringField('Phone number', validators=[DataRequired()])
 	email = StringField('Email address', validators=[validators.Email()])
 	notes = StringField('Additional Notes')
+
+class PatientSignupForm(Form):
+	email = StringField('Email address (optional)')
+	fullname = StringField('Full Name (optional)')
+	dob = DateField('Date of Birth (optional)')
+	phone = StringField('Phone number (optional)')
