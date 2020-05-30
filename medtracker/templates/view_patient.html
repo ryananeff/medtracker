@@ -7,7 +7,7 @@
 			<tr>
 			<th style="font-size:28px">{{patient.fullname}}</th>
 			<th> </th>
-			<th> DOB </th>
+			<th> Age </th>
 			<th> Phone </th>
 			<th> Email </th>
 			<th> Status </th>
@@ -17,9 +17,9 @@
 		</thead>
 		<tbody>
 		  <tr>
-			<td> MRN: {{patient.mrn}}</td>
+			<td> Device ID: {{ fmt_id(patient.mrn) }}</td>
 			<td> </td>
-			<td> {{patient.dob}}</td>
+			<td> {{patient.age}}</td>
 			<td> {{patient.phone}}</td>
 			<td> {{patient.email}}</td>
 			<td> {% if status == 0%}

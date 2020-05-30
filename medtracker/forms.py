@@ -124,15 +124,15 @@ class NewUserForm(Form):
     name = StringField('Full Name', validators=[DataRequired()])
 
 class PatientForm(Form):
-	mrn = DisabledTextField('MRN')
-	fullname = StringField('Full Name', validators=[validators.Length(min=4, max=255)])
-	dob = DateField('Date of Birth', validators=[DataRequired()], format="%Y-%m-%d")
+	mrn = DisabledTextField('Patient Device ID')
+	fullname = StringField('Full Name', validators=[validators.Length(max=255)])
+	age = StringField('Age')
 	phone = StringField('Phone number', validators=[DataRequired()])
 	email = StringField('Email address', validators=[validators.Email()])
 	notes = StringField('Additional Notes')
 
 class PatientSignupForm(Form):
-	email = StringField('Email address (optional)')
 	fullname = StringField('Full Name (optional)')
-	dob = DateField('Date of Birth (optional)')
+	email = StringField('Email address (optional)')
+	age = StringField('Age (optional)')
 	phone = StringField('Phone number (optional)')

@@ -3,19 +3,45 @@ from medtracker.models import *
 from medtracker.forms import *
 from medtracker.email_helper import send_email
 from medtracker.triggers import *
-from flask import flash, Markup
-import random, string
-from werkzeug import secure_filename
-import pytz
-import sys
-from itertools import groupby
-import random
-import urllib.parse
-from delta import html as delta_html #https://github.com/forgeworks/quill-delta-python
-
-from flask_login import login_user, logout_user, current_user
 
 image_staticdir = 'assets/uploads/'
+
+def randomword(length):
+	'''generate a random string of whatever length, good for filenames'''
+	return ''.join(random.choice('23456789ABCDEFGHIJKLMNPQRSTUVWXYZ') for i in range(length))
+
+def fmt_id(str):
+	out = ""
+	for ix,i in enumerate(str):
+		out += i
+		if (ix % 4 == 3)*(ix!=len(str)-1):
+			out += "-"
+	return out
+
+@app.context_processor
+def utility_processor():
+	return dict(fmt_id=fmt_id)
+
+#### session_persistance functions
+@app.before_request
+def detect_user_session():
+    patient_ident_req = request.cookies.get('patient_ident')
+    #check if we generated the patient_ident (ensure it wasn't randomly made up)
+    device = Device.query.filter_by(device_id=patient_ident_req).first()
+
+    if (patient_ident_req is None)|(device is None):
+        g.patient_ident = randomword(16)
+
+        # when the response exists, set a cookie with the language
+        @after_this_request
+        def remember_pt_id(response):
+            response.set_cookie('patient_ident', g.patient_ident, max_age=datetime.timedelta(weeks=52))
+            device = Device(g.patient_ident)
+            db.session.add(device)
+            db.session.commit()
+            return response
+    else:
+    	g.patient_ident = device.device_id
 
 #### logins
 
@@ -39,7 +65,7 @@ def login():					# not logged-in callback
 			msg = Markup('Please confirm your email to log in. <a href="/resend_confirmation?email=' + user.email + '">Resend Confirmation</a>')
 			flash(msg)
 		elif user.verify_password(form.password.data):
-			login_user(user)
+			login_user(user, remember=True, duration = datetime.timedelta(weeks=52))
 			return redirect(url_for('index'))
 		else:
 			return redirect(url_for('login'))
@@ -428,20 +454,33 @@ def remove_question(_id):
 @app.route('/user/<int:id>/patients/signup/', methods=['GET', 'POST'])
 def patient_signup(id):
 	'''GUI: add a patient to the DB via user sign up'''
-	patient = Patient()
+	patient = Patient.query.filter_by(mrn=g.patient_ident).first()
+	if patient == None:
+		new_patient = True
+		patient = Patient()
+	else:
+		new_patient = False
 	formobj = PatientSignupForm(obj=patient)
 	if formobj.validate_on_submit():
 		formobj.populate_obj(patient)
 		link_user = User.query.get_or_404(id)
 		patient.user = link_user
-		mrn = random.randint(1000000,9999999)
-		while mrn in [p.mrn for p in Patient.query.all()]:
-			mrn = random.randint(1000000,9999999)
-		patient.mrn = mrn
+		patient.mrn = g.patient_ident
 		db_session.add(patient)
 		db_session.commit()
+		flash("""You have registered this device and browser to take the COVID-19 screening.
+		      You will need to use this same device and browser to submit future screenings and show compliance.
+		      Do not clear your browser cookies from this device, or you will need to register your device again.
+		      Please keep this ID for your records: %s"""% fmt_id(g.patient_ident))
 		return redirect(url_for("patient_survey_selector",id=patient.id))
-	return render_template('form_signup_min.html', action="New", data_type="student sign-up", form=formobj)
+	if new_patient:
+		return render_template('form_signup_min.html', action="Register", data_type="device", form=formobj)
+	else:
+		if (patient.fullname != None) & (patient.fullname != ""):
+			flash("Welcome back, %s! (ID:%s)" % (patient.fullname,fmt_id(patient.mrn)))
+		else:
+			flash("Welcome back! (ID:%s)" % fmt_id(patient.mrn))
+		return redirect(url_for("patient_survey_selector",id=patient.id))
 
 ##
 @app.route('/patients/new/', methods=['GET', 'POST'])
@@ -481,7 +520,7 @@ def view_patients():
 		status[p.id] = incomplete
 	return render_template("patients.html", patients=patients, status = status)
 
-@app.route("/patients/delete/<int:id>")
+@app.route("/patients/delete/<string:id>")
 def delete_patient(id):
 	patient = Patient.query.filter_by(mrn=id).first_or_404()
 	db_session.delete(patient)
@@ -596,12 +635,6 @@ def remove_response(_id):
 @app.route('/assets/<path:path>')
 def send_js(path):
     return send_from_directory('/Users/ryanneff/suretify/medtracker/assets', path)
-
-#### other helpers
-    
-def randomword(length):
-	'''generate a random string of whatever length, good for filenames'''
-	return ''.join(random.choice(string.ascii_lowercase) for i in range(length))
 
 @app.route('/patient_feed/', methods=["GET", "POST"])
 @app.route('/patient_feed/<int:id>/', methods=["GET", "POST"])
