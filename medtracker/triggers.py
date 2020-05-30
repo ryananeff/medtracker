@@ -7,6 +7,10 @@ import sys
 import urllib, re, random, string, requests, json
 from flask_login import login_user, logout_user, current_user
 
+def randomword(length):
+	'''generate a random string of whatever length, good for filenames'''
+	return ''.join(random.choice(string.ascii_lowercase) for i in range(length))
+
 def redirect_url():
     return request.args.get('next') or \
            request.referrer or \
@@ -429,10 +433,6 @@ def url_trigger(message, recipients, callback):
 	for r in recipients.split(";"):
 		requests.get(r % (urllib.quote(message)))
 	return None
-
-def randomword(length):
-	'''generate a random string of whatever length, good for filenames'''
-	return ''.join(random.choice(string.lowercase) for i in range(length))
 
 @app.route('/autocomplete/triggers', methods=["GET", "POST"])
 @flask_login.login_required

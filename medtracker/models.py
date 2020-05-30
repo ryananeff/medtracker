@@ -1,7 +1,7 @@
+from medtracker import *
 from medtracker.database import db
 from medtracker.config import *
 from sqlalchemy_utils import EncryptedType, ChoiceType
-from datetime import datetime
 from passlib.apps import custom_app_context as pwd_context
 
 TEXT = 'text'
@@ -158,7 +158,7 @@ class Comment(db.Model):
 		self.body = body
 		self.patient_id = patient_id
 		self.user_id = user_id
-		self.time = datetime.utcnow()
+		self.time = datetime.datetime.utcnow()
 
 class QuestionResponse(db.Model):
 	__tablename__ = 'question_response'
@@ -182,7 +182,7 @@ class QuestionResponse(db.Model):
 		self.session_id = session_id
 		self.question_id = question_id
 		self.survey_response_id = survey_response_id
-		self.time = datetime.utcnow()
+		self.time = datetime.datetime.utcnow()
 
 class SurveyResponse(db.Model):
 	__tablename__ = 'survey_response'
@@ -203,10 +203,10 @@ class SurveyResponse(db.Model):
 		self.uniq_id = uniq_id
 		self.session_id = session_id
 		self.user_id = user_id
-		self.start_time = datetime.utcnow()
+		self.start_time = datetime.datetime.utcnow()
 
 	def complete(self):
-		self.end_time = datetime.utcnow()
+		self.end_time = datetime.datetime.utcnow()
 		self.completed = True
 
 class Trigger(db.Model):
@@ -282,7 +282,7 @@ class Patient(db.Model):
 	id = db.Column(db.Integer, primary_key=True)
 	mrn = db.Column(EncryptedType(db.String, flask_secret_key))
 	fullname = db.Column(EncryptedType(db.String, flask_secret_key))
-	dob = db.Column(EncryptedType(db.Date, flask_secret_key))
+	age = db.Column(EncryptedType(db.String, flask_secret_key))
 	phone = db.Column(EncryptedType(db.String, flask_secret_key))
 	email = db.Column(EncryptedType(db.String, flask_secret_key))
 	location = db.Column(EncryptedType(db.String, flask_secret_key))
@@ -290,3 +290,13 @@ class Patient(db.Model):
 	user_id = db.Column(db.Integer, db.ForeignKey('user.id'))
 	responses = db.relationship("QuestionResponse", backref='patient', lazy='dynamic')
 	progress = db.relationship("Progress", backref='patient', lazy='dynamic')
+
+class Device(db.Model):
+
+	__tablename__= "devices"
+
+	id = db.Column(db.Integer, primary_key=True)
+	device_id = db.Column(EncryptedType(db.String, flask_secret_key))
+
+	def __init__(self,device_id):
+		self.device_id = device_id
