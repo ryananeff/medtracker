@@ -10,7 +10,7 @@
     </li>
 {% for patient in current_user.patients %}
     <li>
-        <a href="#">{{patient.fullname}} ({{patient.mrn}})</a>
+        <a href="#">{{patient.mrn}}</a>
     </li>              
 {% endfor %}
 	<li class="active sidebar-brand">
@@ -31,11 +31,9 @@
 	    <table class="table table-hover" id="activesort">
 		<thead>
 			<tr>
-			<th> MRN </th>
-			<th> Name </th>
-			<th> DOB </th>
-			<th> Phone </th>
-			<th> Email </th>
+			<th> Device ID </th>
+			<th> Program </th>
+			<th> Location </th>
 			<th> Status </th>
 			<th> Actions </th>
 			<th> Notes </th>
@@ -44,11 +42,9 @@
 		<tbody>
 		{% for patient in patients %}
 		  <tr>
-			<td> {{patient.mrn}}</td>
-			<td> <a href="/patients/{{patient.id}}">{{patient.fullname}}</a></td>
-			<td> {{patient.dob}}</td>
-			<td> {{patient.phone}}</td>
-			<td> {{patient.email}}</td>
+			<td> <a href="/patients/{{patient.id}}">{{fmt_id(patient.mrn)}}</a></td>
+			<td> {{patient.program}}</td>
+			<td> {{patient.location}}</td>
 			<td> {% if status[patient.id] == 0%}
 			<div class="dropdown">
 			  <button class="btn btn-xs btn-success dropdown-toggle" type="button" id="dropdownMenu1" data-toggle="dropdown" aria-haspopup="true" aria-expanded="true">

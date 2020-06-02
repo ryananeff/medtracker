@@ -2,11 +2,13 @@
 {% block title %}Patient Detail | Suretify {% endblock %}
 {% block body %}
 	<div class="header">
-	    <table class="table">
+	    <table class="table table-responsive">
 		<thead>
 			<tr>
-			<th style="font-size:28px">{{patient.fullname}}</th>
+			<th style="font-size:28px">{% if patient.fullname != "" %}{{patient.fullname}}{% else %}Anonymous User{% endif %}</th>
 			<th> </th>
+			<th> Program </th>
+			<th> Location </th>
 			<th> Age </th>
 			<th> Phone </th>
 			<th> Email </th>
@@ -19,6 +21,8 @@
 		  <tr>
 			<td> Device ID: {{ fmt_id(patient.mrn) }}</td>
 			<td> </td>
+			<td> {{patient.program}}</td>
+			<td> {{patient.location}}</td>
 			<td> {{patient.age}}</td>
 			<td> {{patient.phone}}</td>
 			<td> {{patient.email}}</td>
@@ -91,21 +95,9 @@
 		</table>
 	</div>
 	<div class="panel panel-default">
-	<div class="panel-heading">
-        	<form action="/comment/add/{{patient.id}}/" method="POST">
-                <div class="input-group">
-                    <input id="body" name="body" type="text" class="form-control input-sm" placeholder="Type your message here..." />
-                    <span class="input-group-btn">
-                        <input type="submit" value="Send" class="btn btn-warning btn-sm" id="btn-chat">
-                            Send
-                        </button>
-                    </span>
-                </div>
-            </form>
-        </div>
 		<div class="panel-body" style="height:100%">
                 <ul class="chat">
-                	{% for time, type, question, response in patients_feed %}
+                	{% for time, type, response in patients_feed %}
                 		{% if type=="patient" %}
                     	<li class="left clearfix">
                         <span class="chat-img pull-left">
@@ -113,24 +105,39 @@
                         </span>
                         <div class="chat-body clearfix">
                             <div class="header">
-                                <strong class="primary-font" style="font-size:18px">{{patient.fullname}} <span style="color: grey; font-size:14px">{% if question %}answered </span><br><span style="color: grey; font-size:12px">{{question.body}}{% else %} commented{% endif %} </span></strong>
-                                <small class="pull-right text-muted">
-                                    <i class="fa fa-clock-o fa-fw"></i>{{momentjs(time).calendar()}}<a href="/responses/delete/{{response.id}}" class="btn btn-xs btn-secondary">Delete</a>
-                                </small>
-                            </div>
-                            <p style="font-size:16px">
-                                {% if "YES" in response.question.kind|string %}
-									{% if response.response == '1' %}Yes{% else %}No{% endif %}
-								{% elif "10" in response.question.kind|string %}
-									{{response.response}} out of 10
-								{% elif "/assets/audio/" in response.response %}
-									<audio controls preload="none" style="width:200px"><source src="{{response.response}}"></audio>
-								{% else %}
-									{{response.response}}
-								{% endif %}
-                            </p>
+                                <strong class="primary-font" style="font-size:18px">{{patient.fullname}} <span style="color: grey; font-size:14px">{% if response.completed %} completed {%else%} started {%endif%}</span></strong><br>
+                                	<small class="pull-right text-muted">
+	                                    <i class="fa fa-clock-o fa-fw"></i>{{momentjs(time).calendar()}}<a href="/responses/survey/delete/{{response.id}}" class="btn btn-xs btn-secondary">Delete</a>
+	                                </small>
+                                </div>
+								<div class="card sr-container">
+									<div class="card-body">
+										<h5 class="card-title">{{response.survey.title}}</h5>
+									</div>
+			                            	<ul class="list-group list-group flush">
+			                                {% for q in response.responses %}
+			                            		<li>{{q.question.body}}
+			                            			{% if q.response is iterable and q.response is not string %}
+			                            				{% for rr in q.response %}
+			                            					<ul><li><strong>{{q.response}}</strong></li></ul>
+			                            				{% endfor %}
+			                            			{% else %}
+			                            				<ul><li><strong>{{q.response}}</strong></li></ul>
+			                            			{% endif %}
+			                            		</li>
+			                        		{% endfor %}
+			                        		{% if response.responses | length == 0 %}
+			                        			<i>No responses submitted</i>
+			                        			{% endif %}
+			                            	</ul>
+			                            <div class="card-body">
+			                            {% if response.completed %}
+			                        		<a href="{{url_for('complete_survey',session_id=response.session_id)}}" class="card-link">Completion record</a>
+			                        	{% else %}
+			                        		<a href="#" class="card-link" disabled>No completion record found</a>
+			                        	{% endif %}
+                            		</div>
 	                        </div>
-	                    </li>
 	                    {% elif type=="comment" %}
 	                    {% set commenter = response.user %}
 	                    <li class="left clearfix">
@@ -154,7 +161,18 @@
                 </ul>
         </div>
             <!-- /.panel-body -->
-        
+        <div class="panel-footer">
+        	<form action="/comment/add/{{patient.id}}/" method="POST">
+                <div class="input-group">
+                    <input id="body" name="body" type="text" class="form-control input-sm" placeholder="Type your message here..." />
+                    <span class="input-group-btn">
+                        <input type="submit" value="Send" class="btn btn-warning btn-sm" id="btn-chat">
+                            Send
+                        </button>
+                    </span>
+                </div>
+            </form>
+        </div>
             <!-- /.panel-footer -->
     </div>
 {% endblock %}

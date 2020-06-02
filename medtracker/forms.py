@@ -6,7 +6,7 @@ from wtforms.validators import DataRequired
 from wtforms.widgets.core import HTMLString, html_params, escape
 from medtracker.models import *
 from flask.views import MethodView
-from medtracker.models import QUESTION_KIND_CHOICES, TRIGGER_KIND_CHOICES
+from medtracker.models import QUESTION_KIND_CHOICES, TRIGGER_KIND_CHOICES, PROGRAM_CHOICES, LOCATION_CHOICES
 import re, json
 
 def select_multi_checkbox(field, ul_class='response-multi', **kwargs):
@@ -125,14 +125,19 @@ class NewUserForm(Form):
 
 class PatientForm(Form):
 	mrn = DisabledTextField('Patient Device ID')
-	fullname = StringField('Full Name', validators=[validators.Length(max=255)])
-	age = StringField('Age')
-	phone = StringField('Phone number', validators=[DataRequired()])
-	email = StringField('Email address', validators=[validators.Email()])
-	notes = StringField('Additional Notes')
-
-class PatientSignupForm(Form):
-	fullname = StringField('Full Name (optional)')
+	program = RadioField("What program are you in?", choices=PROGRAM_CHOICES)
+	location = RadioField("Where are you currently living?", choices=LOCATION_CHOICES)
+	fullname = StringField('Name (optional)')
 	email = StringField('Email address (optional)')
 	age = StringField('Age (optional)')
 	phone = StringField('Phone number (optional)')
+
+class PatientEditForm(Form):
+	mrn = DisabledTextField('Patient Device ID')
+	fullname = StringField('Name (optional)')
+	email = StringField('Email address (optional)')
+	age = StringField('Age (optional)')
+	phone = StringField('Phone number (optional)')
+	program = RadioField("What program are you in?", choices=PROGRAM_CHOICES)
+	location = RadioField("Where are you currently living?", choices=LOCATION_CHOICES)
+	
