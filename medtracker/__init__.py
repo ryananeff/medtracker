@@ -1,11 +1,12 @@
 from flask import *
 from requests.auth import HTTPBasicAuth
-import random, string, pytz, sys, random, urllib.parse, datetime
+import random, string, pytz, sys, random, urllib.parse, datetime, os
 from werkzeug import secure_filename
 from itertools import groupby
 from delta import html as delta_html #https://github.com/forgeworks/quill-delta-python
 from flask_login import login_user, logout_user, current_user
 from medtracker.config import *
+from flask_qrcode import QRcode
 
 import twilio.twiml
 from twilio.rest import TwilioRestClient
@@ -26,6 +27,8 @@ app.config['REMEMBER_COOKIE_SECURE'] = False
 app.config['SESSION_COOKIE_SECURE'] = False
 app.secret_key = flask_secret_key
 app.debug = True
+
+qrcode = QRcode(app)
 
 from .momentjs import momentjs
 app.jinja_env.globals['momentjs'] = momentjs

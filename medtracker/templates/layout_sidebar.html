@@ -112,7 +112,7 @@
                                     </li>
                                     {% for patient in current_user.patients %}
                                         <li>
-                                            <a href="/patients/{{patient.id}}"><i class="fa fa-user"></i> {{patient.fullname}} ({{fmt_id(patient.mrn)}})</a>
+                                            <a href="/patients/{{patient.id}}"><i class="fa fa-user"></i> {{fmt_id(patient.mrn)}}</a>
                                         </li>              
                                     {% endfor %}
                                     

@@ -25,23 +25,38 @@ def utility_processor():
 #### session_persistance functions
 @app.before_request
 def detect_user_session():
-    patient_ident_req = request.cookies.get('patient_ident')
-    #check if we generated the patient_ident (ensure it wasn't randomly made up)
-    device = Device.query.filter_by(device_id=patient_ident_req).first()
+	g.patient = None
+	g.patient_ident = None
+	patient_ident_req = request.cookies.get('patient_ident')
+	#check if we generated the patient_ident (ensure it wasn't randomly made up)
+	g.device = Device.query.filter_by(device_id=patient_ident_req).first()
 
-    if (patient_ident_req is None)|(device is None):
-        g.patient_ident = randomword(16)
+	if (patient_ident_req is None)|(g.device is None):
 
-        # when the response exists, set a cookie with the language
-        @after_this_request
-        def remember_pt_id(response):
-            response.set_cookie('patient_ident', g.patient_ident, max_age=datetime.timedelta(weeks=52))
-            device = Device(g.patient_ident)
-            db.session.add(device)
-            db.session.commit()
-            return response
-    else:
-    	g.patient_ident = device.device_id
+		g.patient_ident = randomword(16)
+
+		# when the response exists, set a cookie with the language
+		@after_this_request
+		def remember_pt_id(response):
+			response.set_cookie('flashed',b'True',max_age=0)
+			response.set_cookie('patient_ident', g.patient_ident, max_age=datetime.timedelta(weeks=52))
+			device = Device(g.patient_ident)
+			db.session.add(device)
+			db.session.commit()
+			g.device = device
+			return response
+	else:
+		g.patient_ident = g.device.device_id
+		g.patient = Patient.query.filter_by(mrn=g.patient_ident).first()
+
+@app.after_request
+def flash_warning(response):
+	flashed = request.cookies.get('flashed',False)
+	g.patient = Patient.query.filter_by(mrn=g.patient_ident).first()
+	if (g.patient == None)&(flashed==False):
+		flash("Your device appears to be unregistered. Please register your device.")
+		response.set_cookie('flashed',b'True',max_age=0)
+	return response	
 
 #### logins
 
@@ -273,13 +288,12 @@ def view_survey(_id):
 @app.route('/surveys/start/<int:survey_id>', methods=['GET', 'POST'])
 def start_survey(survey_id):
 	'''TODO: need to select the patient which will be taking the survey. This will make this starting block a form.'''
-	session_id = randomword(64)
-	u = request.values.get('u', None)
+	if g.patient == None:
+		return redirect(url_for('patient_signup',survey_id=survey_id))
+	session_id = randomword(32)
+	u = request.values.get('u', g.patient.id)
 	survey = Survey.query.get_or_404(survey_id)
-	if current_user.is_authenticated == False:
-		patients = None
-	else:
-		patients = current_user.patients
+	patients = None
 	try:
 		survey.description_html = delta_html.render(json.loads(survey.description)["ops"])
 	except:
@@ -322,7 +336,7 @@ def serve_survey(survey_id):
 			survey_response.complete()
 			db_session.add(survey_response)
 			db_session.commit()
-			return redirect(url_for('view_survey', _id=survey_id))
+			return redirect(url_for("complete_survey", session_id=survey_response.session_id))
 		return redirect(url_for('serve_survey', survey_id=survey_id, question=next_question, u=uniq_id, s=sess, sr = survey_response.id))
 	else:
 		try:
@@ -331,6 +345,37 @@ def serve_survey(survey_id):
 			question.description_html = '<p>' + question.description + '</p>'
 		return render_template("serve_question.html", survey = survey, question = question, 
 		                       next_q = next_question, last_q = last_question, form=formobj, u=uniq_id, s = sess, sr = survey_response.id)
+
+@app.route("/cr/<session_id>")
+def complete_survey(session_id):
+	record = SurveyResponse.query.filter_by(session_id=session_id).first()
+	if record==None:
+		return "Completion record not found.",404
+	survey = record.survey
+	if current_user.is_authenticated():
+		if record.completed:
+			patient = record.patient
+			end_time = record.end_time.replace(tzinfo=pytz.utc).astimezone(pytz.timezone('America/New_York'))
+			day_num = end_time.timetuple().tm_yday % 46+1
+			img_path = os.path.join(os.getcwd(),'assets/images/animals/animal%d.jpg'%day_num)
+			qrcode_out = qrcode(url_for('complete_survey',session_id=record.session_id,_external=True),error_correction='Q',icon_img=img_path)
+			return render_template("survey_complete.html",record=record, patient = patient,survey=survey,qrcode_out=qrcode_out)
+		else:
+			return "Completion record not found.",404
+	if g.patient:
+		if record.uniq_id != g.patient.id:
+			return "Your device isn't authorized to view this completion record.", 401
+		else:
+			if record.completed:
+				end_time = record.end_time.replace(tzinfo=pytz.utc).astimezone(pytz.timezone('America/New_York'))
+				day_num = end_time.timetuple().tm_yday % 46+1
+				img_path = os.path.join(os.getcwd(),'assets/images/animals/animal%d.jpg'%day_num)
+				qrcode_out = qrcode(url_for('complete_survey',session_id=record.session_id,_external=True),error_correction='Q',icon_img=img_path)
+				return render_template("survey_complete.html",record=record, patient = g.patient,survey=survey,qrcode_out=qrcode_out)
+			else:
+				return "Completion record not found.",404
+	else:
+		return "Your device appears to be unregistered. Only registered devices can view completion records.",401
 
 def save_response(formdata, question_id, session_id=None, current_user = None, survey_response_id = None):
 	question = Question.query.get_or_404(question_id)
@@ -451,8 +496,8 @@ def remove_question(_id):
     return redirect(url_for('view_survey', _id=survey.id))
 
 ### controller for patient functions
-@app.route('/user/<int:id>/patients/signup/', methods=['GET', 'POST'])
-def patient_signup(id):
+@app.route('/patients/signup/<int:survey_id>', methods=['GET', 'POST'])
+def patient_signup(survey_id):
 	'''GUI: add a patient to the DB via user sign up'''
 	patient = Patient.query.filter_by(mrn=g.patient_ident).first()
 	if patient == None:
@@ -460,56 +505,46 @@ def patient_signup(id):
 		patient = Patient()
 	else:
 		new_patient = False
-	formobj = PatientSignupForm(obj=patient)
+	formobj = PatientForm(obj=patient)
 	if formobj.validate_on_submit():
 		formobj.populate_obj(patient)
-		link_user = User.query.get_or_404(id)
+		link_survey = Survey.query.get_or_404(survey_id)
+		link_user = link_survey.user
 		patient.user = link_user
 		patient.mrn = g.patient_ident
 		db_session.add(patient)
 		db_session.commit()
-		flash("""You have registered this device and browser to take the COVID-19 screening.
-		      You will need to use this same device and browser to submit future screenings and show compliance.
-		      Do not clear your browser cookies from this device, or you will need to register your device again.
+		flash("""You have registered this device and browser to take the COVID-19 screening.\n
+		      You will need to use this same device and browser to submit future screenings and show compliance.\n
+		      Do not clear your browser cookies from this device, or you will need to register your device again.\n
 		      Please keep this ID for your records: %s"""% fmt_id(g.patient_ident))
-		return redirect(url_for("patient_survey_selector",id=patient.id))
+		return redirect(url_for("start_survey",survey_id=survey_id))
 	if new_patient:
-		return render_template('form_signup_min.html', action="Register", data_type="device", form=formobj)
+		return render_template('form_signup_register.html', action="Register", data_type="device", form=formobj)
 	else:
 		if (patient.fullname != None) & (patient.fullname != ""):
 			flash("Welcome back, %s! (ID:%s)" % (patient.fullname,fmt_id(patient.mrn)))
 		else:
 			flash("Welcome back! (ID:%s)" % fmt_id(patient.mrn))
-		return redirect(url_for("patient_survey_selector",id=patient.id))
+		return redirect(url_for("start_survey",survey_id=survey_id))
 
 ##
-@app.route('/patients/new/', methods=['GET', 'POST'])
-@app.route('/patients/edit/<int:id>', methods=['GET', 'POST'])
+@app.route('/patients/edit/<string:id>', methods=['GET', 'POST'])
 @flask_login.login_required
-def add_edit_patient(id=None):
+def edit_patient(id=None):
 	'''GUI: add a patient to the DB'''
-	mrn = None
-	if id:
-		patient = Patient.query.filter_by(user_id=current_user.id, mrn=id).first_or_404()
-		mrn = patient.mrn
-	else:
-		patient = Patient()
-	formobj = PatientForm(obj=patient)
+	patient = Patient.query.filter_by(user_id=current_user.id, mrn=id).first_or_404()
+	formobj = PatientEditForm(obj=patient)
+	formobj.location.default = patient.location.code
+	formobj.program.default = patient.program.code
 	if formobj.validate_on_submit():
 		formobj.populate_obj(patient)
-		if mrn == None:
-			mrn = random.randint(1000000,9999999)
-			while mrn in [p.mrn for p in Patient.query.all()]:
-				mrn = random.randint(1000000,9999999)
-			flash('Patient added.')
-		else:
-			flash('Patient edited.')
-		patient.mrn = mrn
+		flash('Patient edited.')
 		patient.user_id = current_user.id
 		db_session.add(patient)
 		db_session.commit()
 		return redirect(url_for('view_patients'))
-	return render_template("form.html", action="Add", data_type="a patient", form=formobj)
+	return render_template("form.html", action="Edit", data_type="patient", form=formobj)
 
 @app.route("/patients/")
 def view_patients():
@@ -628,7 +663,10 @@ def remove_response(_id):
     db_session.delete(dbobj)
     db_session.commit()
     flash('Response removed.')
-    return redirect(url_for('view_patient', id=patient_id))
+    if request.referrer == None:
+    	return redirect(url_for('view_patient', id=patient_id))
+    else:
+    	return redirect(request.referrer)
 
 ### static files (only when not running under Apache)
 	
@@ -661,19 +699,26 @@ def patient_feed(id=None):
 def view_patient(id):
 	p = Patient.query.filter_by(id=id, user_id=current_user.id).first()
 	patients_feed = []
-	responses = p.responses
-	for r in responses:
-		if r.question_id != None:
-			question = Question.query.get(r.question_id) 
-			patients_feed.append((r.time.strftime("%Y-%m-%d %H:%M:%S"),"patient", question, r))
-		else:
-			patients_feed.append((r.time.strftime("%Y-%m-%d %H:%M:%S"),"patient", None, r))
+	for s in p.surveys:
+		patients_feed.append((s.start_time.strftime("%Y-%m-%d %H:%M:%S"),"patient", s))
 	comments = Comment.query.filter_by(patient_id=p.id)
 	for c in comments:
-		patients_feed.append((c.time.strftime("%Y-%m-%d %H:%M:%S"), "comment", None, c))
-	patients_feed = sorted(patients_feed, key=lambda x:x[0],reverse=True)
+		patients_feed.append((c.time.strftime("%Y-%m-%d %H:%M:%S"), "comment", c))
+	patients_feed = sorted(patients_feed, key=lambda x:x[0],reverse=False)
 	status = sum([1-i.complete for i in p.progress])
 	return render_template('view_patient.html', patients_feed = patients_feed, patient=p, status=status)
+
+@app.route('/patients/self', methods=["GET", "POST"])
+def view_patient_self():
+	if g.patient == None:
+		return "Please register your device first, then come back to this page.", 404
+	p = g.patient
+	patients_feed = []
+	for s in p.surveys:
+		patients_feed.append((s.start_time.strftime("%Y-%m-%d %H:%M:%S"),"patient", s))
+	patients_feed = sorted(patients_feed, key=lambda x:x[0],reverse=True)
+	status = sum([1-i.complete for i in p.progress])
+	return render_template('view_patient_self.html', patients_feed = patients_feed, patient=p, status=status)
 
 @app.route('/comment/add/<int:patient_id>/', methods=["GET", "POST"])
 @flask_login.login_required

@@ -30,6 +30,21 @@ TRIGGER_KIND_CHOICES = (
 	(CURL, 'Push data')
 )
 
+LOCATION_CHOICES = [
+		("student_housing", "Student housing (e.g. Aron Hall)"),
+		("mount_sinai", "Mount Sinai-owned properties"),
+		("other_nyc", "Other housing (inside NYC)"),
+		("other_outside", "Other housing (other locations)")
+	]
+
+PROGRAM_CHOICES = [
+		("MD", "MD"),
+		("PhD", "PhD"),
+		("dual", "Dual degree programs (e.g. MD/PhD)"),
+		("master", "Master's (e.g. MS, MPH)"),
+		("other", "My program isn't listed here")
+	]
+
 class Progress(db.Model):
 	__tablename__ = 'progress'
 	id = db.Column(db.Integer, primary_key=True)
@@ -251,11 +266,10 @@ class User(db.Model):
     triggers = db.relationship("Trigger", backref='user', lazy='dynamic')
     responses = db.relationship("QuestionResponse", backref='user', lazy='dynamic')
     patients = db.relationship("Patient", backref='user', lazy='dynamic')
-    comments = db.relationship("Comment", backref='user', lazy='dynamic')
+    comments = db.relationship("Comment", backref='user', lazy='dynamic',cascade="all, delete-orphan")
 
     def is_active(self):
-        """True, as all users are active."""
-        return True
+        return self.active
 
     def get_id(self):
         """Return the id to satisfy Flask-Login's requirements."""
@@ -285,11 +299,12 @@ class Patient(db.Model):
 	age = db.Column(EncryptedType(db.String, flask_secret_key))
 	phone = db.Column(EncryptedType(db.String, flask_secret_key))
 	email = db.Column(EncryptedType(db.String, flask_secret_key))
-	location = db.Column(EncryptedType(db.String, flask_secret_key))
-	notes = db.Column(EncryptedType(db.String, flask_secret_key))
+	location = db.Column(ChoiceType(LOCATION_CHOICES))
+	program = db.Column(ChoiceType(PROGRAM_CHOICES))
 	user_id = db.Column(db.Integer, db.ForeignKey('user.id'))
-	responses = db.relationship("QuestionResponse", backref='patient', lazy='dynamic')
-	progress = db.relationship("Progress", backref='patient', lazy='dynamic')
+	surveys = db.relationship("SurveyResponse", lazy="dynamic", cascade="all, delete-orphan")
+	responses = db.relationship("QuestionResponse", backref='patient', lazy='dynamic', cascade="all, delete-orphan")
+	progress = db.relationship("Progress", backref='patient', lazy='dynamic', cascade="all, delete-orphan")
 
 class Device(db.Model):
 
