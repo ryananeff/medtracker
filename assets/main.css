@@ -377,3 +377,8 @@ form tr {
 .table{
   max-width:100vw;
 }
+.card--medium{
+  margin:0px;
+  max-width: 100%;
+    width: 344px;
+  }
