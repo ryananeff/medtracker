@@ -350,6 +350,10 @@ form tr {
 }
 .panel{
   position: relative;
+  height: 80vh;
+}
+.panel-self{
+  position: relative;
   height: 60vh;
 }
 .panel-body{
