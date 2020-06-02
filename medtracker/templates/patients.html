@@ -36,7 +36,6 @@
 			<th> Location </th>
 			<th> Status </th>
 			<th> Actions </th>
-			<th> Notes </th>
 			</tr>
 		</thead>
 		<tbody>
@@ -108,7 +107,7 @@
 			<td>
 			<a href="/patients/edit/{{patient.mrn}}" class="btn btn-xs btn-default">Edit</a>
 			<a href="/patients/delete/{{patient.mrn}}" class="btn btn-xs btn-danger">Delete</a></td>
-			<td>{{patient.notes}}</td>
+			
 		  </tr>
 		{% endfor %}
 		</tbody>
