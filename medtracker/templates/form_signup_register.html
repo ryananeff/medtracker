@@ -1,0 +1,40 @@
+{% extends 'layout.html' %}
+{% from '_render_field.html' import render_field %}
+{% block title %}Sign up a new device{% endblock %}
+{% block body %}
+
+    <div class="container">
+		<div class="row">
+			<div class="col-lg-3">
+				</div>
+			<div class="col-md-6">
+				{% block form %}
+				<section>
+				<h1>Sign up a new device</h1>
+				<p>In order to complete this survey, you first need to register your device to save and view your responses.
+				This process will only happen once and take a few seconds. Clearing your browser cookies will delete your registration.</p>
+				<p>Please use the same device and browser for future visits to skip this step and track your responses.</p>
+				<form action="{{ form_action }}" method="{{ method | d("POST") }}" enctype="multipart/form-data">
+				<h3>Required questions</h3>
+				<ol>
+				<li>{{form.program.label}}{{render_field(form.program)}}</li>
+				<li>{{form.location.label}}{{render_field(form.location)}}</li>
+				</ol>
+				<h3>Optional questions</h3>
+				<p>These questions are completely optional and will only be used to contact you should your symptoms change. They will be kept private and 
+					confidential. Only Mount Sinai Student Health has access to this information. It will not be shared with other
+				Mount Sinai faculty or staff.</p>
+				{{render_field(form.email)}}
+				{{render_field(form.phone)}}
+				{{render_field(form.fullname)}}
+				{{render_field(form.age)}}
+				{{render_field(form.csrf_token)}}
+				<input type="submit" value="Save and submit" class="btn btn-primary"> 
+				</form>
+				</section>
+				{% endblock form %}
+			  </div>
+			</div>
+		</div>
+    </div><!-- /.container -->
+{% endblock %}

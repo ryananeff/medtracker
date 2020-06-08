@@ -3,6 +3,7 @@ from medtracker.database import db
 from medtracker.config import *
 from sqlalchemy_utils import EncryptedType, ChoiceType
 from passlib.apps import custom_app_context as pwd_context
+from sqlalchemy.sql import func
 
 TEXT = 'text'
 YES_NO = 'yes-no'
@@ -62,6 +63,9 @@ class Progress(db.Model):
 		self.iterator = int(iterator)
 		self.parent_id = str(parent_id)
 		self.complete = int(complete)
+
+	def to_dict(self):
+		return {col.name: getattr(self, col.name) for col in self.__table__.columns}
 	
 class Survey(db.Model):
 	__tablename__ = 'survey'
@@ -122,6 +126,9 @@ class Survey(db.Model):
 		self.title = title
 		self.description=description
 
+	def to_dict(self):
+		return {col.name: getattr(self, col.name) for col in self.__table__.columns}
+
 class Question(db.Model):
 	__tablename__ = 'question'
 	
@@ -151,6 +158,9 @@ class Question(db.Model):
 		self.kind = kind
 		self.survey_id = survey_id
 
+	def to_dict(self):
+		return {col.name: getattr(self, col.name) for col in self.__table__.columns}
+
 class QuestionMeta(db.Model):
 	__tablename__ = 'question_meta'
 	id = db.Column(db.Integer, primary_key=True)
@@ -160,12 +170,15 @@ class QuestionMeta(db.Model):
 	def __init__(self, body=None, question=None):
 		self.body = body
 		self.question_id = question_id
+	
+	def to_dict(self):
+		return {col.name: getattr(self, col.name) for col in self.__table__.columns}
 
 class Comment(db.Model):
 	__tablename__ = 'comment'
 	id = db.Column(db.Integer, primary_key=True)
-	body = db.Column(EncryptedType(db.String, flask_secret_key))
-	time = db.Column(EncryptedType(db.DateTime, flask_secret_key))
+	body = db.Column(db.String)
+	time = db.Column(db.DateTime)
 	user_id = db.Column(db.Integer, db.ForeignKey('user.id'))
 	patient_id = db.Column(db.Integer, db.ForeignKey('patients.id'))
 
@@ -175,13 +188,16 @@ class Comment(db.Model):
 		self.user_id = user_id
 		self.time = datetime.datetime.utcnow()
 
+	def to_dict(self):
+		return {col.name: getattr(self, col.name) for col in self.__table__.columns}
+
 class QuestionResponse(db.Model):
 	__tablename__ = 'question_response'
 	id = db.Column(db.Integer, primary_key=True)
-	response = db.Column(EncryptedType(db.String, flask_secret_key))
-	time = db.Column(EncryptedType(db.DateTime, flask_secret_key))
+	response = db.Column(db.String)
+	time = db.Column(db.DateTime)
 	uniq_id = db.Column(db.Integer, db.ForeignKey('patients.id'))
-	session_id = db.Column(EncryptedType(db.String, flask_secret_key))
+	session_id = db.Column(db.String)
 	question_id = db.Column(db.Integer, db.ForeignKey('question.id'))
 	survey_response_id = db.Column(db.Integer, db.ForeignKey('survey_response.id'))
 	user_id = db.Column(db.Integer, db.ForeignKey('user.id'))
@@ -199,15 +215,18 @@ class QuestionResponse(db.Model):
 		self.survey_response_id = survey_response_id
 		self.time = datetime.datetime.utcnow()
 
+	def to_dict(self):
+		return {col.name: getattr(self, col.name) for col in self.__table__.columns}
+
 class SurveyResponse(db.Model):
 	__tablename__ = 'survey_response'
 	id = db.Column(db.Integer, primary_key=True)
 	survey_id = db.Column(db.Integer, db.ForeignKey('survey.id'))
 	uniq_id = db.Column(db.Integer, db.ForeignKey('patients.id'))
 	user_id = db.Column(db.Integer, db.ForeignKey('user.id'))
-	session_id = db.Column(EncryptedType(db.String, flask_secret_key))
-	start_time = db.Column(EncryptedType(db.DateTime, flask_secret_key))
-	end_time = db.Column(EncryptedType(db.DateTime, flask_secret_key))
+	session_id = db.Column(db.String)
+	start_time = db.Column(db.DateTime)
+	end_time = db.Column(db.DateTime)
 	completed = db.Column(db.Boolean, default=False)
 
 	def __str__(self):
@@ -223,6 +242,9 @@ class SurveyResponse(db.Model):
 	def complete(self):
 		self.end_time = datetime.datetime.utcnow()
 		self.completed = True
+	
+	def to_dict(self):
+		return {col.name: getattr(self, col.name) for col in self.__table__.columns}
 
 class Trigger(db.Model):
 	__tablename__ = 'trigger'
@@ -248,46 +270,52 @@ class Trigger(db.Model):
 		self.recipients = recipients
 		self.after_function = af
 
+	def to_dict(self):
+		return {col.name: getattr(self, col.name) for col in self.__table__.columns}
+
 class User(db.Model):
-    """A user capable of listening to voicemails"""
-    __tablename__ = 'user'
+	"""A user capable of listening to voicemails"""
+	__tablename__ = 'user'
 
-    id = db.Column(db.Integer, primary_key=True)
-    email = db.Column(EncryptedType(db.String, flask_secret_key), unique=True)
-    username = db.Column(EncryptedType(db.String, flask_secret_key), unique=True)
-    name = db.Column(EncryptedType(db.String, flask_secret_key))
-    password_hash = db.Column(db.String(256))
-    active = db.Column(db.Boolean, default=False)
-    admin = db.Column(db.Boolean, default=False)
-    superadmin = db.Column(db.Boolean, default=False)
-    google_token = db.Column(EncryptedType(db.String, flask_secret_key))
-    authenticated = db.Column(db.Boolean, default=False)
-    surveys = db.relationship("Survey", backref='user', lazy='dynamic')
-    triggers = db.relationship("Trigger", backref='user', lazy='dynamic')
-    responses = db.relationship("QuestionResponse", backref='user', lazy='dynamic')
-    patients = db.relationship("Patient", backref='user', lazy='dynamic')
-    comments = db.relationship("Comment", backref='user', lazy='dynamic',cascade="all, delete-orphan")
+	id = db.Column(db.Integer, primary_key=True)
+	email = db.Column(EncryptedType(db.String, flask_secret_key), unique=True)
+	username = db.Column(EncryptedType(db.String, flask_secret_key), unique=True)
+	name = db.Column(EncryptedType(db.String, flask_secret_key))
+	password_hash = db.Column(db.String(256))
+	active = db.Column(db.Boolean, default=False)
+	admin = db.Column(db.Boolean, default=False)
+	superadmin = db.Column(db.Boolean, default=False)
+	google_token = db.Column(EncryptedType(db.String, flask_secret_key))
+	authenticated = db.Column(db.Boolean, default=False)
+	surveys = db.relationship("Survey", backref='user', lazy='dynamic')
+	triggers = db.relationship("Trigger", backref='user', lazy='dynamic')
+	responses = db.relationship("QuestionResponse", backref='user', lazy='dynamic')
+	patients = db.relationship("Patient", backref='user', lazy='dynamic')
+	comments = db.relationship("Comment", backref='user', lazy='dynamic',cascade="all, delete-orphan")
 
-    def is_active(self):
-        return self.active
+	def is_active(self):
+	    return self.active
 
-    def get_id(self):
-        """Return the id to satisfy Flask-Login's requirements."""
-        return self.id
+	def get_id(self):
+	    """Return the id to satisfy Flask-Login's requirements."""
+	    return self.id
 
-    def is_authenticated(self):
-        """Return True if the user is authenticated."""
-        return self.authenticated
+	def is_authenticated(self):
+	    """Return True if the user is authenticated."""
+	    return self.authenticated
 
-    def is_anonymous(self):
-        """False, as anonymous users aren't supported."""
-        return False
+	def is_anonymous(self):
+	    """False, as anonymous users aren't supported."""
+	    return False
 
-    def hash_password(self, password):
-        self.password_hash = pwd_context.encrypt(password)
+	def hash_password(self, password):
+	    self.password_hash = pwd_context.encrypt(password)
 
-    def verify_password(self, password):
-        return pwd_context.verify(password, self.password_hash)
+	def verify_password(self, password):
+	    return pwd_context.verify(password, self.password_hash)
+
+	def to_dict(self):
+		return {col.name: getattr(self, col.name) for col in self.__table__.columns}
 
 class Patient(db.Model):
 	'''A patient record capable of taking surveys'''
@@ -302,9 +330,13 @@ class Patient(db.Model):
 	location = db.Column(ChoiceType(LOCATION_CHOICES))
 	program = db.Column(ChoiceType(PROGRAM_CHOICES))
 	user_id = db.Column(db.Integer, db.ForeignKey('user.id'))
-	surveys = db.relationship("SurveyResponse", lazy="dynamic", cascade="all, delete-orphan")
+	surveys = db.relationship("SurveyResponse", backref='patient', lazy="dynamic", cascade="all, delete-orphan")
 	responses = db.relationship("QuestionResponse", backref='patient', lazy='dynamic', cascade="all, delete-orphan")
 	progress = db.relationship("Progress", backref='patient', lazy='dynamic', cascade="all, delete-orphan")
+	creation_time = db.Column(db.DateTime, default=func.now())
+
+	def to_dict(self):
+		return {col.name: getattr(self, col.name) for col in self.__table__.columns}
 
 class Device(db.Model):
 
@@ -312,6 +344,10 @@ class Device(db.Model):
 
 	id = db.Column(db.Integer, primary_key=True)
 	device_id = db.Column(EncryptedType(db.String, flask_secret_key))
+	creation_time = db.Column(db.DateTime, default=func.now())
 
 	def __init__(self,device_id):
 		self.device_id = device_id
+
+	def to_dict(self):
+		return {col.name: getattr(self, col.name) for col in self.__table__.columns}

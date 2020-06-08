@@ -1,0 +1,94 @@
+{% extends "layout.html" %}
+{% block title %}Patient Detail | Suretify {% endblock %}
+{% block body %}
+	<div class="header">
+	    <table class="table table-responsive">
+	    	<tbody>
+	    		<tr>
+	    			<td>Device ID:</td><td> {{ fmt_id(patient.mrn) }}</td>
+	    		</tr>
+	    		<tr>
+					<td>Name:</td><td>{{patient.fullname}}</td>
+					</tr>
+	    		<tr>
+					<td>Phone:</td><td>{{patient.phone}}</td>
+					</tr>
+	    		<tr>
+					<td>E-mail</td><td>{{patient.email}}</td>
+					</tr>
+	    		
+	    		<tr>
+					<td>Program:</td><td>{{patient.program}}</td>
+				</tr>
+					<td>Location:</td><td>{{patient.location}}</td>
+					</tr>
+
+	    		
+	    		</tbody>
+	    	</table>
+	</div>
+	<div class="panel panel-self panel-default">
+		<div class="panel-body-self">
+                	{% for time, type, response in patients_feed %}
+                		{% if type=="patient" %}
+                        <span class="chat-img pull-left">
+                            <i class="fa fa-user"></i>
+                        </span>
+                        <div class="chat-body clearfix">
+                            <div class="header">
+                                <strong class="primary-font" style="font-size:18px">You <span style="color: grey; font-size:14px">{% if response.completed %} completed {%else%} started {%endif%} a survey</span></strong><br>
+                                	<small>
+	                                    <i class="fa fa-clock-o fa-fw"></i>{{momentjs(time).format('LLLL')}}
+	                                </small>
+                                </div>
+								<div class="card sr-container">
+									<div class="card-body">
+										<h5 class="card-title">{{response.survey.title}}</h5>
+									</div>
+			                            	<ul class="list-group list-group flush">
+			                                {% for q in response.responses %}
+			                            		<li>{{q.question.body}}
+			                            			{% if q.response is iterable and q.response is not string %}
+			                            				{% for rr in q.response %}
+			                            					<ul><li><strong>{{q.response}}</strong></li></ul>
+			                            				{% endfor %}
+			                            			{% else %}
+			                            				<ul><li><strong>{{q.response}}</strong></li></ul>
+			                            			{% endif %}
+			                            		</li>
+			                        		{% endfor %}
+			                        		{% if response.responses | length == 0 %}
+			                        			<i>No responses submitted</i>
+			                        			{% endif %}
+			                            	</ul>
+			                            <div class="card-body">
+			                            {% if response.completed %}
+			                        		<a href="{{url_for('complete_survey',session_id=response.session_id)}}" class="card-link">Completion record</a>
+			                        	{% else %}
+			                        		<a href="#" class="card-link" disabled>No completion record found</a>
+			                        	{% endif %}
+                            		</div>
+	                        </div>
+	                    {% elif type=="comment" %}
+	                    {% set commenter = response.user %}
+	                    <li class="left clearfix">
+                        <span class="chat-img pull-left">
+                            <i class="fa fa-comment" style="color:#f0ad4e"></i>
+                        </span>
+                        <div class="chat-body clearfix">
+                            <div class="header" >
+                                <strong class="primary-font" style="font-size:18px; color:#f0ad4e">{{commenter.username}} <span style="font-size:14px">commented</span></strong>
+                                <small class="pull-right text-muted">
+                                    <i class="fa fa-clock-o fa-fw"></i>{{momentjs(time).calendar()}}<a href="/comment/delete/{{response.id}}" class="btn btn-xs btn-secondary">Delete</a>
+                                </small>
+                            </div>
+                            <p style="font-weight: normal;">
+                            	{{response.body}}
+                            </p>
+	                        </div>
+	                    
+	                    {% endif %}
+	                {% endfor %}
+                
+        </div></div></div></div>
+{% endblock %}

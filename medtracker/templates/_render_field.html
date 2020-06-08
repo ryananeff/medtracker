@@ -1,0 +1,64 @@
+{% macro render_field(field) -%}
+<fieldset class="form-group">
+{% if field.type in ['CSRFTokenField', 'HiddenField'] %}
+  {{ field() }}
+{% else %}
+      {% if field.type == "RadioField" %}
+      
+      {% if field.errors or field.help_text %}
+        <span class="help-inline">
+        {% if field.errors %}
+          {{ field.errors|join(' ') }}
+        {% else %}
+          {{ field.help_text }}
+        {% endif %}
+        </span> 
+      {% endif %}
+    		{% for item in field %}
+    		<div class="radio">
+    			<label for="{{item.id}}">{{item.label.text|safe}}</label>
+          {% if field.default == item._value() %}
+          {{item(class="form-control",checked=True)}}
+          {% else %}
+          {{item(class="form-control",checked=False)}}
+          {% endif %}
+    		</div>
+		  {% endfor %}
+      {% elif field.type == "IntegerRangeField" %}
+      {% if field.errors or field.help_text %}
+        <span class="help-inline">
+        {% if field.errors %}
+          {{ field.errors|join(' ') }}
+        {% else %}
+          {{ field.help_text }}
+        {% endif %}
+        </span> 
+      {% endif %}
+        {{ field(class="form-control", min = 1, max=9,**{"list":"responselist","height":"50px"}) }}
+        <datalist id="responselist">
+          <option label="None">1</option>
+          <option label=" ">2</option>
+          <option label="Mild">3</option>
+          <option label=" ">4</option>
+          <option label="Moderate">5</option>
+          <option label=" ">6</option>
+          <option label="Severe">7</option>
+          <option label=" ">8</option>
+          <option label="Extreme">9</option>
+        </datalist>
+ 
+    {% else %}
+		{{ field(class="form-control",**{"placeholder":field.label.text}) }}
+      {% endif %}
+      {% if field.errors or field.help_text %}
+        <span class="help-inline">
+        {% if field.errors %}
+          {{ field.errors|join(' ') }}
+        {% else %}
+          {{ field.help_text }}
+        {% endif %}
+        </span>	
+      {% endif %}
+{% endif %}
+</fieldset>
+{% endmacro %}
