@@ -1,0 +1,48 @@
+{% extends "layout_sidebar.html" %}
+{% block title %}Dashboard | Suretify{% endblock %}
+{% block headscripts %}<script src="https://cdn.plot.ly/plotly-latest.min.js"></script>{% endblock%}
+{% block body %}
+	    <div class="page-header">
+		    <h2><span style="color: grey;">{{current_user.username}} /</span> Dashboard</h2>
+	    </div>
+	    <div class="row">
+	    	<div class="col-sm-3">
+	    		<div class="card text-center">
+	    			<div class="card-body">
+	    				<h1 class="card-title">{{device_count}}</h1>
+	    				<h5 class="card-subtitle">Total Devices</h5>
+	    			</div>
+	    		</div>
+	    	</div>
+	    	<div class="col-sm-3">
+	    		<div class="card text-center">
+	    			<div class="card-body">
+	    				<h1 class="card-title">{{patient_count}}</h1>
+	    				<h5 class="card-subtitle">Registered Students</h5>
+	    			</div>
+	    		</div>
+	    	</div>
+	    	<div class="col-sm-3">
+	    		<div class="card text-center">
+	    			<div class="card-body">
+	    				<h1 class="card-title">{{today_count}} ({{today_pct|round(0)}}%)</h1>
+	    				<h5 class="card-subtitle">Screenings Today</h5>
+	    			</div>
+	    		</div>
+	    	</div>
+	    	<div class="col-sm-3">
+	    		<div class="card text-center">
+	    			<div class="card-body">
+	    				<h1 class="card-title">{{week_count}} ({{week_pct}}%)</h1>
+	    				<h5 class="card-subtitle">Screenings Last Week</h5>
+	    			</div>
+	    		</div>
+	    	</div>
+	    </div>
+	    <div class="row">
+		    <div class="col-sm-4">{{fig1|safe}}</div>
+		    <div class="col-sm-4">{{fig2|safe}}</div>
+		    <div class="col-sm-4">{{fig3|safe}}</div>
+	    </div>
+		
+{% endblock %}

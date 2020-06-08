@@ -1,0 +1,24 @@
+{% extends "layout.html" %}
+{% block title %}Start: {{survey.title}} | Suretify{% endblock %}
+{% block body %}
+	    <div class="jumbotron survey-question">
+		<div class="row">
+		<h2>{{survey.title}}</h2>
+	    {% if survey.description %}
+			<h3 style="color:gray">{{survey.description_html | safe}}</h3>
+		{% endif %}
+		</div>
+			{% include 'form_survey.html' %}
+			<div class="row">
+			<a href="/surveys/serve/{{survey.id}}?u={{u}}&s={{s}}" class="btn btn-lg btn-primary" onclick='document.getElementById("serveSurvey").submit();'>Begin Survey</a>
+		</div>
+			<div class="row" style="padding-top:20px">
+		    <a href="/surveys">Go back</a>
+			</div>
+		</div>
+	    
+		
+	    
+	    </div>
+    </div><!-- /.container -->
+{% endblock %}

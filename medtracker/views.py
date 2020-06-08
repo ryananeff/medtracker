@@ -4,6 +4,15 @@ from medtracker.forms import *
 from medtracker.email_helper import send_email
 from medtracker.triggers import *
 
+import matplotlib as mpl
+import matplotlib.cm as cm
+import matplotlib.dates as mdates
+from plotly import offline
+import pandas as pd
+import numpy as np
+import datetime
+import plotly.graph_objects as go
+
 image_staticdir = 'assets/uploads/'
 
 def randomword(length):
@@ -352,7 +361,7 @@ def complete_survey(session_id):
 	if record==None:
 		return "Completion record not found.",404
 	survey = record.survey
-	if current_user.is_authenticated():
+	if current_user.is_authenticated:
 		if record.completed:
 			patient = record.patient
 			end_time = record.end_time.replace(tzinfo=pytz.utc).astimezone(pytz.timezone('America/New_York'))
@@ -745,3 +754,139 @@ def remove_comment(_id):
     db_session.commit()
     flash('Comment removed.')
     return redirect(url_for('view_patient', id=patient_id))
+
+@app.route("/test",methods=["GET"])
+def test_plotly():
+	patients = models.Patient.query.all()
+	devices = models.Device.query.all()
+
+	def model_to_pd(model):
+	    res = [r.to_dict() for r in model.query.all()]
+	    return pd.DataFrame(res)
+
+	sres = []
+	for p in patients:
+	    sr = [s.to_dict() for s in p.surveys.all()]
+	    sres.extend(sr)
+
+	sres = pd.DataFrame(sres)
+	sres["date"] = sres.end_time.dt.floor('d')
+	sres = sres.groupby(["date","uniq_id"]).first()
+	sres = sres.reset_index()
+
+	devs = pts = model_to_pd(models.Device)
+	devs_per_day = pd.DataFrame(devs.groupby([devs.creation_time.dt.floor("d")])["creation_time"].count())
+	devs_per_day.columns = ["daily_new_devices"]
+	pts = model_to_pd(models.Patient)
+	pts_per_day = pd.DataFrame(pts.groupby([pts.creation_time.dt.floor("d")])["creation_time"].count())
+	pts_per_day.columns = ["daily_registered_students"]
+	res_per_day = pd.DataFrame(sres.groupby([sres.end_time.dt.floor('d')])["end_time"].count())
+	res_per_day.columns = ["daily_completed_surveys"]
+	df = pd.merge(pts_per_day,res_per_day,left_index=True,right_index=True,how="outer")
+	df = pd.merge(df,devs_per_day,left_index=True,right_index=True,how="outer")
+	begin_time = datetime.datetime.utcnow().date() - datetime.timedelta(days=14)
+	df = df.reindex(pd.date_range(begin_time, datetime.datetime.utcnow().date())).fillna(0).astype(int)
+	df["total_registered_students"] = df["daily_registered_students"].cumsum()
+	df["total_completed_surveys"] = df["daily_registered_students"].cumsum()
+	df["total_devices"] = df["daily_new_devices"].cumsum()
+	df.reset_index(inplace=True)
+	df = df.sort_values(by="index",ascending=True)
+	df["index"] = [datetime.datetime.strftime(a,"%D") for a in df["index"]]
+	fig1 = plotlyBarplot(data=df,x="index",y="total_devices",width=400,height=300,title="Total Devices Seen")
+	fig2 = plotlyBarplot(data=df,x="index",y="total_registered_students",width=400,height=300,title="Total Registered Students")
+	df["daily_uncompleted_surveys"] = df["total_registered_students"] - df["daily_completed_surveys"]
+	df["daily_pct"] = df["daily_completed_surveys"]/df["total_registered_students"]*100
+	df2 = df.loc[:,["index","daily_uncompleted_surveys","daily_completed_surveys"]]
+	df2.columns = ["index","Not Completed","Completed"]
+	df3 = df2.melt(id_vars="index")
+	fig3 = plotlyBarplot(data=df3,x="index",y="value",hue="variable",width=400,height=300, title="Screening Status",stacked=True)
+	fig1 = offline.plot(fig1,show_link=False, output_type="div", include_plotlyjs=False)
+	fig2 = offline.plot(fig2,show_link=False, output_type="div", include_plotlyjs=False)
+	fig3 = offline.plot(fig3,show_link=False, output_type="div", include_plotlyjs=False)
+	patient_count = len(patients)
+	device_count = len(devices)
+	today_count = list(df["daily_completed_surveys"])[-1]
+	today_pct = list(df["daily_pct"])[-1]
+	week_count = sum(list(df["daily_completed_surveys"])[-7:])
+	week_pct = sum(list(df["daily_completed_surveys"])[-7:])/sum(list(df["total_registered_students"])[-7:])*100
+	return render_template("dashboard.html",fig1=fig1,fig2=fig2,fig3=fig3,patient_count=patient_count,device_count=device_count,
+	                       today_count=today_count, today_pct=today_pct, week_count=week_count, week_pct=week_pct)
+
+def plotlyBarplot(x=None,y=None,hue=None,data=None,ylabel="",xlabel="",title="",
+                    width=600,height=400,colors=["rgba"+str(i) for i in cm.get_cmap("Dark2").colors],
+                    stacked=False,percent=False,ordered=False):
+    yaxis=go.layout.YAxis(
+            title=ylabel,
+            automargin=True,
+            titlefont=dict(size=12),
+        )
+
+    xaxis=go.layout.XAxis(
+            title=xlabel,
+            automargin=True,
+            titlefont=dict(size=12),
+            type='category'
+        )
+
+    layout = go.Layout(
+        autosize=True,
+        width=width,
+        height=height,
+        yaxis=yaxis,
+        xaxis=xaxis
+    )
+    titledict= {'text': title,
+            'y':0.9,
+            'x':0.5,
+            'xanchor': 'center',
+            'yanchor': 'top'}
+
+    fig = go.Figure(layout=layout)
+    ylab = y
+    xlab = x
+    
+    ix = 0
+    if hue != None:
+        data = data[[type(i)!=float for i in data[hue]]]
+        if percent:
+            totalcounts = data.groupby(xlab).sum()[ylab]
+        for hue,group in data.groupby(hue):
+            counts = group.groupby(xlab).sum()[ylab]
+            if percent:
+                counts = round(counts/totalcounts.loc[counts.index,]*100,1)
+            x = [str(i) for i in counts.index]
+            y = counts.values
+            trace = go.Bar(x=x,y=y,
+                           text=y,
+                           textposition='auto',
+                           orientation='v',
+                         marker=dict(color=colors[ix]),
+                         name="%s"%(hue))
+            ix += 1
+            fig.add_trace(trace)
+    else:
+        counts = data.groupby(xlab).sum()[ylab]
+        x = [str(i) for i in counts.index]
+        y = counts.values
+        trace = go.Bar(x=x,y=y,
+                       text=y,
+                       textposition='auto',
+                       orientation='v',
+                     marker=dict(color=colors[ix]),
+                     name="%s"%(ylabel))
+        ix += 1
+        fig.add_trace(trace)
+    fig.update_layout(title=titledict)
+    if ordered:
+        if stacked:
+            if percent==False:
+                fig.update_layout(barmode='stack',xaxis={'categoryorder':'total ascending'})
+            else:
+                fig.update_layout(barmode='stack',xaxis={'categoryorder':'category descending'})
+        else:
+            fig.update_layout(xaxis={'categoryorder':'total ascending'})
+    else:
+        if stacked:
+            fig.update_layout(barmode='stack')
+    fig.update_layout(margin=dict(l=10, r=10, t=60, b=10,pad=0),showlegend=False)
+    return fig
