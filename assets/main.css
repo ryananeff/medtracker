@@ -382,3 +382,7 @@ form tr {
   max-width: 100%;
     width: 344px;
   }
+
+.card-auto{
+  width:auto;
+}
