@@ -73,9 +73,11 @@
                 <li><a href="/logout">Log out</a></li>
               </ul>
               {% else %}
-              <li class="inactive"><a href="#">Products</a></li>
+              {% if g.patient != None %}
+                <li class="inactive"><a href="/patients/self">Your Records</a></li>
+              {% endif %}
+              <li class="inactive"><a href="/patients/signup/1">COVID-19 Screening Tool</a></li>
               <li class="inactive"><a href="/about">About</a></li>
-              <li class="inactive"><a href="#">Contact</a></li>
               <li class="dropdown">
         	    <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-haspopup="true" aria-expanded="false">Login<span class="caret"></span></a>
         	    <ul class="dropdown-menu">
