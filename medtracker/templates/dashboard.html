@@ -6,7 +6,7 @@
 		    <h2><span style="color: grey;">{{current_user.username}} /</span> Dashboard</h2>
 	    </div>
 	    <div class="row">
-	    	<div class="col-sm-3">
+	    	<div class="col-md-3" style="min-width:300px">
 	    		<div class="card card-auto text-center">
 	    			<div class="card-body">
 	    				<h1 class="card-title">{{device_count}}</h1>
@@ -14,7 +14,7 @@
 	    			</div>
 	    		</div>
 	    	</div>
-	    	<div class="col-sm-3">
+	    	<div class="col-md-3" style="min-width:300px">
 	    		<div class="card card-auto text-center">
 	    			<div class="card-body">
 	    				<h1 class="card-title">{{patient_count}}</h1>
@@ -22,7 +22,7 @@
 	    			</div>
 	    		</div>
 	    	</div>
-	    	<div class="col-sm-3">
+	    	<div class="col-md-3" style="min-width:300px">
 	    		<div class="card card-auto text-center">
 	    			<div class="card-body">
 	    				<h1 class="card-title">{{today_count}} ({{today_pct|round(0)}}%)</h1>
@@ -30,7 +30,7 @@
 	    			</div>
 	    		</div>
 	    	</div>
-	    	<div class="col-sm-3">
+	    	<div class="col-md-3" style="min-width:300px">
 	    		<div class="card card-auto text-center">
 	    			<div class="card-body">
 	    				<h1 class="card-title">{{week_count}} ({{week_pct}}%)</h1>
@@ -39,10 +39,10 @@
 	    		</div>
 	    	</div>
 	    </div>
-	    <div class="row">
-		    <div class="col-sm-4">{{fig1|safe}}</div>
-		    <div class="col-sm-4">{{fig2|safe}}</div>
-		    <div class="col-sm-4">{{fig3|safe}}</div>
+	    <div class="row justify-content-md-center">
+		    <div class="col-lg-4" style="min-width:400px">{{fig1|safe}}</div>
+		    <div class="col-lg-4" style="min-width:400px">{{fig2|safe}}</div>
+		    <div class="col-lg-4" style="min-width:400px">{{fig3|safe}}</div>
 	    </div>
 		
 {% endblock %}
