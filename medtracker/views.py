@@ -756,6 +756,7 @@ def remove_comment(_id):
     return redirect(url_for('view_patient', id=patient_id))
 
 @app.route("/test",methods=["GET"])
+@flask_login.login_required
 def test_plotly():
 	patients = models.Patient.query.all()
 	devices = models.Device.query.all()
@@ -784,8 +785,8 @@ def test_plotly():
 	res_per_day.columns = ["daily_completed_surveys"]
 	df = pd.merge(pts_per_day,res_per_day,left_index=True,right_index=True,how="outer")
 	df = pd.merge(df,devs_per_day,left_index=True,right_index=True,how="outer")
-	begin_time = datetime.datetime.utcnow().date() - datetime.timedelta(days=14)
-	df = df.reindex(pd.date_range(begin_time, datetime.datetime.utcnow().date())).fillna(0).astype(int)
+	begin_time = datetime.datetime.now().date() - datetime.timedelta(days=14)
+	df = df.reindex(pd.date_range(begin_time, datetime.datetime.now().date())).fillna(0).astype(int)
 	df["total_registered_students"] = df["daily_registered_students"].cumsum()
 	df["total_completed_surveys"] = df["daily_registered_students"].cumsum()
 	df["total_devices"] = df["daily_new_devices"].cumsum()
