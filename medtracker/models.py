@@ -216,7 +216,13 @@ class QuestionResponse(db.Model):
 		self.time = datetime.datetime.utcnow()
 
 	def to_dict(self):
-		return {col.name: getattr(self, col.name) for col in self.__table__.columns}
+		outdict = {col.name: getattr(self, col.name) for col in self.__table__.columns}
+		outdict["question_title"] = self._question.body
+		outdict["question_choices"] = self._question.choices
+		outdict["question_type"] = self._question.kind.code
+		outdict["survey_title"] = self._question.survey.title
+		outdict["survey_id"] = self._question.survey.id
+		return outdict
 
 class SurveyResponse(db.Model):
 	__tablename__ = 'survey_response'

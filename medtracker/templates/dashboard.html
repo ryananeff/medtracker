@@ -3,7 +3,7 @@
 {% block headscripts %}<script src="https://cdn.plot.ly/plotly-latest.min.js"></script>{% endblock%}
 {% block body %}
 	    <div class="page-header">
-		    <h2><span style="color: grey;">{{current_user.username}} /</span> Dashboard</h2>
+		    <h2><span style="color: grey;">{{survey.title}} /</span> Dashboard</h2>
 	    </div>
 	    <div class="row">
 	    	<div class="col-md-3" style="min-width:300px">
@@ -40,9 +40,15 @@
 	    	</div>
 	    </div>
 	    <div class="row justify-content-md-center">
-		    <div class="col-lg-4" style="min-width:400px">{{fig1|safe}}</div>
-		    <div class="col-lg-4" style="min-width:400px">{{fig2|safe}}</div>
-		    <div class="col-lg-4" style="min-width:400px">{{fig3|safe}}</div>
+	    	{% for fig in dash_figs %}
+		    <div class="col-lg-4" style="min-width:400px">{{fig|safe}}</div>
+		    {% endfor %}
+	    </div>
+	    <h3>Survey Responses</h3>
+	    <div class="row justify-content-md-center">
+	    	{% for fig in question_figs %}
+		    <div class="col-lg-4" style="min-width:400px">{{fig|safe}}</div>
+		    {% endfor %}
 	    </div>
 		
 {% endblock %}

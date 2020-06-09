@@ -12,6 +12,7 @@ import pandas as pd
 import numpy as np
 import datetime
 import plotly.graph_objects as go
+import ast
 
 image_staticdir = 'assets/uploads/'
 
@@ -576,7 +577,7 @@ def delete_patient(id):
 def patient_survey_selector(id):
 	'''GUI: serve the survey select page for a patient'''
 	patient = Patient.query.get_or_404(id)
-	surveys = patient.user.surveys
+	surveys = Patient.user.surveys
 	for s in surveys:
 		try:
 			s.description_html = delta_html.render(json.loads(s.description)["ops"])
@@ -755,11 +756,17 @@ def remove_comment(_id):
     flash('Comment removed.')
     return redirect(url_for('view_patient', id=patient_id))
 
-@app.route("/test",methods=["GET"])
+@app.route("/surveys/<int:survey_id>/responses/dashboard",methods=["GET"])
 @flask_login.login_required
-def test_plotly():
+def survey_response_dashboard(survey_id):
+	survey = models.Survey.query.get_or_404(survey_id)
+	sr = survey.responses
 	patients = models.Patient.query.all()
 	devices = models.Device.query.all()
+	responses = []
+	dash_figs = []
+	question_figs = []
+	for sre in sr: responses.extend([r.to_dict() for r in sre.responses])
 
 	def model_to_pd(model):
 	    res = [r.to_dict() for r in model.query.all()]
@@ -800,22 +807,46 @@ def test_plotly():
 	df2 = df.loc[:,["index","daily_uncompleted_surveys","daily_completed_surveys"]]
 	df2.columns = ["index","Not Completed","Completed"]
 	df3 = df2.melt(id_vars="index")
-	fig3 = plotlyBarplot(data=df3,x="index",y="value",hue="variable",width=400,height=300, title="Screening Status",stacked=True)
-	fig1 = offline.plot(fig1,show_link=False, output_type="div", include_plotlyjs=False)
-	fig2 = offline.plot(fig2,show_link=False, output_type="div", include_plotlyjs=False)
-	fig3 = offline.plot(fig3,show_link=False, output_type="div", include_plotlyjs=False)
+	fig3 = plotlyBarplot(data=df3,x="index",y="value",hue="variable",width=400,height=300, title="Screening Status",stacked=True,show_legend=False)
+	
+	dash_figs = [fig1,fig2,fig3]
+
 	patient_count = len(patients)
 	device_count = len(devices)
 	today_count = list(df["daily_completed_surveys"])[-1]
 	today_pct = list(df["daily_pct"])[-1]
 	week_count = sum(list(df["daily_completed_surveys"])[-7:])
 	week_pct = sum(list(df["daily_completed_surveys"])[-7:])/sum(list(df["total_registered_students"])[-7:])*100
-	return render_template("dashboard.html",fig1=fig1,fig2=fig2,fig3=fig3,patient_count=patient_count,device_count=device_count,
-	                       today_count=today_count, today_pct=today_pct, week_count=week_count, week_pct=week_pct)
+
+	qres = pd.DataFrame(responses)
+	qres["date"] = qres.time.dt.floor('d')
+	qres = qres.groupby(["date","question_id","uniq_id"]).first()
+	qres = qres.reset_index()
+	
+	question_ids = [q.id for q in survey.questions()]
+
+	for q in question_ids:
+		g = qres[qres["question_id"]==q]
+		title = list(g.question_title)[0]
+		choices = list(g.question_choices)[0]
+		choices = ast.literal_eval(choices) if choices != "" else {}
+		kind = list(g.question_type)[0]
+		xtype = "category" if kind in ("select","radio") else None
+		pltdict = {v:0 for ix,v in choices.items()}
+		pltdict.update(g.groupby("response").count()["question_id"].to_dict())
+		df = pd.DataFrame(pltdict,index=["value"]).T.reset_index()
+		fig = plotlyBarplot(data=df,x="index",y="value",xtype=xtype,width=400,height=400,title=title)
+		question_figs.append(fig)
+	for ix,fig in enumerate(dash_figs):
+		dash_figs[ix] = offline.plot(fig,show_link=False, output_type="div", include_plotlyjs=False)
+	for ix,fig in enumerate(question_figs):
+		question_figs[ix] = offline.plot(fig,show_link=False, output_type="div", include_plotlyjs=False)
+	return render_template("dashboard.html",dash_figs = dash_figs, question_figs = question_figs,patient_count=patient_count,device_count=device_count,
+	                       today_count=today_count, today_pct=today_pct, week_count=week_count, week_pct=week_pct, survey=survey)
 
 def plotlyBarplot(x=None,y=None,hue=None,data=None,ylabel="",xlabel="",title="",
                     width=600,height=400,colors=["rgba"+str(i) for i in cm.get_cmap("Dark2").colors],
-                    stacked=False,percent=False,ordered=False):
+                    stacked=False,percent=False,ordered=False, xtype="category",grouped=False,show_legend=False):
     yaxis=go.layout.YAxis(
             title=ylabel,
             automargin=True,
@@ -826,7 +857,7 @@ def plotlyBarplot(x=None,y=None,hue=None,data=None,ylabel="",xlabel="",title="",
             title=xlabel,
             automargin=True,
             titlefont=dict(size=12),
-            type='category'
+            type=xtype
         )
 
     layout = go.Layout(
@@ -843,6 +874,7 @@ def plotlyBarplot(x=None,y=None,hue=None,data=None,ylabel="",xlabel="",title="",
             'yanchor': 'top'}
 
     fig = go.Figure(layout=layout)
+    fig.update_layout(xaxis_type = xtype)
     ylab = y
     xlab = x
     
@@ -866,8 +898,12 @@ def plotlyBarplot(x=None,y=None,hue=None,data=None,ylabel="",xlabel="",title="",
             ix += 1
             fig.add_trace(trace)
     else:
-        counts = data.groupby(xlab).sum()[ylab]
-        x = [str(i) for i in counts.index]
+        if grouped:
+            counts = data.groupby(xlab).sum()[ylab]
+            x = [str(i) for i in counts.index]
+        else:
+            counts = data[ylab]
+            x = [str(i) for i in data[xlab]]
         y = counts.values
         trace = go.Bar(x=x,y=y,
                        text=y,
@@ -889,5 +925,5 @@ def plotlyBarplot(x=None,y=None,hue=None,data=None,ylabel="",xlabel="",title="",
     else:
         if stacked:
             fig.update_layout(barmode='stack')
-    fig.update_layout(margin=dict(l=10, r=10, t=60, b=10,pad=0),showlegend=False)
+    fig.update_layout(showlegend=show_legend)
     return fig
