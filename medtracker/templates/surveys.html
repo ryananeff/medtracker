@@ -8,13 +8,13 @@
 	    <div class="row">
 		{% for survey in surveys %}
 			<div class="card card--medium col-xs-4">
-			  <h2 class="card__title"><a href="/surveys/view/{{ survey.id }}">{{ survey.title }}</a></h2>
+			  <h2 class="card__title"><a href="/surveys/{{ survey.id }}/responses/dashboard">{{ survey.title }}</a></h2>
 			  <span class="card__subtitle">(ID: {{survey.id}})</span>
 			  <div class="card__text">{{ survey.description_html | safe }}</div></p>
 			  <div class="card__action-bar">
-				<button class="card__button"><a href="/surveys/start/{{ survey.id }}">BEGIN</a></button>
+				<button class="card__button"><a href="/surveys/view/{{ survey.id }}">QUESTIONS</a></button>
 				<button class="card__button"><a href="/surveys/edit/{{ survey.id }}">PROPERTIES</a></button>
-				<button class="card__button"><a href="/surveys/delete/{{ survey.id }}" style="color:red">DELETE</a></button>
+				<button class="card__button"><a href="/surveys/delete/{{ survey.id }}" style="color:red" onclick="return confirm('Are you sure?')">DELETE</a></button>
 			  </div>
 			</div>		
 		{% endfor %}
