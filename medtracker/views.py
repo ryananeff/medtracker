@@ -106,8 +106,6 @@ def login():					# not logged-in callback
 			return redirect(url_for('index'))
 		else:
 			return redirect(url_for('login'))
-	else:
-	    flash("Validation error in form.")
 	return render_template('form_login.html', form=form, action="Please log in", data_type="")
 
 @app.route('/logout')
