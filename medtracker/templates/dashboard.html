@@ -44,9 +44,15 @@
 		    <div class="col-lg-4" style="min-width:400px">{{fig|safe}}</div>
 		    {% endfor %}
 	    </div>
-	    <h3>Survey Responses</h3>
+	    <h3>Survey Responses (today)</h3>
 	    <div class="row justify-content-md-center">
 	    	{% for fig in question_figs %}
+		    <div class="col-lg-4" style="min-width:400px">{{fig|safe}}</div>
+		    {% endfor %}
+	    </div>
+	    <h3>Survey Responses (last 7 days)</h3>
+	    <div class="row justify-content-md-center">
+	    	{% for fig in last7_figs %}
 		    <div class="col-lg-4" style="min-width:400px">{{fig|safe}}</div>
 		    {% endfor %}
 	    </div>
