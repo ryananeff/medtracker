@@ -11,7 +11,7 @@ cssutils==1.0.2
 cycler==0.10.0
 Cython==0.29.20
 diff-match-patch==20181111
-Flask==0.12.2
+Flask==1.0
 Flask-Login==0.4.1
 Flask-Mail==0.9.1
 Flask-QRcode==3.0.0
