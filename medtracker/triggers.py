@@ -26,7 +26,7 @@ def run_trigger(question, response, from_type = None, session_id = None, current
 			criteria = trigger.criteria.lower().strip().encode()
 			callback = Survey.query.filter_by(id=trigger.after_function).first()
 
-			print("To evaluate: " + response.response)
+			print("To evaluate: " + ";".join(response.response))
 			# this code checks the criteria to see if it evaluates to true or false
 			if criteria != 'any':
 				print("Criteria is not any")
