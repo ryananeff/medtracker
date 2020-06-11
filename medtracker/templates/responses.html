@@ -25,13 +25,13 @@
 			  <td>{{response.question.body}}</td>
 			<td>
 			{% if "YES" in response.question.kind|string %}
-				Responded with {% if response.response == '1' %}YES{% else %}NO{% endif %}
+				Responded with {% if response._response == '1' %}YES{% else %}NO{% endif %}
 			{% elif "10" in response.question.kind|string %}
-				Responded with {{response.response}} out of 10
-			{% elif "/assets/audio/" in response.response %}
-				<audio controls preload="none" style="width:200px"><source src="{{response.response}}"></audio>
+				Responded with {{response._response}} out of 10
+			{% elif "/assets/audio/" in response._response %}
+				<audio controls preload="none" style="width:200px"><source src="{{response._response}}"></audio>
 			{% else %}
-			Responded with "{{response.response}}"
+			Responded with "{{response._response}}"
 			{% endif %}
 			</td>
 			<td>

@@ -119,7 +119,7 @@
 			                            		<li>{{q.question.body}}
 			                            			{% if q.response is iterable and q.response is not string %}
 			                            				{% for rr in q.response %}
-			                            					<ul><li><strong>{{q.response}}</strong></li></ul>
+			                            					<ul><li><strong>{{rr}}</strong></li></ul>
 			                            				{% endfor %}
 			                            			{% else %}
 			                            				<ul><li><strong>{{q.response}}</strong></li></ul>
