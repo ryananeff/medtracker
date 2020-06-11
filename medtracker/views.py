@@ -760,13 +760,18 @@ def remove_comment(_id):
 @flask_login.login_required
 def survey_response_dashboard(survey_id):
 	survey = models.Survey.query.get_or_404(survey_id)
-	sr = survey.responses
+	
 	patients = models.Patient.query.all()
 	devices = models.Device.query.all()
-	responses = []
+	
 	dash_figs = []
 	question_figs = []
+	sr = survey.responses.filter(models.SurveyResponse.start_time > (datetime.datetime.now()).date()).all()
+	responses = []
 	for sre in sr: responses.extend([r.to_dict() for r in sre.responses])
+	sr = survey.responses.filter(models.SurveyResponse.start_time > (datetime.datetime.now()-datetime.timedelta(days=6)).date()).all()
+	responses_last7 = []
+	for sre in sr: responses_last7.extend([r.to_dict() for r in sre.responses])
 
 	def model_to_pd(model):
 	    res = [r.to_dict() for r in model.query.all()]
@@ -800,14 +805,14 @@ def survey_response_dashboard(survey_id):
 	df.reset_index(inplace=True)
 	df = df.sort_values(by="index",ascending=True)
 	df["index"] = [datetime.datetime.strftime(a,"%D") for a in df["index"]]
-	fig1 = plotlyBarplot(data=df,x="index",y="total_devices",width=400,height=300,title="Total Devices Seen")
-	fig2 = plotlyBarplot(data=df,x="index",y="total_registered_students",width=400,height=300,title="Total Registered Students")
+	fig1 = plotlyBarplot(data=df,x="index",y="total_devices",width=None, height=None,title="Total Devices Seen")
+	fig2 = plotlyBarplot(data=df,x="index",y="total_registered_students",width=None, height=None,title="Total Registered Students")
 	df["daily_uncompleted_surveys"] = df["total_registered_students"] - df["daily_completed_surveys"]
 	df["daily_pct"] = df["daily_completed_surveys"]/df["total_registered_students"]*100
 	df2 = df.loc[:,["index","daily_uncompleted_surveys","daily_completed_surveys"]]
 	df2.columns = ["index","Not Completed","Completed"]
 	df3 = df2.melt(id_vars="index")
-	fig3 = plotlyBarplot(data=df3,x="index",y="value",hue="variable",width=400,height=300, title="Screening Status",stacked=True,show_legend=False)
+	fig3 = plotlyBarplot(data=df3,x="index",y="value",hue="variable",width=None, height=None, title="Screening Status",stacked=True,show_legend=False)
 	
 	dash_figs = [fig1,fig2,fig3]
 
@@ -835,18 +840,49 @@ def survey_response_dashboard(survey_id):
 		pltdict = {v:0 for ix,v in choices.items()}
 		pltdict.update(g.groupby("response").count()["question_id"].to_dict())
 		df = pd.DataFrame(pltdict,index=["value"]).T.reset_index()
-		fig = plotlyBarplot(data=df,x="index",y="value",xtype=xtype,width=400,height=400,title=title)
+		fig = plotlyBarplot(data=df,x="index",y="value",xtype=xtype,width=None, height=None,title=title)
 		question_figs.append(fig)
+
+	last7_figs = []
+	qres = pd.DataFrame(responses_last7)
+	qres["date"] = qres.time.dt.floor('d')
+	qres = qres.groupby(["date","question_id","uniq_id"]).first()
+	qres = qres.reset_index()
+	e = [str(a.date()) for a in list(pd.date_range(datetime.datetime.now().date()-datetime.timedelta(days=7),datetime.datetime.now().date()))]
+
+	for n,g in qres.groupby("question_id"):
+	    title = list(g.question_title)[0]
+	    choices = list(g.question_choices)[0]
+	    choices = ast.literal_eval(choices) if choices != "" else {}
+	    kind = list(g.question_type)[0]
+	    xtype = "category"
+	    pltdf = g.loc[:,["date","response"]]
+	    pltdf["count"] = 1
+	    pltdf.sort_values("date",inplace=True)
+	    pltdf["date"] = pltdf["date"].astype(str)
+	    pltdf.set_index("date",inplace=True)
+	    for ix in e:
+	        if ix not in pltdf.index:
+	            pltdf.loc[ix] = [None,0]
+	    pltdf.sort_index(inplace=True)
+	    pltdf.reset_index(inplace=True)
+	    pltdf=pltdf.fillna(method="bfill")
+	    fig = plotlyBarplot(data=pltdf,x="date",y="count",hue="response",
+	                        xtype=xtype,grouped=True,ordered=False,stacked=True,order2=True,width=None,height=None,show_legend=True,title=title)
+	    last7_figs.append(fig)
+
 	for ix,fig in enumerate(dash_figs):
 		dash_figs[ix] = offline.plot(fig,show_link=False, output_type="div", include_plotlyjs=False)
 	for ix,fig in enumerate(question_figs):
 		question_figs[ix] = offline.plot(fig,show_link=False, output_type="div", include_plotlyjs=False)
-	return render_template("dashboard.html",dash_figs = dash_figs, question_figs = question_figs,patient_count=patient_count,device_count=device_count,
+	for ix,fig in enumerate(last7_figs):
+		last7_figs[ix] = offline.plot(fig,show_link=False, output_type="div", include_plotlyjs=False)
+	return render_template("dashboard.html",dash_figs = dash_figs, question_figs = question_figs,last7_figs=last7_figs,patient_count=patient_count,device_count=device_count,
 	                       today_count=today_count, today_pct=today_pct, week_count=week_count, week_pct=week_pct, survey=survey)
 
 def plotlyBarplot(x=None,y=None,hue=None,data=None,ylabel="",xlabel="",title="",
                     width=600,height=400,colors=["rgba"+str(i) for i in cm.get_cmap("Dark2").colors],
-                    stacked=False,percent=False,ordered=False, xtype="category",grouped=False,show_legend=False):
+                    stacked=False,percent=False,ordered=False,xtype="category",grouped=False,order2=False,show_legend=False):
     yaxis=go.layout.YAxis(
             title=ylabel,
             automargin=True,
@@ -879,8 +915,9 @@ def plotlyBarplot(x=None,y=None,hue=None,data=None,ylabel="",xlabel="",title="",
     xlab = x
     
     ix = 0
+    catorder = list(data.groupby(xlab).sum().index)
     if hue != None:
-        data = data[[type(i)!=float for i in data[hue]]]
+        #data = data[[type(i)!=float for i in data[hue]]]
         if percent:
             totalcounts = data.groupby(xlab).sum()[ylab]
         for hue,group in data.groupby(hue):
@@ -917,13 +954,15 @@ def plotlyBarplot(x=None,y=None,hue=None,data=None,ylabel="",xlabel="",title="",
     if ordered:
         if stacked:
             if percent==False:
-                fig.update_layout(barmode='stack',xaxis={'categoryorder':'total ascending'})
+                fig.update_layout(barmode='stack',xaxis={'categoryorder':'category ascending'})
             else:
-                fig.update_layout(barmode='stack',xaxis={'categoryorder':'category descending'})
+                fig.update_layout(barmode='stack',xaxis={'categoryorder':'category ascending'})
         else:
-            fig.update_layout(xaxis={'categoryorder':'total ascending'})
+            fig.update_layout(xaxis={'categoryorder':'category ascending'})
     else:
         if stacked:
             fig.update_layout(barmode='stack')
+    if order2:
+        fig.update_layout(xaxis={"categoryorder":"array","categoryarray":catorder})
     fig.update_layout(showlegend=show_legend)
     return fig

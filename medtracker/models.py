@@ -77,7 +77,7 @@ class Survey(db.Model):
 	user_id = db.Column(db.Integer, db.ForeignKey('user.id'))
 	read_public = db.Column(db.Boolean)
 	edit_public = db.Column(db.Boolean)
-	responses = db.relationship("SurveyResponse", backref='survey', cascade="all, delete-orphan")
+	responses = db.relationship("SurveyResponse", backref='survey', cascade="all, delete-orphan",lazy="dynamic")
 
 	def push(survey, question):
 		if survey.head==None:
@@ -202,7 +202,6 @@ class QuestionResponse(db.Model):
 	survey_response_id = db.Column(db.Integer, db.ForeignKey('survey_response.id'))
 	user_id = db.Column(db.Integer, db.ForeignKey('user.id'))
 	_question = db.relationship("Question", backref='_response')
-	parent_session = db.relationship("SurveyResponse",backref="responses")
 
 	def __str__(self):
 		return '%s' % self.response
@@ -234,6 +233,7 @@ class SurveyResponse(db.Model):
 	start_time = db.Column(db.DateTime)
 	end_time = db.Column(db.DateTime)
 	completed = db.Column(db.Boolean, default=False)
+	responses = db.relationship("QuestionResponse",backref="parent",lazy="dynamic", cascade="all,delete-orphan")
 
 	def __str__(self):
 		return '%s' % self.session_id
