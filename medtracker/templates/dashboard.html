@@ -25,7 +25,7 @@
 	    	<div class="col-md-3" style="min-width:300px">
 	    		<div class="card card-auto text-center">
 	    			<div class="card-body">
-	    				<h1 class="card-title">{{today_count}} ({{today_pct|round(0)}}%)</h1>
+	    				<h1 class="card-title">{{today_count}} ({{today_pct|round(1)}}%)</h1>
 	    				<h5 class="card-subtitle">Compliance Today</h5>
 	    			</div>
 	    		</div>
@@ -33,7 +33,7 @@
 	    	<div class="col-md-3" style="min-width:300px">
 	    		<div class="card card-auto text-center">
 	    			<div class="card-body">
-	    				<h1 class="card-title">{{week_count}} ({{week_pct}}%)</h1>
+	    				<h1 class="card-title">{{week_count}} ({{week_pct|round(1)}}%)</h1>
 	    				<h5 class="card-subtitle">Compliance Last 7 days</h5>
 	    			</div>
 	    		</div>
