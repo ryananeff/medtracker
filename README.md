@@ -1,9 +1,23 @@
 # Suretify
 <img src="https://github.com/nosarcasm/medtracker/blob/master/assets/images/suretify-logo.png?raw=true" height=100 />
 
-Discharge tracking app. No longer current as of July 2018.
+COVID-19 tracking app, and more!
 
-Notes:
+Recent News: 
+* Editing survey doesn't work (fixed)
+* Questions don't have body description text (fixed)
+* Questions don't have radio select or checkbox select (fixed!)
+* Question editor doesn't have an intuitive way to add options (fixed!)
+* Each survey session should be logged in a DB as a separate table (fixed!)
+* Questions should support a next and previous option like a doubly linked list (done!)
+* Can't reorder questions in a survey (fixed!)
+* Question description doesn't support HTML (fixed!)
+* Make student-facing version of the webpage that includes the auth mechanism we want (fixed)
+* Student-facing version should be able to be taken anonymously and have an on-boarding process (fixed)
+* Need to be able to generate some sort of code saying the person took the survey (fixed)
+* Survey/question view needs to be improved (fixed)
+
+Older News:
 * 2/10/2016: This is just a skeleton at the moment. It won't be able to run.
 * 3/25/2016: Runable skeleton with models made and index pages for views (but the controller needs to be built).
 * 4/10/2016: Runable demo with surveys, triggers, responses (but only survey data collection working).
