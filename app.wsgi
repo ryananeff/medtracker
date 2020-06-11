@@ -1,4 +1,17 @@
 import sys
-PROJECT_DIR = '~/suretify/'
-sys.path.insert(1,PROJECT_DIR)
+
+python-home="/hpc/users/neffr01/www/medtracker/virtualenvs"
+
+import sys
+import site
+
+# Calculate path to site-packages directory.
+
+python_version = '.'.join(map(str, sys.version_info[:2]))
+site_packages = python_home + '/lib/python%s/site-packages' % python_version
+
+# Add the site-packages directory.
+
+site.addsitedir(site_packages)
+
 from medtracker import app as application
