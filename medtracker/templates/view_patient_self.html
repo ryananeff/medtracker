@@ -50,14 +50,14 @@
 			                            		<li>{{q.question.body}}
 			                            			{% if q.response is iterable and q.response is not string %}
 			                            				{% for rr in q.response %}
-			                            					<ul><li><strong>{{q.response}}</strong></li></ul>
+			                            					<ul><li><strong>{{rr}}</strong></li></ul>
 			                            				{% endfor %}
 			                            			{% else %}
 			                            				<ul><li><strong>{{q.response}}</strong></li></ul>
 			                            			{% endif %}
 			                            		</li>
 			                        		{% endfor %}
-			                        		{% if response.responses | length == 0 %}
+			                        		{% if response.responses.all() | length == 0 %}
 			                        			<i>No responses submitted</i>
 			                        			{% endif %}
 			                            	</ul>
