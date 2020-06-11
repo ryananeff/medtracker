@@ -824,52 +824,54 @@ def survey_response_dashboard(survey_id):
 	week_pct = sum(list(df["daily_completed_surveys"])[-7:])/sum(list(df["total_registered_students"])[-7:])*100
 
 	qres = pd.DataFrame(responses)
-	qres["date"] = qres.time.dt.floor('d')
-	qres = qres.groupby(["date","question_id","uniq_id"]).first()
-	qres = qres.reset_index()
+	if len(qres)>0:
+		qres["date"] = qres.time.dt.floor('d')
+		qres = qres.groupby(["date","question_id","uniq_id"]).first()
+		qres = qres.reset_index()
 	
-	question_ids = [q.id for q in survey.questions()]
+		question_ids = [q.id for q in survey.questions()]
 
-	for q in question_ids:
-		g = qres[qres["question_id"]==q]
-		title = list(g.question_title)[0]
-		choices = list(g.question_choices)[0]
-		choices = ast.literal_eval(choices) if choices != "" else {}
-		kind = list(g.question_type)[0]
-		xtype = "category" if kind in ("select","radio") else None
-		pltdict = {v:0 for ix,v in choices.items()}
-		pltdict.update(g.groupby("response").count()["question_id"].to_dict())
-		df = pd.DataFrame(pltdict,index=["value"]).T.reset_index()
-		fig = plotlyBarplot(data=df,x="index",y="value",xtype=xtype,width=None, height=None,title=title)
-		question_figs.append(fig)
+		for q in question_ids:
+			g = qres[qres["question_id"]==q]
+			title = list(g.question_title)[0]
+			choices = list(g.question_choices)[0]
+			choices = ast.literal_eval(choices) if choices != "" else {}
+			kind = list(g.question_type)[0]
+			xtype = "category" if kind in ("select","radio") else None
+			pltdict = {v:0 for ix,v in choices.items()}
+			pltdict.update(g.groupby("response").count()["question_id"].to_dict())
+			df = pd.DataFrame(pltdict,index=["value"]).T.reset_index()
+			fig = plotlyBarplot(data=df,x="index",y="value",xtype=xtype,width=None, height=None,title=title)
+			question_figs.append(fig)
 
 	last7_figs = []
 	qres = pd.DataFrame(responses_last7)
-	qres["date"] = qres.time.dt.floor('d')
-	qres = qres.groupby(["date","question_id","uniq_id"]).first()
-	qres = qres.reset_index()
-	e = [str(a.date()) for a in list(pd.date_range(datetime.datetime.now().date()-datetime.timedelta(days=7),datetime.datetime.now().date()))]
+	if len(qres)>0:
+		qres["date"] = qres.time.dt.floor('d')
+		qres = qres.groupby(["date","question_id","uniq_id"]).first()
+		qres = qres.reset_index()
+		e = [str(a.date()) for a in list(pd.date_range(datetime.datetime.now().date()-datetime.timedelta(days=7),datetime.datetime.now().date()))]
 
-	for n,g in qres.groupby("question_id"):
-	    title = list(g.question_title)[0]
-	    choices = list(g.question_choices)[0]
-	    choices = ast.literal_eval(choices) if choices != "" else {}
-	    kind = list(g.question_type)[0]
-	    xtype = "category"
-	    pltdf = g.loc[:,["date","response"]]
-	    pltdf["count"] = 1
-	    pltdf.sort_values("date",inplace=True)
-	    pltdf["date"] = pltdf["date"].astype(str)
-	    pltdf.set_index("date",inplace=True)
-	    for ix in e:
-	        if ix not in pltdf.index:
-	            pltdf.loc[ix] = [None,0]
-	    pltdf.sort_index(inplace=True)
-	    pltdf.reset_index(inplace=True)
-	    pltdf=pltdf.fillna(method="bfill")
-	    fig = plotlyBarplot(data=pltdf,x="date",y="count",hue="response",
-	                        xtype=xtype,grouped=True,ordered=False,stacked=True,order2=True,width=None,height=None,show_legend=True,title=title)
-	    last7_figs.append(fig)
+		for n,g in qres.groupby("question_id"):
+		    title = list(g.question_title)[0]
+		    choices = list(g.question_choices)[0]
+		    choices = ast.literal_eval(choices) if choices != "" else {}
+		    kind = list(g.question_type)[0]
+		    xtype = "category"
+		    pltdf = g.loc[:,["date","response"]]
+		    pltdf["count"] = 1
+		    pltdf.sort_values("date",inplace=True)
+		    pltdf["date"] = pltdf["date"].astype(str)
+		    pltdf.set_index("date",inplace=True)
+		    for ix in e:
+		        if ix not in pltdf.index:
+		            pltdf.loc[ix] = [None,0]
+		    pltdf.sort_index(inplace=True)
+		    pltdf.reset_index(inplace=True)
+		    pltdf=pltdf.fillna(method="bfill")
+		    fig = plotlyBarplot(data=pltdf,x="date",y="count",hue="response",
+		                        xtype=xtype,grouped=True,ordered=False,stacked=True,order2=True,width=None,height=None,show_legend=True,title=title)
+		    last7_figs.append(fig)
 
 	for ix,fig in enumerate(dash_figs):
 		dash_figs[ix] = offline.plot(fig,show_link=False, output_type="div", include_plotlyjs=False)
