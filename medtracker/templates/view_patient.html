@@ -115,7 +115,7 @@
 										<h5 class="card-title">{{response.survey.title}}</h5>
 									</div>
 			                            	<ul class="list-group list-group flush">
-			                                {% for q in response.responses %}
+			                                {% for q in response.responses.all() %}
 			                            		<li>{{q.question.body}}
 			                            			{% if q.response is iterable and q.response is not string %}
 			                            				{% for rr in q.response %}
@@ -126,7 +126,7 @@
 			                            			{% endif %}
 			                            		</li>
 			                        		{% endfor %}
-			                        		{% if response.responses | length == 0 %}
+			                        		{% if response.responses.all() | length == 0 %}
 			                        			<i>No responses submitted</i>
 			                        			{% endif %}
 			                            	</ul>
