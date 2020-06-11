@@ -14,18 +14,6 @@ import datetime
 import plotly.graph_objects as go
 import ast
 
-from simplekv.memory import DictStore
-
-def configure_session(app):
-    with app.app_context():
-        if config['other']['local_debug']:
-            store = simplekv.memory.DictStore()
-        else:
-            store = simplekv.db.sql.SQLAlchemyStore(engine, metadata, 'sessions')
-
-        # Attach session store
-        flask_kvsession.KVSessionExtension(store, app)
-
 image_staticdir = 'assets/uploads/'
 
 def randomword(length):
@@ -78,7 +66,7 @@ def flash_warning(response):
 	if (g.patient == None)&(flashed==False):
 		flash("Your device appears to be unregistered. Please register your device.")
 		response.set_cookie('flashed',b'True',max_age=0)
-	return response	
+	return response
 
 #### logins
 
@@ -230,8 +218,8 @@ def serve_triggers_index():
 	triggers = Trigger.query.filter(Trigger.questions==None, Trigger.user_id==current_user.id)
 	questions = Question.query.filter(Question.trigger_id != None, Trigger.user_id==current_user.id)
 	return render_template("triggers.html",
-		questions = questions, 
-		triggers = triggers)                         
+		questions = questions,
+		triggers = triggers)
 
 ### controller functions for surveys
 
@@ -365,7 +353,7 @@ def serve_survey(survey_id):
 			question.description_html = delta_html.render(json.loads(question.description)["ops"])
 		except:
 			question.description_html = '<p>' + question.description + '</p>'
-		return render_template("serve_question.html", survey = survey, question = question, 
+		return render_template("serve_question.html", survey = survey, question = question,
 		                       next_q = next_question, last_q = last_question, form=formobj, u=uniq_id, s = sess, sr = survey_response.id)
 
 @app.route("/cr/<session_id>")
@@ -406,19 +394,19 @@ def save_response(formdata, question_id, session_id=None, current_user = None, s
 		formdata.getlist("response"),
 		formdata["uniq_id"],
 		session_id,
-		question_id, 
+		question_id,
 		survey_response_id
 	)
+	responses = formdata.getlist("response")
 	if (question.kind =="select") | (question.kind=="radio" ):
 			try:
 				choices = json.loads(question.choices)
-				for ix,r in enumerate(_response.response):
-					_response.response[ix] = choices[r]
+				for ix,r in enumerate(responses):
+					responses[ix] = choices[r]
 			except:
 				print("ERROR: can't convert response ID to choice")
 				pass
-	_response.response = _response.response[0] if len(_response.response)==1 else _response.response
-	print(_response.response)
+	_response.response = responses
 	_response.user_id = Patient.query.get(formdata["uniq_id"]).user_id
 	db_session.add(_response)
 	db_session.commit()
@@ -596,7 +584,7 @@ def patient_survey_selector(id):
 		except:
 			s.description_html = '<p>' + s.description + '</p>'
 	return render_template("surveys_selector.html",
-	                    surveys = surveys, 
+	                    surveys = surveys,
 	                    patient = patient)
 
 ### controller for trigger functions
@@ -676,7 +664,7 @@ def remove_trigger(_id):
     db_session.commit()
     flash('Trigger removed.')
     return redirect(url_for('serve_triggers_index'))
-    
+
 @app.route('/responses/delete/<int:_id>', methods=['GET', 'POST'])
 @flask_login.login_required
 def remove_response(_id):
@@ -691,7 +679,7 @@ def remove_response(_id):
     	return redirect(request.referrer)
 
 ### static files (only when not running under Apache)
-	
+
 @app.route('/assets/<path:path>')
 def send_js(path):
     return send_from_directory('/Users/ryanneff/suretify/medtracker/assets', path)
@@ -709,7 +697,7 @@ def patient_feed(id=None):
 		responses = p.responses
 		for r in responses:
 			if r.question_id != None:
-				question = Question.query.get(r.question_id) 
+				question = Question.query.get(r.question_id)
 				patients_feed.append((r.time.strftime("%Y-%m-%d %H:%M:%S"), p.id, r.session_id, question.body, question.kind.code, r.response))
 			else:
 				patients_feed.append((r.time.strftime("%Y-%m-%d %H:%M:%S"), p.id, r.session_id, None, None, r.response))
@@ -772,10 +760,10 @@ def remove_comment(_id):
 @flask_login.login_required
 def survey_response_dashboard(survey_id):
 	survey = models.Survey.query.get_or_404(survey_id)
-	
+
 	patients = models.Patient.query.all()
 	devices = models.Device.query.all()
-	
+
 	dash_figs = []
 	question_figs = []
 	sr = survey.responses.filter(models.SurveyResponse.start_time > (datetime.datetime.now()).date()).all()
@@ -825,7 +813,7 @@ def survey_response_dashboard(survey_id):
 	df2.columns = ["index","Not Completed","Completed"]
 	df3 = df2.melt(id_vars="index")
 	fig3 = plotlyBarplot(data=df3,x="index",y="value",hue="variable",width=None, height=None, title="Screening Status",stacked=True,show_legend=False)
-	
+
 	dash_figs = [fig1,fig2,fig3]
 
 	patient_count = len(patients)
@@ -840,11 +828,18 @@ def survey_response_dashboard(survey_id):
 		qres["date"] = qres.time.dt.floor('d')
 		qres = qres.groupby(["date","question_id","uniq_id"]).first()
 		qres = qres.reset_index()
-	
+
 		question_ids = [q.id for q in survey.questions()]
 
 		for q in question_ids:
 			g = qres[qres["question_id"]==q]
+			g = g.loc[:,["response","question_id","question_title","question_choices","question_type"]]
+			refmt = []
+			for ix,row in g.iterrows():
+			    row = list(row)
+			    for rr in row[0].split(";"):
+			        refmt.append([rr,row[1],row[2],row[3],row[4]])
+			g = pd.DataFrame(refmt,columns=g.columns)
 			title = list(g.question_title)[0]
 			choices = list(g.question_choices)[0]
 			choices = ast.literal_eval(choices) if choices != "" else {}
@@ -874,6 +869,12 @@ def survey_response_dashboard(survey_id):
 		    pltdf["count"] = 1
 		    pltdf.sort_values("date",inplace=True)
 		    pltdf["date"] = pltdf["date"].astype(str)
+		    refmt = []
+		    for ix,row in pltdf.iterrows():
+		        row = list(row)
+		        for rr in row[1].split(";"):
+		            refmt.append([row[0],rr,row[2]])
+		    pltdf = pd.DataFrame(refmt,columns=pltdf.columns)
 		    pltdf.set_index("date",inplace=True)
 		    for ix in e:
 		        if ix not in pltdf.index:
@@ -927,7 +928,7 @@ def plotlyBarplot(x=None,y=None,hue=None,data=None,ylabel="",xlabel="",title="",
     fig.update_layout(xaxis_type = xtype)
     ylab = y
     xlab = x
-    
+
     ix = 0
     catorder = list(data.groupby(xlab).sum().index)
     if hue != None:

@@ -194,7 +194,7 @@ class Comment(db.Model):
 class QuestionResponse(db.Model):
 	__tablename__ = 'question_response'
 	id = db.Column(db.Integer, primary_key=True)
-	response = db.Column(db.String)
+	_response = db.Column(db.String)
 	time = db.Column(db.DateTime)
 	uniq_id = db.Column(db.Integer, db.ForeignKey('patients.id'))
 	session_id = db.Column(db.String)
@@ -205,6 +205,16 @@ class QuestionResponse(db.Model):
 
 	def __str__(self):
 		return '%s' % self.response
+
+	@property
+	def response(self):
+		return [x for x in self._response.split(';')]
+
+	@response.setter
+	def response(self,value):
+		if type(value)!=list:
+			value = [value]
+		self._response = ";".join([str(a) for a in value])
 	
 	def __init__(self, response=None, uniq_id=None, session_id=None, question_id=None, survey_response_id = None):
 		self.response = response
@@ -216,6 +226,7 @@ class QuestionResponse(db.Model):
 
 	def to_dict(self):
 		outdict = {col.name: getattr(self, col.name) for col in self.__table__.columns}
+		outdict["response"] = self._response
 		outdict["question_title"] = self._question.body
 		outdict["question_choices"] = self._question.choices
 		outdict["question_type"] = self._question.kind.code
