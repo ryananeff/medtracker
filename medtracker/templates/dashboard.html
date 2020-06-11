@@ -49,12 +49,28 @@
 	    	{% for fig in question_figs %}
 		    <div class="col-lg-4" style="min-width:400px">{{fig|safe}}</div>
 		    {% endfor %}
+		    {% if question_figs | length==0 %}
+		    <div class="well">
+				<div class="starter-template">
+				No responses yet.
+				<h1>:(</h1>
+				</div>
+			</div>
+			{% endif %}
 	    </div>
 	    <h3>Survey Responses (last 7 days)</h3>
 	    <div class="row justify-content-md-center">
 	    	{% for fig in last7_figs %}
 		    <div class="col-lg-4" style="min-width:400px">{{fig|safe}}</div>
 		    {% endfor %}
+		    {% if last7_figs | length==0 %}
+		    <div class="well">
+				<div class="starter-template">
+				No responses yet.
+				<h1>:(</h1>
+				</div>
+			</div>
+			{% endif %}
 	    </div>
 		
 {% endblock %}
