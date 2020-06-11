@@ -21,11 +21,13 @@ ts = URLSafeTimedSerializer(flask_secret_key)
 
 #Flask init
 app = Flask(__name__, static_folder='')
+app.config["APPLICATION_ROOT"] = "/medtracker"
 app.config['SQLALCHEMY_DATABASE_URI'] = sqlalchemy_db
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 app.config['REMEMBER_COOKIE_SECURE'] = False
 app.config['SESSION_COOKIE_SECURE'] = False
-app.secret_key = flask_secret_key
+app.config['SECRET_KEY'] = flask_secret_key
+app.config['WTF_CSRF_ENABLED']=False
 app.debug = True
 
 qrcode = QRcode(app)

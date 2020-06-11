@@ -14,6 +14,18 @@ import datetime
 import plotly.graph_objects as go
 import ast
 
+from simplekv.memory import DictStore
+
+def configure_session(app):
+    with app.app_context():
+        if config['other']['local_debug']:
+            store = simplekv.memory.DictStore()
+        else:
+            store = simplekv.db.sql.SQLAlchemyStore(engine, metadata, 'sessions')
+
+        # Attach session store
+        flask_kvsession.KVSessionExtension(store, app)
+
 image_staticdir = 'assets/uploads/'
 
 def randomword(length):
@@ -94,6 +106,8 @@ def login():					# not logged-in callback
 			return redirect(url_for('index'))
 		else:
 			return redirect(url_for('login'))
+	else:
+	    flash("Validation error in form.")
 	return render_template('form_login.html', form=form, action="Please log in", data_type="")
 
 @app.route('/logout')
@@ -367,7 +381,7 @@ def complete_survey(session_id):
 			patient = record.patient
 			end_time = record.end_time.replace(tzinfo=pytz.utc).astimezone(pytz.timezone('America/New_York'))
 			day_num = end_time.timetuple().tm_yday % 46+1
-			img_path = os.path.join(os.getcwd(),'assets/images/animals/animal%d.jpg'%day_num)
+			img_path = "/home/ryan/medtracker/assets/images/animals/animal%d.jpg"%day_num
 			qrcode_out = qrcode(url_for('complete_survey',session_id=record.session_id,_external=True),error_correction='Q',icon_img=img_path)
 			return render_template("survey_complete.html",record=record, patient = patient,survey=survey,qrcode_out=qrcode_out)
 		else:
@@ -379,7 +393,7 @@ def complete_survey(session_id):
 			if record.completed:
 				end_time = record.end_time.replace(tzinfo=pytz.utc).astimezone(pytz.timezone('America/New_York'))
 				day_num = end_time.timetuple().tm_yday % 46+1
-				img_path = os.path.join(os.getcwd(),'assets/images/animals/animal%d.jpg'%day_num)
+				img_path = "/home/ryan/medtracker/assets/images/animals/animal%d.jpg"%day_num
 				qrcode_out = qrcode(url_for('complete_survey',session_id=record.session_id,_external=True),error_correction='Q',icon_img=img_path)
 				return render_template("survey_complete.html",record=record, patient = g.patient,survey=survey,qrcode_out=qrcode_out)
 			else:

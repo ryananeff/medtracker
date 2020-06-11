@@ -37,7 +37,7 @@ PySocks==1.7.1
 python-dateutil==2.8.1
 pytz==2017.2
 qrcode==6.1
-quill-delta @ git+https://github.com/forgeworks/quill-delta-python.git@99355c37edd6a2ff3436baf04e8a6f5ede9af34c
+quill-delta @ git+https://github.com/forgeworks/quill-delta-python.git#egg=delta
 requests==2.23.0
 retrying==1.3.3
 six==1.15.0
