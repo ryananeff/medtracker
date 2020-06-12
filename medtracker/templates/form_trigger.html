@@ -8,9 +8,8 @@
 	<h2>{{ action }} {{ data_type }}</h2>
 	</div>
     <div class="col col-12" style="background-color:rgb(238, 238, 238);padding:15px">
-		<div class="row">
-			<div class="col-lg-1">
-				</div>
+		<div class="row align-items-center">
+			<div class="col-lg-1"></div>
 			<div class="col-lg-10">
 				{% block form %}
 				<div class="form-group">
@@ -30,27 +29,32 @@
 				<div class="media" style="padding:10px; margin-top:0px;">
 					<div class="media-container" style="max-width:900px; background-color:white;box-shadow: 0px 2px 10px 0px rgba(0,0,0,0.2);">
 					<div class="media" style="padding:10px;">
-						<small>Question</small>
+						<small>After question</small>
 						<h4 class="media-heading">{{ form.question_id(class="transparent-input") }}</h4>
 					</div>
 				</div>
 				<div class="connector">
-					<div class="connector-line" style="border-style:none none none solid; margin-left:120px; padding:20px;">If<span style="color: grey;"> answer is </span>{{form.criteria(class="transparent-input")}}</div>
+					<div class="connector-line" style="border-style:none none none solid; margin-left:120px; padding:20px;">Conditions:<br>If<span style="color: grey;"> {{form.subject(class="transparent-input")}} {{form.comparator(class="transparent-input")}} {{form.condition_value(class="transparent-input")}} {{form.next_comparator(class="transparent-input")}} </span></div>
 				</div>
-				<div class="media" style="margin-left:80px; max-width:900px;margin-top:0px;box-shadow: 0px 2px 10px 0px rgba(0,0,0,0.2);">
-				<div class="media-left" style="background-color:#e6e6ff; padding:10px;box-shadow: 0px 2px 10px 0px rgba(0,0,0,0.2);">
-				  <a href="#">
-					<img class="media-object" src="/assets/images/web-st.png" alt="..." style="height:64px">
-				  </a>
+				<div class="media" style="margin-left:80px; min-width:860px;max-width:1100px;margin-top:0px;box-shadow: 0px 2px 10px 0px rgba(0,0,0,0.2);">
+				<div class="media-body" style="padding:10px; background-color:white;padding:10px;border-right:1px solid;">
+				  <small>If true</small>
+				  <h4 class="media-heading"><span style="color: grey;"> {{form.yes_type(class="transparent-input")}} </span></h4><br>
+				  <small>Destination</small>
+				  <h4 class="media-heading"><span style="color: grey;"> {{form.dest_yes(class="transparent-input")}}  </span></h4><br>
+				  <span style="font-weight:bold">Message:</span><br>{{form.payload_yes(class="form-control inputor")}}<span style="color: grey;">hint: type '&lt;' to select from a list of dynamic phrases</span><br>
+				  Send alert {{form.alert_yes(class="form")}}
 				</div>
 				<div class="media-body" style="padding:10px; background-color:white;padding:10px;">
-					<small>Trigger</small>
-				  <h4 class="media-heading">{{ form.kind(class="transparent-input") }}<span style="color: grey;"> to </span>{{form.recipients(class="transparent-input inputor")}}</h4>
-				  <p><span style="font-weight:bold">Message:{{ form.title(class="form-control inputor") }}</span><span style="color: grey;">hint: type '&lt;' to select from a list of dynamic phrases</span></p>
+				  <small>If false</small>
+				  <h4 class="media-heading"><span style="color: grey;"> {{form.no_type(class="transparent-input")}} </span></h4><br>
+				  <small>Destination</small>
+				  <h4 class="media-heading"><span style="color: grey;"> {{form.dest_no(class="transparent-input")}}  </span></h4><br>
+				  <span style="font-weight:bold">Message:</span><br>{{form.payload_no(class="form-control inputor")}}<span style="color: grey;">hint: type '&lt;' to select from a list of dynamic phrases</span><br>
+				  Send alert {{form.alert_no(class="form")}}
 
 				</div>
 				</div>
-				<div class="connector-line" style="border-style:none none none solid; margin-left:120px; padding:20px;">Then<span style="color: grey;"> send patient to </span>{{form.after_function(class="transparent-input")}}</div>
 				</div>
 				{% if u %}
 					<input type="hidden" name="uniq_id" value="{{u}}">
@@ -66,8 +70,6 @@
 				</div>
 				{% endblock form %}
 			  </div>
-			<div class="col-lg-6">
-			  </div> 
 		</div>
     </div><!-- /.container -->
     <script type="text/javascript">
