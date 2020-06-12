@@ -600,6 +600,7 @@ def add_trigger():
 	q = request.values.get("question", None)
 	formobj = TriggerForm(request.form)
 	formobj.conditions._add_entry()
+	formobj.template = formobj.conditions[0]
 	if q:
 		question = Question.query.get(q)
 	if question:
