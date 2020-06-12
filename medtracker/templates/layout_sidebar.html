@@ -90,36 +90,38 @@
                         <a href="#"><i class="fa fa-sitemap"></i> Surveys<span class="fa arrow"></span></a>
                             <ul class="nav nav-second-level">
                                     <li>
-                                        <a href="/surveys"><i class="fa fa-dashboard fa-fw"></i> Dashboard</a>
-                                    </li>
-                                    <li>
-                                        <a href="/surveys/new/"><i class="fa fa-plus"></i> Create New</a>
+                                        <a href="/surveys"><i class="fa fa-th-large fa-fw"></i> View All</a>
                                     </li>
                                     {% for survey in current_user.surveys %}
                                         <li>
                                             <a href="/surveys/view/{{survey.id}}"><i class="fa fa-file-text"></i> {{survey.title}}</a>
                                         </li>              
                                     {% endfor %}
+                                    <li>
+                                        <a href="/surveys/new/"><i class="fa fa-plus"></i> Create New</a>
+                                    </li>
                                 </ul>
                         </li>
                         <li>
                             <a href="#"><i class="fa fa-users"></i> Patients <span class="fa arrow"></span></a>
                                 <ul class="nav nav-second-level">
                                     <li>
-                                        <a href="/patients/"><i class="fa fa-dashboard fa-fw"></i> Dashboard</a>
+                                        <a href="/patients/"><i class="fa fa-align-justify fa-fw"></i> View All</a>
                                     </li>
-                                    <li>
-                                        <a href="/patients/new/"><i class="fa fa-plus"></i> Add New</a>
-                                    </li>
-                                    {% for patient in current_user.patients %}
-                                        <li>
-                                            <a href="/patients/{{patient.id}}"><i class="fa fa-user"></i> {{fmt_id(patient.mrn)}}</a>
-                                        </li>              
-                                    {% endfor %}
-                                    
                                 </ul>
                         </li>
-                        <li><a href="/responses" class="inactive"><i class="fa fa-bar-chart-o"></i> Responses</a></li>
+                        <li><a href="#"><i class="fa fa-bar-chart-o"></i> Responses <span class="fa arrow"></span></a>
+                            <ul class="nav nav-second-level">
+                                    <li>
+                                        <a href="/responses"><i class="fa fa-align-justify fa-fw"></i> View All</a>
+                                    </li>
+                                    {% for survey in current_user.surveys %}
+                                        <li>
+                                            <a href="/surveys/{{survey.id}}/responses/dashboard"><i class="fa fa-dashboard fa-fw"></i> {{survey.title}}</a>
+                                        </li>              
+                                    {% endfor %}
+                                </ul>
+                        </li>
                         <li><a href="#admin" class="inactive"><i class="fa fa-gears"></i> Settings</a></li>
               </li>
                     </ul>
