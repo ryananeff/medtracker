@@ -50,7 +50,7 @@ def detect_user_session():
 		def remember_pt_id(response):
 			response.set_cookie('flashed',b'True',max_age=0)
 			response.set_cookie('patient_ident', g.patient_ident, max_age=datetime.timedelta(weeks=52))
-			device = Device(g.patient_ident)
+			device = Device(device_id = g.patient_ident)
 			db.session.add(device)
 			db.session.commit()
 			g.device = device
@@ -194,12 +194,16 @@ def about():
 @flask_login.login_required
 def serve_survey_index():
 	'''GUI: serve the survey index page'''
-	surveys = current_user.surveys
-	for s in surveys:
+	surveys = []
+	for s in current_user.surveys:
 		try:
 			s.description_html = delta_html.render(json.loads(s.description)["ops"])
 		except:
 			s.description_html = '<p>' + s.description + '</p>'
+		surveys.append(s)
+	for s in surveys:
+		print(s)
+		print(s.description_html)
 	return render_template("surveys.html",
 	                        surveys = surveys)
 
@@ -229,7 +233,7 @@ def add_survey():
 	'''GUI: add a survey to the DB'''
 	formobj = SurveyForm(request.form)
 	if request.method == 'POST' and formobj.validate():
-		dbobj = Survey(formobj.title.data, formobj.description.data)
+		dbobj = Survey(title=formobj.title.data, description=formobj.description.data)
 		dbobj.user_id = current_user.id
 		db_session.add(dbobj)
 		db_session.commit()
@@ -432,12 +436,12 @@ def add_question():
 	formobj.survey_id.data = survey.id
 	if request.method == 'POST' and formobj.validate():
 		dbobj = Question(
-				formobj.body.data,
-				formobj.description.data,
-				formobj.choices.data,
-				None,
-				formobj.kind.data,
-				formobj.survey_id.data
+				body=formobj.body.data,
+				description=formobj.description.data,
+				choices=formobj.choices.data,
+				image=None,
+				kind=formobj.kind.data,
+				survey_id = formobj.survey_id.data
 		)
 		dbobj.user_id = current_user.id
 		if request.files["image"]:
@@ -595,13 +599,14 @@ def add_trigger():
 	'''GUI: add a trigger to the DB'''
 	q = request.values.get("question", None)
 	formobj = TriggerForm(request.form)
+	formobj.conditions._add_entry()
 	if q:
 		question = Question.query.get(q)
 	if question:
 		formobj.question_id.query = [question]
 	else:
 		formobj.question_id.query = Question.query.filter(Survey.user_id==current_user.id).all()
-	formobj.subject.query = Survey.query.get(1)._questions
+	formobj.conditions[0].subject.query = Survey.query.get(1)._questions
 	formobj.dest_yes.query = Survey.query.get(1)._questions
 	formobj.dest_no.query = Survey.query.get(1)._questions
 	if request.method == 'POST' and formobj.validate():
@@ -771,47 +776,55 @@ def survey_response_dashboard(survey_id):
 	for p in patients:
 	    sr = [s.to_dict() for s in p.surveys.all()]
 	    sres.extend(sr)
+	if len(sres)>0:
+		sres = pd.DataFrame(sres)
+		sres["date"] = sres.end_time.dt.floor('d')
+		sres = sres.groupby(["date","uniq_id"]).first()
+		sres = sres.reset_index()
 
-	sres = pd.DataFrame(sres)
-	sres["date"] = sres.end_time.dt.floor('d')
-	sres = sres.groupby(["date","uniq_id"]).first()
-	sres = sres.reset_index()
+		devs = pts = model_to_pd(models.Device)
+		devs_per_day = pd.DataFrame(devs.groupby([devs.creation_time.dt.floor("d")])["creation_time"].count())
+		devs_per_day.columns = ["daily_new_devices"]
+		pts = model_to_pd(models.Patient)
+		pts_per_day = pd.DataFrame(pts.groupby([pts.creation_time.dt.floor("d")])["creation_time"].count())
+		pts_per_day.columns = ["daily_registered_students"]
+		res_per_day = pd.DataFrame(sres.groupby([sres.end_time.dt.floor('d')])["end_time"].count())
+		res_per_day.columns = ["daily_completed_surveys"]
+		df = pd.merge(pts_per_day,res_per_day,left_index=True,right_index=True,how="outer")
+		df = pd.merge(df,devs_per_day,left_index=True,right_index=True,how="outer")
+		begin_time = datetime.datetime.now().date() - datetime.timedelta(days=6)
+		df = df.reindex(pd.date_range(begin_time, datetime.datetime.now().date())).fillna(0).astype(int)
+		df["total_registered_students"] = df["daily_registered_students"].cumsum()
+		df["total_completed_surveys"] = df["daily_registered_students"].cumsum()
+		df["total_devices"] = df["daily_new_devices"].cumsum()
+		df.reset_index(inplace=True)
+		df = df.sort_values(by="index",ascending=True)
+		df["index"] = [datetime.datetime.strftime(a,"%D") for a in df["index"]]
+		fig1 = plotlyBarplot(data=df,x="index",y="total_devices",width=None, height=300,title="Total Devices Seen")
+		fig2 = plotlyBarplot(data=df,x="index",y="total_registered_students",width=None, height=300,title="Total Registered Students")
+		df["daily_uncompleted_surveys"] = df["total_registered_students"] - df["daily_completed_surveys"]
+		df["daily_pct"] = df["daily_completed_surveys"]/df["total_registered_students"]*100
+		df2 = df.loc[:,["index","daily_uncompleted_surveys","daily_completed_surveys"]]
+		df2.columns = ["index","Not Completed","Completed"]
+		df3 = df2.melt(id_vars="index")
+		fig3 = plotlyBarplot(data=df3,x="index",y="value",hue="variable",width=None, height=300, title="Screening Status",stacked=True,show_legend=False)
 
-	devs = pts = model_to_pd(models.Device)
-	devs_per_day = pd.DataFrame(devs.groupby([devs.creation_time.dt.floor("d")])["creation_time"].count())
-	devs_per_day.columns = ["daily_new_devices"]
-	pts = model_to_pd(models.Patient)
-	pts_per_day = pd.DataFrame(pts.groupby([pts.creation_time.dt.floor("d")])["creation_time"].count())
-	pts_per_day.columns = ["daily_registered_students"]
-	res_per_day = pd.DataFrame(sres.groupby([sres.end_time.dt.floor('d')])["end_time"].count())
-	res_per_day.columns = ["daily_completed_surveys"]
-	df = pd.merge(pts_per_day,res_per_day,left_index=True,right_index=True,how="outer")
-	df = pd.merge(df,devs_per_day,left_index=True,right_index=True,how="outer")
-	begin_time = datetime.datetime.now().date() - datetime.timedelta(days=6)
-	df = df.reindex(pd.date_range(begin_time, datetime.datetime.now().date())).fillna(0).astype(int)
-	df["total_registered_students"] = df["daily_registered_students"].cumsum()
-	df["total_completed_surveys"] = df["daily_registered_students"].cumsum()
-	df["total_devices"] = df["daily_new_devices"].cumsum()
-	df.reset_index(inplace=True)
-	df = df.sort_values(by="index",ascending=True)
-	df["index"] = [datetime.datetime.strftime(a,"%D") for a in df["index"]]
-	fig1 = plotlyBarplot(data=df,x="index",y="total_devices",width=None, height=300,title="Total Devices Seen")
-	fig2 = plotlyBarplot(data=df,x="index",y="total_registered_students",width=None, height=300,title="Total Registered Students")
-	df["daily_uncompleted_surveys"] = df["total_registered_students"] - df["daily_completed_surveys"]
-	df["daily_pct"] = df["daily_completed_surveys"]/df["total_registered_students"]*100
-	df2 = df.loc[:,["index","daily_uncompleted_surveys","daily_completed_surveys"]]
-	df2.columns = ["index","Not Completed","Completed"]
-	df3 = df2.melt(id_vars="index")
-	fig3 = plotlyBarplot(data=df3,x="index",y="value",hue="variable",width=None, height=300, title="Screening Status",stacked=True,show_legend=False)
+		dash_figs = [fig1,fig2,fig3]
 
-	dash_figs = [fig1,fig2,fig3]
+		today_count = list(df["daily_completed_surveys"])[-1]
+		today_pct = list(df["daily_pct"])[-1]
+		week_count = sum(list(df["daily_completed_surveys"])[-7:])
+		week_pct = sum(list(df["daily_completed_surveys"])[-7:])/sum(list(df["total_registered_students"])[-7:])*100
+
+	else:
+		dash_figs = []
+		today_count = 0
+		today_pct = 0
+		week_count = 0
+		week_pct = 0
 
 	patient_count = len(patients)
 	device_count = len(devices)
-	today_count = list(df["daily_completed_surveys"])[-1]
-	today_pct = list(df["daily_pct"])[-1]
-	week_count = sum(list(df["daily_completed_surveys"])[-7:])
-	week_pct = sum(list(df["daily_completed_surveys"])[-7:])/sum(list(df["total_registered_students"])[-7:])*100
 
 	qres = pd.DataFrame(responses)
 	if len(qres)>0:

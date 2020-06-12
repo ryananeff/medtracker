@@ -23,11 +23,6 @@ VOICE = 'voice'
 SMS = 'sms'
 EMAIL = 'email'
 CURL = 'curl'
-COMPLETE="complete"
-EXIT="exit"
-QUESTION="question",
-SURVEY="survey"
-NOTHING="nothing"
 
 TRIGGER_KIND_CHOICES = (
 	(VOICE, 'Make a call'),
@@ -36,6 +31,12 @@ TRIGGER_KIND_CHOICES = (
 	(CURL, 'Push data')
 )
 
+COMPLETE="complete"
+EXIT="exit"
+QUESTION="question",
+SURVEY="survey"
+NOTHING="nothing"
+
 TRIGGER_KINDS = (
     (NOTHING,"Do nothing"),
 	(COMPLETE, 'Complete survey'),
@@ -43,6 +44,26 @@ TRIGGER_KINDS = (
 	(QUESTION, 'Goto question'),
 	(SURVEY, 'Goto survey')
 )
+
+EQUAL = "=="
+NOTEQUAL = "!="
+CONTAINS = "is in"
+NOTCONTAIN = "is not in"
+
+TRIGGER_COMPARATORS = (
+    (EQUAL, "equal to"),
+    (NOTEQUAL, "not equal to"),
+    (CONTAINS, "contains"),
+    (NOTCONTAIN, "does not contain"),
+)
+
+AND = "&"
+OR = "|"
+
+TRIGGER_NEXT_COMPARATORS = (
+    (AND,"and"),
+    (OR, "or")
+ )
 
 LOCATION_CHOICES = [
 		("student_housing", "Student housing (e.g. Aron Hall)"),
@@ -70,7 +91,8 @@ class Progress(db.Model):
 	session_id = db.Column(db.String)
 	complete = db.Column(db.Integer)
 
-	def __init__(self, user='', task='', iterator=0, parent_id='', complete=0):
+	def __init__(**kwargs):
+		super(Progress, self).__init__(**kwargs)
 		self.user = str(user)
 		self.task = str(task)
 		self.iterator = int(iterator)
@@ -134,56 +156,7 @@ class Survey(db.Model):
 
 	def __str__(self):
 		return '%s' % self.title
-	
-	def __init__(self, title=None, description=None):
-		self.title = title
-		self.description=description
 
-	def to_dict(self):
-		return {col.name: getattr(self, col.name) for col in self.__table__.columns}
-
-class Question(db.Model):
-	__tablename__ = 'question'
-	
-	id = db.Column(db.Integer, primary_key=True)
-	body = db.Column(db.String)
-	description = db.Column(db.Text)
-	image = db.Column(db.String)
-	kind = db.Column(ChoiceType(QUESTION_KIND_CHOICES))
-	choices = db.Column(db.Text)
-	survey_id = db.Column(db.Integer, db.ForeignKey('survey.id'))
-	triggers = db.relationship("Trigger", backref='question')
-	next_id = db.Column(db.Integer, db.ForeignKey('question.id'))
-	next_q = db.relationship("Question", uselist=False, remote_side = [id], back_populates='prev_q', post_update=True)
-	prev_q = db.relationship("Question", uselist=False, post_update=True)
-	responses = db.relationship("QuestionResponse", backref='question', cascade="all, delete-orphan")
-	survey = db.relationship("Survey",foreign_keys=[survey_id],backref="_questions")
-
-	def __str__(self):
-		return '%s' % self.body
-	
-	def __init__(self, body=None, description=None,
-	             choices = None, image=None, kind=None, survey_id=None):
-		self.body = body
-		self.description = description
-		self.choices = choices
-		self.image = image
-		self.kind = kind
-		self.survey_id = survey_id
-
-	def to_dict(self):
-		return {col.name: getattr(self, col.name) for col in self.__table__.columns}
-
-class QuestionMeta(db.Model):
-	__tablename__ = 'question_meta'
-	id = db.Column(db.Integer, primary_key=True)
-	body = db.Column(db.String)
-	question_id = db.Column(db.Integer, db.ForeignKey('question.id'))
-	
-	def __init__(self, body=None, question=None):
-		self.body = body
-		self.question_id = question_id
-	
 	def to_dict(self):
 		return {col.name: getattr(self, col.name) for col in self.__table__.columns}
 
@@ -195,10 +168,8 @@ class Comment(db.Model):
 	user_id = db.Column(db.Integer, db.ForeignKey('user.id'))
 	patient_id = db.Column(db.Integer, db.ForeignKey('patients.id'))
 
-	def __init__(self, body, patient_id, user_id):
-		self.body = body
-		self.patient_id = patient_id
-		self.user_id = user_id
+	def __init__(**kwargs):
+		super(Comment, self).__init__(**kwargs)
 		self.time = datetime.datetime.utcnow()
 
 	def to_dict(self):
@@ -229,12 +200,8 @@ class QuestionResponse(db.Model):
 			value = [value]
 		self._response = ";".join([str(a) for a in value])
 	
-	def __init__(self, response=None, uniq_id=None, session_id=None, question_id=None, survey_response_id = None):
-		self.response = response
-		self.uniq_id = uniq_id
-		self.session_id = session_id
-		self.question_id = question_id
-		self.survey_response_id = survey_response_id
+	def __init__(**kwargs):
+		super(QuestionResponse, self).__init__(**kwargs)
 		self.time = datetime.datetime.utcnow()
 
 	def to_dict(self):
@@ -262,11 +229,8 @@ class SurveyResponse(db.Model):
 	def __str__(self):
 		return '%s' % self.session_id
 	
-	def __init__(self, survey_id=None, uniq_id=None, session_id=None, user_id=None):
-		self.survey_id = survey_id
-		self.uniq_id = uniq_id
-		self.session_id = session_id
-		self.user_id = user_id
+	def __init__(self,**kwargs):
+		super(SurveyResponse, self).__init__(**kwargs)
 		self.start_time = datetime.datetime.utcnow()
 
 	def complete(self):
@@ -280,26 +244,65 @@ class Trigger(db.Model):
 	__tablename__ = 'trigger'
 	
 	id = db.Column(db.Integer, primary_key=True)
-	title = db.Column(db.String)
-	criteria = db.Column(db.String)
-	kind = db.Column(ChoiceType(TRIGGER_KIND_CHOICES))
-	recipients = db.Column(db.String)
-	after_function = db.Column(db.String)
 	question_id = db.Column(db.Integer, db.ForeignKey('question.id'))
+	conditions = db.relationship("TriggerCondition",backref="trigger",cascade="all,delete-orphan")
 	user_id = db.Column(db.Integer, db.ForeignKey('user.id'))
-	read_public = db.Column(db.Boolean)
-	edit_public = db.Column(db.Boolean)
+	
+	yes_type = db.Column(ChoiceType(TRIGGER_KINDS))
+	dest_yes = db.Column(db.Integer, db.ForeignKey('question.id'))
+	payload_yes = db.Column(db.Text)
+	alert_yes = db.Column(db.Boolean,default=False)
+
+	no_type = db.Column(ChoiceType(TRIGGER_KINDS))
+	dest_no = db.Column(db.Integer, db.ForeignKey('question.id'))
+	payload_no = db.Column(db.Text)
+	alert_no = db.Column(db.Boolean,default=False)
 
 	def __str__(self):
 		return '%s' % self.body
-	
-	def __init__(self, body=None, kind=None, criteria=None, recipients=None, af=None):
-		self.title = body
-		self.kind = kind
-		self.criteria = criteria
-		self.recipients = recipients
-		self.after_function = af
 
+	def to_dict(self):
+		return {col.name: getattr(self, col.name) for col in self.__table__.columns}
+
+class TriggerCondition(db.Model):
+	__tablename__= 'trigger_condition'
+
+	id = db.Column(db.Integer, primary_key=True)
+	trigger_id = db.Column(db.Integer, db.ForeignKey('trigger.id'))
+	subject_id = db.Column(db.Integer, db.ForeignKey('question.id'))
+	comparator = db.Column(ChoiceType(TRIGGER_COMPARATORS))
+	condition_value = db.Column(db.String)
+	next_comparator = db.Column(ChoiceType(TRIGGER_NEXT_COMPARATORS))
+
+class Question(db.Model):
+	__tablename__ = 'question'
+	
+	id = db.Column(db.Integer, primary_key=True)
+	body = db.Column(db.String)
+	description = db.Column(db.Text)
+	image = db.Column(db.String)
+	kind = db.Column(ChoiceType(QUESTION_KIND_CHOICES))
+	choices = db.Column(db.Text)
+	survey_id = db.Column(db.Integer, db.ForeignKey('survey.id'))
+	triggers = db.relationship("Trigger", foreign_keys=[Trigger.question_id],backref='question', cascade="all, delete-orphan")
+	next_id = db.Column(db.Integer, db.ForeignKey('question.id'))
+	next_q = db.relationship("Question", uselist=False, remote_side = [id], back_populates='prev_q', post_update=True)
+	prev_q = db.relationship("Question", uselist=False, post_update=True)
+	responses = db.relationship("QuestionResponse", backref='question', cascade="all, delete-orphan")
+	survey = db.relationship("Survey",foreign_keys=[survey_id],backref="_questions")
+
+	def __str__(self):
+		return '%s' % self.body
+
+	def to_dict(self):
+		return {col.name: getattr(self, col.name) for col in self.__table__.columns}
+
+class QuestionMeta(db.Model):
+	__tablename__ = 'question_meta'
+	id = db.Column(db.Integer, primary_key=True)
+	body = db.Column(db.String)
+	question_id = db.Column(db.Integer, db.ForeignKey('question.id'))
+	
 	def to_dict(self):
 		return {col.name: getattr(self, col.name) for col in self.__table__.columns}
 
@@ -375,9 +378,6 @@ class Device(db.Model):
 	id = db.Column(db.Integer, primary_key=True)
 	device_id = db.Column(EncryptedType(db.String, flask_secret_key))
 	creation_time = db.Column(db.DateTime, default=func.now())
-
-	def __init__(self,device_id):
-		self.device_id = device_id
 
 	def to_dict(self):
 		return {col.name: getattr(self, col.name) for col in self.__table__.columns}
