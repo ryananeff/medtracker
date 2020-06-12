@@ -289,15 +289,7 @@ def remove_survey(_id):
 @flask_login.login_required
 def view_survey(_id):
     dbobj = Survey.query.get_or_404(_id)
-    triggers = dict()
-    for question in dbobj.questions():
-    	if question.triggers != None:
-    		tlist=[]
-    		for trigger in question.triggers:
-	    		after = Survey.query.get(trigger.after_function) if trigger.after_function else None
-	    		tlist.append((trigger, after))
-	    	triggers[question.id] = tlist
-    return render_template("view_survey.html", survey = dbobj, triggers = triggers)
+    return render_template("view_survey.html", survey = dbobj)
 
 @app.route('/surveys/start/<int:survey_id>', methods=['GET', 'POST'])
 def start_survey(survey_id):
@@ -599,23 +591,35 @@ def add_trigger():
 	'''GUI: add a trigger to the DB'''
 	q = request.values.get("question", None)
 	formobj = TriggerForm(request.form)
-	formobj.conditions._add_entry()
-	formobj.template = formobj.conditions[0]
-	if q:
-		question = Question.query.get(q)
-	if question:
-		formobj.question_id.query = [question]
-	else:
-		formobj.question_id.query = Question.query.filter(Survey.user_id==current_user.id).all()
-	formobj.conditions[0].subject.query = Survey.query.get(1)._questions
+	trigger = Trigger()
+	question = Question.query.get(q)
+	formobj.question_id.data = question.id
+	formobj.question_id.label = question.body
+	for ix in range(len(formobj.conditions)):
+		formobj.conditions[ix].subject.query = Survey.query.get(1)._questions
 	formobj.dest_yes.query = Survey.query.get(1)._questions
 	formobj.dest_no.query = Survey.query.get(1)._questions
+	
 	if request.method == 'POST' and formobj.validate():
+		formobj.populate_obj(trigger)
+		trigger.question_id = int(formobj.question_id.data)
+		trigger.dest_yes = trigger.dest_yes.id if trigger.dest_yes else None
+		trigger.dest_no = trigger.dest_no.id if trigger.dest_no else None
+		for ix in range(len(trigger.conditions)):
+			trigger.conditions[ix].subject_id = trigger.conditions[ix].subject.id
+		db.session.add(trigger)
+		db.session.commit()
 		flash('Trigger added.')
-		if question:
+		if q:
 			return redirect(url_for('view_survey', _id=question.survey.id))
 		else:
 			return redirect(url_for('serve_survey_index'))
+	else:
+		formobj.conditions._add_entry()
+		formobj.template = formobj.conditions[-1]
+		formobj.template.subject.query = Survey.query.get(1)._questions
+		if len(formobj.conditions)>1:
+			formobj.conditions = formobj.conditions[0:-1]
 	#formobj.questions.choices = [(q.id, "(ID: %s) "% str(q.id) + q.body) for q in Question.query]
 	return render_template("form_trigger.html", action="Add", data_type="a trigger", form=formobj)
 
