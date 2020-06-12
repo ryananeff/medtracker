@@ -215,8 +215,8 @@ def serve_responses_index():
 @flask_login.login_required
 def serve_triggers_index():
 	'''GUI: serve the trigger index page'''
-	triggers = Trigger.query.filter(Trigger.questions==None, Trigger.user_id==current_user.id)
-	questions = Question.query.filter(Question.trigger_id != None, Trigger.user_id==current_user.id)
+	triggers = Trigger.query.filter(Trigger.question==None, Trigger.user_id==current_user.id)
+	questions = Question.query.filter(Question.triggers != None, Trigger.user_id==current_user.id)
 	return render_template("triggers.html",
 		questions = questions,
 		triggers = triggers)
@@ -251,7 +251,7 @@ def edit_survey(_id):
 		db_session.commit()
 		flash('Survey edited.')
 		return redirect(url_for('serve_survey_index'))
-	return render_template("form.html", action="Edit", data_type="survey #" + str(_id), form=formout)
+	return render_template("form.html", action="Edit", data_type=survey.title, form=formout)
 
 @app.route('/surveys/<int:survey_id>/questions/sort', methods=["POST"])
 @flask_login.login_required
@@ -663,7 +663,10 @@ def remove_trigger(_id):
     db_session.delete(dbobj)
     db_session.commit()
     flash('Trigger removed.')
-    return redirect(url_for('serve_triggers_index'))
+    if request.referrer == None:
+    	return redirect(url_for('serve_triggers_index'))
+    else:
+    	return redirect(request.referrer)
 
 @app.route('/responses/delete/<int:_id>', methods=['GET', 'POST'])
 @flask_login.login_required
