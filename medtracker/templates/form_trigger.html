@@ -34,8 +34,18 @@
 					</div>
 				</div>
 				<div class="connector">
-					<div class="connector-line" style="border-style:none none none solid; margin-left:120px; padding:20px;">Conditions:<br>If<span style="color: grey;"> {{form.subject(class="transparent-input")}} {{form.comparator(class="transparent-input")}} {{form.condition_value(class="transparent-input")}} {{form.next_comparator(class="transparent-input")}} </span>
-					<br><br><button class="btn btn-sm btn-primary add_form_field">Add Condition &nbsp; <span class="add_form_field">+</span></button>
+					<div class="connector-line" style="border-style:none none none solid; margin-left:120px; padding:20px;">Conditions:<br>
+						{% for e in form.conditions %}
+						If
+						<span style="color: grey;"> 
+							{{e.subject(class="transparent-input")}} 
+							{{e.comparator(class="transparent-input")}} 
+							{{e.condition_value(class="transparent-input")}} 
+							{{e.next_comparator(class="transparent-input")}}
+						</span>
+						<br>
+						{% endfor %}
+					<button class="btn btn-sm btn-primary add_form_field">Add Condition &nbsp; <span class="add_form_field">+</span></button>
 					</div>
 				</div>
 				<div class="media" style="margin-left:80px; min-width:860px;max-width:1100px;margin-top:0px;box-shadow: 0px 2px 10px 0px rgba(0,0,0,0.2);">

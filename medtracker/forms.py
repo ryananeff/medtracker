@@ -6,8 +6,10 @@ from wtforms.validators import DataRequired
 from wtforms.widgets.core import HTMLString, html_params, escape
 from medtracker.models import *
 from flask.views import MethodView
-from medtracker.models import QUESTION_KIND_CHOICES, TRIGGER_KIND_CHOICES, PROGRAM_CHOICES, LOCATION_CHOICES, TRIGGER_KINDS
+from medtracker.models import *
 import re, json
+from wtforms_alchemy import ModelForm, ModelFieldList
+from wtforms.fields import FormField
 
 def select_multi_checkbox(field, ul_class='response-multi', **kwargs):
     kwargs.setdefault('type', 'checkbox')
@@ -101,17 +103,25 @@ class QuestionView(MethodView):
 			qlabel = "Write your response below."
 			return qtype, TextAreaField(qlabel,render_kw={"placeholder":"Your answer"})
 		# can extend if clauses at every new fieldtype
-    
-class TriggerForm(Form):				
-	'''GUI: trigger build form used in views'''
-	question_id = QuerySelectField("Attach to this question", 
-		get_pk=lambda a: a.id, get_label=lambda a: a.body)
+
+class TriggerConditionForm(ModelForm):
+	class Meta:
+		model = TriggerCondition
 	#conditions
 	subject = QuerySelectField("Subject", 
 		get_pk=lambda a: a.id, get_label=lambda a: a.body, allow_blank=True)
 	comparator = SelectField("Comparator",choices=list(enumerate(["equal to", "not equal to","contains", "does not contain"])))
 	condition_value = TextField("Condition value",render_kw={"placeholder":"value"})
-	next_comparator = SelectField("Next",choices=list(enumerate(["","AND","OR"])))
+	next_comparator = SelectField("Next",choices=list(enumerate(["","AND","OR"])))    
+
+class TriggerForm(ModelForm):
+	class Meta:
+		model = Trigger				
+	'''GUI: trigger build form used in views'''
+	question_id = QuerySelectField("Attach to this question", 
+		get_pk=lambda a: a.id, get_label=lambda a: a.body)
+	#conditions
+	conditions = ModelFieldList(FormField(TriggerConditionForm))
 	#if true
 	yes_type = SelectField('Type', choices=TRIGGER_KINDS)
 	dest_yes = QuerySelectField("Destination", 
@@ -125,7 +135,6 @@ class TriggerForm(Form):
 		get_pk=lambda a: a.id, get_label=lambda a: a.body, allow_blank=True)
 	payload_no = TextAreaField("Message")
 	alert_no = BooleanField("Alert")
-	
 
 class UsernamePasswordForm(Form):
     username = StringField('E-mail', validators=[DataRequired()])
