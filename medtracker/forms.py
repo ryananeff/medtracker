@@ -3,13 +3,16 @@ from flask_wtf import Form
 from wtforms.ext.sqlalchemy.fields import *
 from wtforms.fields.html5 import DateField, IntegerRangeField
 from wtforms.validators import DataRequired
-from wtforms.widgets.core import HTMLString, html_params, escape
+from wtforms.widgets.core import HTMLString, html_params, escape, HiddenInput
 from medtracker.models import *
 from flask.views import MethodView
 from medtracker.models import *
 import re, json
 from wtforms_alchemy import ModelForm, ModelFieldList
 from wtforms.fields import FormField
+
+class HiddenInteger(IntegerField):
+    widget = HiddenInput()
 
 def select_multi_checkbox(field, ul_class='response-multi', **kwargs):
     kwargs.setdefault('type', 'checkbox')
@@ -109,17 +112,16 @@ class TriggerConditionForm(ModelForm):
 		model = TriggerCondition
 	#conditions
 	subject = QuerySelectField("Subject", 
-		get_pk=lambda a: a.id, get_label=lambda a: a.body, allow_blank=True)
-	comparator = SelectField("Comparator",choices=list(enumerate(["equal to", "not equal to","contains", "does not contain"])))
+		get_pk=lambda a: a.id, get_label=lambda a: a.body)
+	comparator = SelectField("Comparator",choices=TRIGGER_COMPARATORS)
 	condition_value = TextField("Condition value",render_kw={"placeholder":"value"})
-	next_comparator = SelectField("Next",choices=list(enumerate(["","AND","OR"])))    
+	next_comparator = SelectField("Next",choices=TRIGGER_NEXT_COMPARATORS)    
 
 class TriggerForm(ModelForm):
 	class Meta:
 		model = Trigger				
 	'''GUI: trigger build form used in views'''
-	question_id = QuerySelectField("Attach to this question", 
-		get_pk=lambda a: a.id, get_label=lambda a: a.body)
+	question_id = HiddenInteger("Question id")
 	#conditions
 	conditions = ModelFieldList(FormField(TriggerConditionForm))
 	#if true

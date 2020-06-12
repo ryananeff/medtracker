@@ -27,62 +27,21 @@
 			</div>
 			</div>
 			{% if question.triggers != None %}
-				{% set trigger_set = triggers[question.id] %}
-				{% for trigger_tup in trigger_set %}
-					{% set trigger = trigger_tup[0] %}
-					{% set after = trigger_tup[1] %}
+				{% for trigger in question.triggers %}
 					<div class="connector">
-						<div class="connector-line" style="border-style:none none none solid; margin-left:120px; padding:20px;">If<span style="color: grey;"> answer is </span>{{trigger.criteria}}</div>
+						<div class="connector-line" style="border-style:none none none solid; margin-left:120px; padding:20px;">If<span style="color: grey;"> -x-x-x- </span></div>
 					</div>
 					<div class="media draggable" style="margin-left:80px; max-width:600px;margin-top:0px;box-shadow: 0px 2px 10px 0px rgba(0,0,0,0.2);">
 					<div class="media-left" style="background-color:#e6e6ff; padding:10px;box-shadow: 0px 2px 10px 0px rgba(0,0,0,0.2);">
-					  <a href="#">
-						  {% if "voice" in trigger.kind.code|string %}
-						<img class="media-object" src="/assets/images/phone-st.png" alt="..." style="height:64px">
-						{% elif "email" in trigger.kind.code|string %}
-						<img class="media-object" src="/assets/images/email-st.png" alt="..." style="height:64px">
-						{% elif "sms" in trigger.kind.code|string %}
-						<img class="media-object" src="/assets/images/sms-st.png" alt="..." style="height:64px">
-						{% else %}
-						<img class="media-object" src="/assets/images/web-st.png" alt="..." style="height:64px">
-						{% endif %}
-					  </a>
+					  blah
 					</div>
 					<div class="media-body" style="padding:10px; background-color:white;padding:10px;">
 						<small>Trigger</small>
-					  <h4 class="media-heading">{{ trigger.kind }}<span style="color: grey;"> to </span>{{trigger.recipients}}</h4>
-					  <p><span style="font-weight:bold">"{{ trigger.title }}"</span></p>
+					  
 					<a href="/triggers/edit/{{ trigger.id }}" style="padding-right:10px">Edit</a>
 					<a href="/triggers/delete/{{ trigger.id }}" style="color:darkred">Delete</a>
 					</div>
 					</div>
-					{% if after %}
-						{% if trigger_set|length == loop.index %}
-							<div class="connector">
-								<div class="connector-line" style="border-style:none none none solid; margin-left:200px; padding:20px;"><span style="color: grey;">Then</span> begin</div>
-							</div>
-							<div class="media" style="margin-left:160px; max-width:600px;margin-top:0px;box-shadow: 0px 2px 10px 0px rgba(0,0,0,0.2);">
-							<div class="media-body" style="padding:10px; background-color:white;padding:10px;">
-								<small>Survey</small>
-							  <h4 class="media-heading"><a href="/surveys/view/{{after.id}}">{{ after.title }}</a></h4>
-							  <p>{{after.description}}</p>
-							</div>
-							</div>
-						{% else %}
-							<div class="connector">
-								<div class="connector-line" style="border-style:none none none solid; margin-left:120px; padding:20px;float:left;height:60px"></div>
-								<div class="connector-line" style="border-style:none none none solid; margin-left:200px; padding:20px;height:60px"><span style="color: grey;">Then</span> begin</div>
-							</div>
-							<div class="connector-line" style="border-style:none none none solid; margin-left:120px; padding:20px;float:left; height:170px"></div>
-							<div class="media" style="margin-left:160px; max-width:600px;margin-top:0px;box-shadow: 0px 2px 10px 0px rgba(0,0,0,0.2);">
-							<div class="media-body" style="padding:10px; background-color:white;padding:10px;">
-								<small>Survey</small>
-							  <h4 class="media-heading"><a href="/surveys/view/{{after.id}}">{{ after.title }}</a></h4>
-							  <p>{{after.description}}</p>
-							</div>
-							</div>
-						{% endif %}
-					{% endif %}
 				{% endfor %}
 			{% endif %}
 		</div>

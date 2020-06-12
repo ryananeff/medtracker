@@ -31,17 +31,17 @@ TRIGGER_KIND_CHOICES = (
 	(CURL, 'Push data')
 )
 
+NOTHING="nothing"
 COMPLETE="complete"
 EXIT="exit"
-QUESTION="question",
 SURVEY="survey"
-NOTHING="nothing"
+
 
 TRIGGER_KINDS = (
     (NOTHING,"Do nothing"),
 	(COMPLETE, 'Complete survey'),
 	(EXIT, 'Exit survey'),
-	(QUESTION, 'Goto question'),
+	("question", 'Goto question'),
 	(SURVEY, 'Goto survey')
 )
 
@@ -61,6 +61,7 @@ AND = "&"
 OR = "|"
 
 TRIGGER_NEXT_COMPARATORS = (
+    (NOTHING,"."),
     (AND,"and"),
     (OR, "or")
  )
