@@ -23,12 +23,25 @@ VOICE = 'voice'
 SMS = 'sms'
 EMAIL = 'email'
 CURL = 'curl'
+COMPLETE="complete"
+EXIT="exit"
+QUESTION="question",
+SURVEY="survey"
+NOTHING="nothing"
 
 TRIGGER_KIND_CHOICES = (
 	(VOICE, 'Make a call'),
 	(SMS, 'Send a text or picture message'),
 	(EMAIL, 'Send an email'),
 	(CURL, 'Push data')
+)
+
+TRIGGER_KINDS = (
+    (NOTHING,"Do nothing"),
+	(COMPLETE, 'Complete survey'),
+	(EXIT, 'Exit survey'),
+	(QUESTION, 'Goto question'),
+	(SURVEY, 'Goto survey')
 )
 
 LOCATION_CHOICES = [
@@ -144,7 +157,7 @@ class Question(db.Model):
 	next_q = db.relationship("Question", uselist=False, remote_side = [id], back_populates='prev_q', post_update=True)
 	prev_q = db.relationship("Question", uselist=False, post_update=True)
 	responses = db.relationship("QuestionResponse", backref='question', cascade="all, delete-orphan")
-	survey = db.relationship("Survey",foreign_keys=[survey_id])
+	survey = db.relationship("Survey",foreign_keys=[survey_id],backref="_questions")
 
 	def __str__(self):
 		return '%s' % self.body

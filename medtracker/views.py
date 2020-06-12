@@ -601,23 +601,10 @@ def add_trigger():
 		formobj.question_id.query = [question]
 	else:
 		formobj.question_id.query = Question.query.filter(Survey.user_id==current_user.id).all()
-	formobj.after_function.query = Survey.query.filter_by(user_id=current_user.id).all()
+	formobj.subject.query = Survey.query.get(1)._questions
+	formobj.dest_yes.query = Survey.query.get(1)._questions
+	formobj.dest_no.query = Survey.query.get(1)._questions
 	if request.method == 'POST' and formobj.validate():
-		if formobj.after_function.data:
-			af = formobj.after_function.data.id
-		else:
-			af = None
-		trigger = Trigger(
-			formobj.title.data,
-			formobj.kind.data,
-			formobj.criteria.data,
-			formobj.recipients.data,
-			af
-			)
-		trigger.user_id = current_user.id
-		trigger.question_id = formobj.question_id.data.id
-		db_session.add(trigger)
-		db_session.commit()
 		flash('Trigger added.')
 		if question:
 			return redirect(url_for('view_survey', _id=question.survey.id))
@@ -800,7 +787,7 @@ def survey_response_dashboard(survey_id):
 	res_per_day.columns = ["daily_completed_surveys"]
 	df = pd.merge(pts_per_day,res_per_day,left_index=True,right_index=True,how="outer")
 	df = pd.merge(df,devs_per_day,left_index=True,right_index=True,how="outer")
-	begin_time = datetime.datetime.now().date() - datetime.timedelta(days=14)
+	begin_time = datetime.datetime.now().date() - datetime.timedelta(days=6)
 	df = df.reindex(pd.date_range(begin_time, datetime.datetime.now().date())).fillna(0).astype(int)
 	df["total_registered_students"] = df["daily_registered_students"].cumsum()
 	df["total_completed_surveys"] = df["daily_registered_students"].cumsum()
@@ -808,14 +795,14 @@ def survey_response_dashboard(survey_id):
 	df.reset_index(inplace=True)
 	df = df.sort_values(by="index",ascending=True)
 	df["index"] = [datetime.datetime.strftime(a,"%D") for a in df["index"]]
-	fig1 = plotlyBarplot(data=df,x="index",y="total_devices",width=None, height=None,title="Total Devices Seen")
-	fig2 = plotlyBarplot(data=df,x="index",y="total_registered_students",width=None, height=None,title="Total Registered Students")
+	fig1 = plotlyBarplot(data=df,x="index",y="total_devices",width=None, height=300,title="Total Devices Seen")
+	fig2 = plotlyBarplot(data=df,x="index",y="total_registered_students",width=None, height=300,title="Total Registered Students")
 	df["daily_uncompleted_surveys"] = df["total_registered_students"] - df["daily_completed_surveys"]
 	df["daily_pct"] = df["daily_completed_surveys"]/df["total_registered_students"]*100
 	df2 = df.loc[:,["index","daily_uncompleted_surveys","daily_completed_surveys"]]
 	df2.columns = ["index","Not Completed","Completed"]
 	df3 = df2.melt(id_vars="index")
-	fig3 = plotlyBarplot(data=df3,x="index",y="value",hue="variable",width=None, height=None, title="Screening Status",stacked=True,show_legend=False)
+	fig3 = plotlyBarplot(data=df3,x="index",y="value",hue="variable",width=None, height=300, title="Screening Status",stacked=True,show_legend=False)
 
 	dash_figs = [fig1,fig2,fig3]
 
@@ -851,7 +838,7 @@ def survey_response_dashboard(survey_id):
 			pltdict = {v:0 for ix,v in choices.items()}
 			pltdict.update(g.groupby("response").count()["question_id"].to_dict())
 			df = pd.DataFrame(pltdict,index=["value"]).T.reset_index()
-			fig = plotlyBarplot(data=df,x="index",y="value",xtype=xtype,width=None, height=None,title=title)
+			fig = plotlyBarplot(data=df,x="index",y="value",xtype=xtype,width=None, height=300,title=title)
 			question_figs.append(fig)
 
 	last7_figs = []
@@ -886,7 +873,7 @@ def survey_response_dashboard(survey_id):
 		    pltdf.reset_index(inplace=True)
 		    pltdf=pltdf.fillna(method="bfill")
 		    fig = plotlyBarplot(data=pltdf,x="date",y="count",hue="response",
-		                        xtype=xtype,grouped=True,ordered=False,stacked=True,order2=True,width=None,height=None,show_legend=True,title=title)
+		                        xtype=xtype,grouped=True,ordered=False,stacked=True,order2=True,width=None,height=300,show_legend=True,title=title)
 		    last7_figs.append(fig)
 
 	for ix,fig in enumerate(dash_figs):
