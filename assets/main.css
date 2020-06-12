@@ -385,3 +385,9 @@ form tr {
 .card-auto{
   width:auto;
 }
+
+.connector-line{
+  border-style:none none none solid; 
+  margin-left:120px; 
+  padding:20px;
+}

@@ -1,5 +1,14 @@
 {% extends 'layout_sidebar.html' %}
 {% block title %}{{ action }} {{ data_type }} | Suretify {% endblock %}
+{% set template %}
+<div id="templateForm" style="color: grey;display:none;" data-index=0> 
+	<p>If {{form.template.subject(class="transparent-input")}} 
+	{{form.template.comparator(class="transparent-input")}} 
+	{{form.template.condition_value(class="transparent-input")}} 
+	{{form.template.next_comparator(class="transparent-input")}}</p>
+</div>
+{% endset %}
+
 {% block body %}
 <link href="/assets/at/jquery.atwho.min.css" rel="stylesheet">
 <script src="/assets/at/jquery.caret.min.js"></script>
@@ -34,18 +43,18 @@
 					</div>
 				</div>
 				<div class="connector">
-					<div class="connector-line" style="border-style:none none none solid; margin-left:120px; padding:20px;">Conditions:<br>
+					<div class="connector-line" id="conditions">
+						<p>Conditions: <button class="btn btn-xs btn-primary" id="add_condition">Add Condition &nbsp; +</button></p>
 						{% for e in form.conditions %}
-						If
-						<span style="color: grey;"> 
-							{{e.subject(class="transparent-input")}} 
+						<div class="subform" data-index="{{ loop.index0 }}" style="color: grey;">
+						<p> 
+							If {{e.subject(class="transparent-input")}} 
 							{{e.comparator(class="transparent-input")}} 
 							{{e.condition_value(class="transparent-input")}} 
 							{{e.next_comparator(class="transparent-input")}}
-						</span>
-						<br>
+						</p>
+						</div>
 						{% endfor %}
-					<button class="btn btn-sm btn-primary add_form_field">Add Condition &nbsp; <span class="add_form_field">+</span></button>
 					</div>
 				</div>
 				<div class="media" style="margin-left:80px; min-width:860px;max-width:1100px;margin-top:0px;box-shadow: 0px 2px 10px 0px rgba(0,0,0,0.2);">
@@ -84,7 +93,65 @@
 			  </div>
 		</div>
     </div><!-- /.container -->
+    {{ template }}
     <script type="text/javascript">
+    
+    function addForm() {
+    	console.log("working!");
+	    var $templateForm = $('#templateForm');
+
+	    if (!$templateForm) {
+	        console.log('[ERROR] Cannot find template');
+	        return;
+	    }
+
+	    // Get Last index
+	    var $lastForm = $('.subform').last();
+
+	    var newIndex = 0;
+
+	    if ($lastForm.length > 0) {
+	        newIndex = parseInt($lastForm.data('index')) + 1;
+	    }
+
+	    // Maximum of 20 subforms
+	    if (newIndex > 20) {
+	        console.log('[WARNING] Reached maximum number of elements');
+	        return;
+	    }
+
+	    // Add elements
+	    var $newForm = $templateForm.clone();
+	    const regex = /\d+/gi;
+
+	    $newForm.attr('id', "");
+	    $newForm.data('index', newIndex);
+
+	    $newForm.find('input').each(function(idx) {
+	        var $item = $(this);
+
+	        $item.attr('id', $item.attr('id').replace(regex, newIndex));
+	        $item.attr('name', $item.attr('name').replace(regex, newIndex));
+	    });
+	    $newForm.find('select').each(function(idx) {
+	        var $item = $(this);
+
+	        $item.attr('id', $item.attr('id').replace(regex, newIndex));
+	        $item.attr('name', $item.attr('name').replace(regex, newIndex));
+	    });
+
+	    // Append
+	    $('#conditions').append($newForm);
+	    $newForm.addClass('subform');
+	    $newForm.show();
+	};
+
+    $(document).ready(function(){
+    	$("#add_condition").click(function(e) {
+	        e.preventDefault();
+	        addForm();
+    	});
+    });
 	$('.inputor').atwho({
 	    at: "<",
 	    data: '/autocomplete/triggers',
