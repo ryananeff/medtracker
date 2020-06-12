@@ -111,7 +111,7 @@ class TriggerForm(Form):
 		get_pk=lambda a: a.id, get_label=lambda a: a.body, allow_blank=True)
 	comparator = SelectField("Comparator",choices=list(enumerate(["equal to", "not equal to","contains", "does not contain"])))
 	condition_value = TextField("Condition value",render_kw={"placeholder":"value"})
-	next_comparator = SelectField("Next",choices=list(enumerate(["AND","OR"])))
+	next_comparator = SelectField("Next",choices=list(enumerate(["","AND","OR"])))
 	#if true
 	yes_type = SelectField('Type', choices=TRIGGER_KINDS)
 	dest_yes = QuerySelectField("Destination", 
