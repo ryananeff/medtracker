@@ -119,7 +119,7 @@ def run_trigger(question, response, from_type = None, session_id = None, current
 				return None, None, True, False, message
 			elif trigger_type=="question":
 				if next_question != None:
-					return next_question.id,None,None,None,message
+					return next_question,None,None,None,message
 			elif trigger_type=="survey": 
 				print("WARNING: survey redirect in trigger not implemented")
 				continue #NOT IMPLEMENTED!

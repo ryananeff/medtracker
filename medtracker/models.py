@@ -51,14 +51,14 @@ NOTCONTAIN = "is not in"
 ANY = "any"
 
 TRIGGER_COMPARATORS = (
-    (EQUAL, "equal to"),
-    (NOTEQUAL, "not equal to"),
+    (EQUAL, "is equal to"),
+    (NOTEQUAL, "is not equal to"),
     (CONTAINS, "contains"),
     (NOTCONTAIN, "does not contain"),
-    ("lt","less than"),
-    ("gt","greater than"),
-    ("ge","greater than or equal to"),
-    ("le","less than or equal to"),
+    ("lt","is less than"),
+    ("gt","is greater than"),
+    ("ge","is greater than or equal to"),
+    ("le","is less than or equal to"),
     (ANY,"is any")
 )
 
@@ -264,11 +264,13 @@ class Trigger(db.Model):
 	
 	yes_type = db.Column(ChoiceType(TRIGGER_KINDS))
 	dest_yes = db.Column(db.Integer, db.ForeignKey('question.id'))
+	dest_yes_question = db.relationship("Question",foreign_keys=[dest_yes])
 	payload_yes = db.Column(db.Text)
 	alert_yes = db.Column(db.Boolean,default=False)
 
 	no_type = db.Column(ChoiceType(TRIGGER_KINDS))
 	dest_no = db.Column(db.Integer, db.ForeignKey('question.id'))
+	dest_no_question = db.relationship("Question",foreign_keys=[dest_no])
 	payload_no = db.Column(db.Text)
 	alert_no = db.Column(db.Boolean,default=False)
 
