@@ -29,17 +29,33 @@
 			{% if question.triggers != None %}
 				{% for trigger in question.triggers %}
 					<div class="connector">
-						<div class="connector-line" style="border-style:none none none solid; margin-left:120px; padding:20px;">If<span style="color: grey;"> -x-x-x- </span></div>
+						<div class="connector-line" style="border-style:none none none solid; margin-left:120px; padding:20px;">Conditions:<br>
+							{% for e in trigger.conditions %}
+							<span style="color: grey;"> If "{{e.question.body}}" is {{e.comparator}} "{{e.condition_value}}" {% if loop.last == False %}{{e.next_comparator}}{% endif %} </span></div>
+							{% endfor %}
 					</div>
 					<div class="media draggable" style="margin-left:80px; max-width:600px;margin-top:0px;box-shadow: 0px 2px 10px 0px rgba(0,0,0,0.2);">
-					<div class="media-left" style="background-color:#e6e6ff; padding:10px;box-shadow: 0px 2px 10px 0px rgba(0,0,0,0.2);">
-					  blah
+					
+					<div class="media-body" style="padding:10px; background-color:white;padding:10px;">
+						<div class="media-body" style="padding:10px; background-color:white;padding:10px;border-right:1px solid;">
+					  <small>If true</small>
+					  <h4 class="media-heading"><span style="color: grey;"> {{trigger.yes_type}} </span></h4><br>
+					  <small>Destination</small>
+					  <h4 class="media-heading"><span style="color: grey;"> {{trigger.dest_yes}}  </span></h4><br>
+					  <span style="font-weight:bold">Message:</span><br>{{trigger.payload_yes}}<br>
+					  
 					</div>
 					<div class="media-body" style="padding:10px; background-color:white;padding:10px;">
-						<small>Trigger</small>
+					  <small>If false</small>
+					  <h4 class="media-heading"><span style="color: grey;"> {{trigger.no_type}} </span></h4><br>
+					  <small>Destination</small>
+					  <h4 class="media-heading"><span style="color: grey;"> {{trigger.dest_no}}  </span></h4><br>
+					  <span style="font-weight:bold">Message:</span><br>{{trigger.payload_no}}<br>
 					  
-					<a href="/triggers/edit/{{ trigger.id }}" style="padding-right:10px">Edit</a>
-					<a href="/triggers/delete/{{ trigger.id }}" style="color:darkred">Delete</a>
+					</div>
+					  
+						<a href="/triggers/edit/{{ trigger.id }}" style="padding-right:10px">Edit</a>
+						<a href="/triggers/delete/{{ trigger.id }}" style="color:darkred">Delete</a>
 					</div>
 					</div>
 				{% endfor %}

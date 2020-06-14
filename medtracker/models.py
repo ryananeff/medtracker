@@ -284,6 +284,7 @@ class TriggerCondition(db.Model):
 	id = db.Column(db.Integer, primary_key=True)
 	trigger_id = db.Column(db.Integer, db.ForeignKey('trigger.id'))
 	subject_id = db.Column(db.Integer, db.ForeignKey('question.id'))
+	question = db.relationship("Question")
 	comparator = db.Column(ChoiceType(TRIGGER_COMPARATORS))
 	condition_value = db.Column(db.String)
 	next_comparator = db.Column(ChoiceType(TRIGGER_NEXT_COMPARATORS))
