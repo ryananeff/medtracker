@@ -36,7 +36,6 @@ COMPLETE="complete"
 EXIT="exit"
 SURVEY="survey"
 
-
 TRIGGER_KINDS = (
     (NOTHING,"Do nothing"),
 	(COMPLETE, 'Complete survey'),
@@ -49,12 +48,18 @@ EQUAL = "=="
 NOTEQUAL = "!="
 CONTAINS = "is in"
 NOTCONTAIN = "is not in"
+ANY = "any"
 
 TRIGGER_COMPARATORS = (
     (EQUAL, "equal to"),
     (NOTEQUAL, "not equal to"),
     (CONTAINS, "contains"),
     (NOTCONTAIN, "does not contain"),
+    ("lt","less than"),
+    ("gt","greater than"),
+    ("ge","greater than or equal to"),
+    ("le","less than or equal to"),
+    (ANY,"is any")
 )
 
 AND = "&"
@@ -201,7 +206,7 @@ class QuestionResponse(db.Model):
 			value = [value]
 		self._response = ";".join([str(a) for a in value])
 	
-	def __init__(**kwargs):
+	def __init__(self,**kwargs):
 		super(QuestionResponse, self).__init__(**kwargs)
 		self.time = datetime.datetime.utcnow()
 
@@ -224,7 +229,9 @@ class SurveyResponse(db.Model):
 	session_id = db.Column(db.String)
 	start_time = db.Column(db.DateTime)
 	end_time = db.Column(db.DateTime)
+	exited = db.Column(db.Boolean,default=False)
 	completed = db.Column(db.Boolean, default=False)
+	message = db.Column(db.Text)
 	responses = db.relationship("QuestionResponse",backref="parent",lazy="dynamic", cascade="all,delete-orphan")
 
 	def __str__(self):
@@ -237,6 +244,12 @@ class SurveyResponse(db.Model):
 	def complete(self):
 		self.end_time = datetime.datetime.utcnow()
 		self.completed = True
+		self.exited = False
+
+	def exit(self):
+		self.end_time = datetime.datetime.utcnow()
+		self.exited = True
+		self.completed = False
 	
 	def to_dict(self):
 		return {col.name: getattr(self, col.name) for col in self.__table__.columns}
