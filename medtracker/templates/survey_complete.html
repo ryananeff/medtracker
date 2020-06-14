@@ -2,14 +2,14 @@
 {% block title %}Completed: {{survey.title}} | Suretify{% endblock %}
 {% block body %}
 	    <div class="page-header">
-		    <h3>Survey complete</h3>
+		    <h3>Thank you for taking the {{survey.title}}.</h3>
 	    </div>
 	    <div class="jumbotron survey-question">
 	    <div class="container">
 	    	<div class="col-lg-2"></div>
 	    	<div class="col-lg-8">
-	    	<h2 style="color:gray">Thank you for taking the {{survey.title}}.</h2>
-	    	<p>Your answers have been recorded successfully. Please screenshot or print out this page for your records. You can also bookmark this page on this device to refer to it later.</p>
+	    	{%if record.message %}<h2 style="color:gray">{{record.message}}</h2>{% endif%}
+	    	<p><small>Your answers have been recorded successfully. Please screenshot or print out this page for your records. You can also bookmark this page on this device to refer to it later.</small></p>
 	    	<p>Device ID: <strong>{{ fmt_id(patient.mrn) }}</strong></p>
 	    	<p>Completion Date: <strong>{{ momentjs(record.end_time).format('MMMM Do YYYY, h:mm a') }}</strong></p>
 	    	<p>QR Code:</p><p><img src="{{qrcode_out|safe}}" style="max-width:100%"></p>

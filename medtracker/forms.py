@@ -107,11 +107,14 @@ class QuestionView(MethodView):
 			return qtype, TextAreaField(qlabel,render_kw={"placeholder":"Your answer"})
 		# can extend if clauses at every new fieldtype
 
+def possible_question():
+	return Question.query
+
 class TriggerConditionForm(ModelForm):
 	class Meta:
 		model = TriggerCondition
 	#conditions
-	subject = QuerySelectField("Subject", 
+	subject = QuerySelectField("Subject", query_factory=possible_question,
 		get_pk=lambda a: a.id, get_label=lambda a: a.body)
 	comparator = SelectField("Comparator",choices=TRIGGER_COMPARATORS)
 	condition_value = TextField("Condition value",render_kw={"placeholder":"value"})

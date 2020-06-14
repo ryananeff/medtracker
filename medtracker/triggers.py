@@ -7,6 +7,13 @@ import sys
 import urllib, re, random, string, requests, json
 from flask_login import login_user, logout_user, current_user
 
+def isfloat(value):
+  try:
+    float(value)
+    return True
+  except ValueError:
+    return False
+
 def randomword(length):
 	'''generate a random string of whatever length, good for filenames'''
 	return ''.join(random.choice(string.ascii_lowercase) for i in range(length))
@@ -17,164 +24,114 @@ def redirect_url():
            url_for('index')
 
 def run_trigger(question, response, from_type = None, session_id = None, current_user = None):
+	'''return: next_question, next_survey, exit, complete, message'''
+	next_q = question.next_q
 	if question.triggers:
 		for trigger in question.triggers:
-			message = trigger.title
-			recipients = trigger.recipients
-			split_message = re.split('(<.+?>)',message)
-			split_recipients = re.split('(<.+?>)',recipients)
-			criteria = trigger.criteria.lower().strip().encode()
-			callback = Survey.query.filter_by(id=trigger.after_function).first()
-
-			print("To evaluate: " + ";".join(response.response))
-			# this code checks the criteria to see if it evaluates to true or false
-			if criteria != 'any':
-				print("Criteria is not any")
-				if question.kind.code == "numeric":
-					print("numeric code")
+			#get conditions
+			trigger_master_state = False
+			trigger_comparators_next = None
+			for ix,c in enumerate(trigger.conditions):
+				trigger_state = False
+				subject_response = QuestionResponse.query.filter_by(survey_response_id=response.survey_response_id,
+				                                                    question_id=c.subject_id).first()
+				c_value = c.condition_value.strip().lower()
+				if subject_response != None:
+					subject_response = subject_response._response.strip().lower() #get the response inputted for the trigger condition
+				else:
+					continue #there was no response for that trigger condition...
+				sr_float = float(subject_response) if isfloat(subject_response) else subject_response
+				cv_float = float(c_value) if isfloat(c_value) else c_value
+				if c.comparator == "==":
+					#subject_response must match condition value exactly (in lowercase, of course!)
+					if subject_response==c_value:
+						trigger_state = True
+				elif c.comparator == "!=":
+					if subject_response!=c_value:
+						trigger_state = True
+				elif c.comparator == "is in":
+					if c_value in subject_response:
+						trigger_state = True
+				elif c.comparator == "is not in":
+					if c_value not in subject_response:
+						trigger_state = True
+				elif c.comparator == "any":
+					trigger_state = True
+				elif c.comparator == "lt":
 					try:
-						if eval(response.response + " " + criteria) != True:
-							print("Trigger did not match criteria.")
-							continue
+						if sr_float < cv_float:
+							trigger_state=True
 					except:
-						print("Can't determine if trigger matched criteria, failsafe stop.")
 						continue
-				elif question.kind.code == "yes-no":
-					print("yes-no code")
+				elif c.comparator == "le":
 					try:
-						yes_no = {'0':"no", '1':"yes"}
-						if yes_no[response.response] != criteria.decode():
-							print("Trigger did not match criteria, (criteria: %s, response: %s)"%(criteria,yes_no[response.response]))
-							continue
+						if sr_float <= cv_float:
+							trigger_state=True
 					except:
-						print("Can't determine if trigger matched criteria, failsafe stop.")
+						continue
+				elif c.comparator == "gt":
+					try:
+						if sr_float > cv_float:
+							trigger_state=True
+					except:
+						continue
+				elif c.comparator == "ge":
+					try:
+						if sr_float >= cv_float:
+							trigger_state=True
+					except:
 						continue
 				else:
-					print("other/text code")
-					try:
-						if eval(criteria + " " + response.response) != True:
-							print("Trigger did not match criteria.")
-							continue
-					except:
-						print("Can't determine if trigger matched criteria, failsafe stop.")
-						continue
-
-			# this code replaces the recipients field with the response
-			for ix,i in enumerate(split_recipients):
-				tag = re.findall('<(.+?)>',i) # look for tags we need to replace
-				if tag != []:
-					tag = tag[0].split("|")[1].strip() # so we can include descriptions
-					split_tag = tag.split(".")
-					if len(split_tag) == 2: # db type is the resource type (question, trigger, callback, etc.), while the ID is actually the position in the survey
-						db_type, db_id = split_tag
-						db_subtype = None # subtype is if the element is multi-part (e.g. questions have elements attached)
-					if len(split_tag) == 3:
-						db_type, db_id, db_subtype = split_tag
-					if db_type.lower() == 'question':
-						result = QuestionResponse.query.filter_by(question_id=int(db_id), uniq_id=response.uniq_id, session_id=session_id).first()
-						if result != None:
-							split_recipients[ix] = result.response.strip() # this is the default subtype (response)
-								#TODO: this needs to be fixed for things like yes or no questions or 1 to 10
-								#        * maybe in the models??
-						else:
-							split_recipients[ix] = "" # when there's nothing there
-			recipients = "".join(split_recipients)
-
-			# this code replaces the message field with the response
-			for ix,i in enumerate(split_message):
-				tag = re.findall('<(.+?)>',i) # look for tags we need to replace
-				if tag != []:
-					tag = tag[0].split("|")[1].strip() # so we can include descriptions
-					split_tag = tag.split(".")
-					if len(split_tag) == 2: # db type is the resource type (question, trigger, callback, etc.), while the ID is actually the position in the survey
-						db_type, db_id = split_tag
-						db_subtype = None # subtype is if the element is multi-part (e.g. questions have elements attached)
-					if len(split_tag) == 3:
-						db_type, db_id, db_subtype = split_tag
-					if db_type.lower() == 'question':
-						result = QuestionResponse.query.filter_by(question_id=int(db_id), uniq_id=response.uniq_id, session_id=session_id).first()
-						if result != None:
-							split_message[ix] = result.response # this is the default subtype (response)
-								#TODO: this needs to be fixed for things like yes or no questions or 1 to 10
-								#        * maybe in the models??
-						else:
-							split_message[ix] = "" # when there's nothing there
-					if db_type.lower() == 'survey':
-						if current_user != None:
-							surveys = Survey.query.filter_by(id=int(db_id), user_id=current_user.id).all()
-							if len(surveys) != 0:
-								survey = surveys[0]
-							if trigger.kind == 'voice':
-								for r in recipients.split(";"):
-									r = r.strip()
-									test_voice_out(survey.id, r, uniq_id = response.uniq_id)
-							if trigger.kind == 'sms':
-								for r in recipients.split(";"):
-									r = r.strip()
-									test_sms_survey(survey.id, r, uniq_id = response.uniq_id)
-							if trigger.kind == 'email':
-								for r in recipients.split(";"):
-									r = r.strip()
-									url = "https://suretify.co" + url_for('start_survey', survey_id = callback.id) + "?u=%s" % response.uniq_id
-									message = "Please complete the following survey at this link: %s" % url
-									test_sms_survey(survey.id, r, uniq_id = response.uniq_id)
-			message = "".join(split_message)
-			if recipients == "":
-				print("No valid recipients")
+					continue #we should never get to this line of code!
+				if trigger_comparators_next != None:
+					if trigger_comparators_next == "&":
+						trigger_master_state = trigger_master_state&trigger_state
+					elif trigger_comparators_next == "|":
+						trigger_master_state = trigger_master_state|trigger_state
+					elif trigger_comparators_next == ".":
+						break
+					else: #something went wrong
+						break
+				else:
+					trigger_master_state = trigger_state
+				trigger_comparators_next = c.next_comparator
+				#end conditions
+			#now we can branch if true or false
+			trigger_type = None
+			next_question = None
+			message = None
+			alerted = None
+			if trigger_master_state: #if true
+				trigger_type = trigger.yes_type
+				next_question = trigger.dest_yes
+				message = trigger.payload_yes
+				alerted=trigger.alert_yes
+			else: #if false
+				trigger_type = trigger.no_type
+				next_question = trigger.dest_no
+				message = trigger.payload_no
+				alerted=trigger.alert_no
+			if trigger_type=="complete":
+				'''return: next_question, next_survey, exit, complete, message'''
+				return None, None, False, True, message
+			elif trigger_type=="exit":
+				'''return: next_question, next_survey, exit, complete, message'''
+				return None, None, True, False, message
+			elif trigger_type=="question":
+				if next_question != None:
+					return next_question.id,None,None,None,message
+			elif trigger_type=="survey": 
+				print("WARNING: survey redirect in trigger not implemented")
+				continue #NOT IMPLEMENTED!
+			elif trigger_type=="nothing":
 				continue
-			if trigger.kind == 'voice':
-				# TODO: needs to check if the recipient type is actually valid or else internal server error!
-				phone_trigger(message, recipients, callback)
-			elif trigger.kind == 'sms':
-				sms_trigger(message, recipients, callback)
-			elif trigger.kind == 'email':
-				email_trigger(message, recipients, callback)
-			elif trigger.kind == 'curl':
-				url_trigger(message, recipients, callback)
-			else:
-				print("ERROR: Not a valid trigger type.")
-				continue
-			print("Trigger sent successfully.")
-
-			if callback:
-				if from_type == 'voice':
-					# TODO: needs to check if the recipient type is actually valid or else internal server error!
-					try:
-						recipients = Patient.query.get(response.uniq_id).phone
-						test_voice_out(callback.id, recipients, uniq_id = response.uniq_id)
-					except:
-						print("No recipient defined for callback.")
-						pass					
-				elif from_type == 'sms':
-					try:
-						recipients = Patient.query.get(response.uniq_id).phone
-						test_sms_survey(callback.id, recipients, uniq_id = response.uniq_id)
-					except:
-						print("No recipient defined for callback.")
-						pass
-				elif from_type == 'email':
-					#TODO - need to generate the URL to send out
-					try:
-						url = "https://suretify.co" + url_for('start_survey', survey_id = callback.id) + "?u=%s" % response.uniq_id
-						message = "Please complete the following survey at this link: %s" % url
-						recipients = Patient.query.get(response.uniq_id).email
-						task = Progress(
-							user = recipients, 
-							task = callback.id,
-							parent_id = response.uniq_id)
-						db_session.add(task)
-						db_session.commit()
-						email_trigger(message, recipients, callback)
-					except:
-						print("Error in sending email callback")
-						pass
-				elif from_type == 'curl':
-					# TODO - need to generate the URL to send out
-					#url_trigger(message, recipients, callback)
-					pass
-				elif from_type == "web":
-					return callback.id
-		return None
+	#no trigger active for question
+	if next_q: #if more questions
+		'''return: next_question, next_survey, exit, complete, message'''
+		return next_q.id, None, False, False, None #do nothing if no trigger
+	else: #exited without a completion record (completion must be explicit)
+		'''return: next_question, next_survey, exit, complete, message'''
+		return None, None, True, False, None
 
 def phone_trigger(message, recipients, callback=None):
 	'''send a trigger message at a certain time'''
@@ -441,7 +398,7 @@ def autocomplete_choices():
 	possible = []
 	for survey in surveys:
 		possible.append({"name": "survey." + str(survey.id), "content":survey.title})
-		for ix, question in enumerate(survey.questions):
+		for ix, question in enumerate(survey._questions):
 			possible.append({"name":"question." + str(question.id), "content":question.body})
 	return json.dumps(possible)
 
