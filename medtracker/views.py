@@ -396,7 +396,7 @@ def complete_survey(session_id):
 			patient = record.patient
 			end_time = record.end_time.replace(tzinfo=pytz.utc).astimezone(pytz.timezone('America/New_York'))
 			day_num = end_time.timetuple().tm_yday % 46+1
-			img_path = "/Users/ryanneff/suretify/medtracker/assets/images/animals/animal%d.jpg"%day_num
+			img_path = app.root_path+"/../assets/images/animals/animal%d.jpg"%day_num
 			qrcode_out = qrcode(url_for('complete_survey',session_id=record.session_id,_external=True),error_correction='Q',icon_img=img_path)
 			return render_template("survey_complete.html",record=record, patient = patient,survey=survey,qrcode_out=qrcode_out)
 		else:
@@ -408,7 +408,7 @@ def complete_survey(session_id):
 			if record.completed:
 				end_time = record.end_time.replace(tzinfo=pytz.utc).astimezone(pytz.timezone('America/New_York'))
 				day_num = end_time.timetuple().tm_yday % 46+1
-				img_path = "/Users/ryanneff/suretify/medtracker/assets/images/animals/animal%d.jpg"%day_num
+				img_path = app.root_path+"/../assets/images/animals/animal%d.jpg"%day_num
 				qrcode_out = qrcode(url_for('complete_survey',session_id=record.session_id,_external=True),error_correction='Q',icon_img=img_path)
 				return render_template("survey_complete.html",record=record, patient = g.patient,survey=survey,qrcode_out=qrcode_out)
 			else:
