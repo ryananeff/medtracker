@@ -1,6 +1,6 @@
 {% extends 'layout.html' %}
 {% import '_forms.html' as forms %}
-{% block title %}Login | Suretify{% endblock %}
+{% block title %}Login | ISMMS Health Check{% endblock %}
 {% block body %}
     <div class="container">
 		<div class="row">
@@ -10,12 +10,12 @@
 				{% block form %}
 				<section>
 				<h1>{{ action }} {{ data_type }}</h1>
-				<form action="{{ form_action }}" method="{{ method | d("POST") }}" enctype="multipart/form-data">
+				<form action="{{ form_action }}" method='{{ method | d("POST") }}' enctype="multipart/form-data">
 				{{ forms.render(form) }}
 				<input type="submit" value="Submit" class="btn btn-primary"> 
 				</form>
 				</section><br>
-				<p>New to Suretify? <a href='{{ url_for("signup") }}'>Sign up</a></p>
+				<p>Are you an admin for ISMMS Health Check but don't yet have an account? <a href='{{ url_for("signup") }}'>Sign up (confirmation required)</a></p>
 				{% endblock form %}
 			  </div>
 			</div>

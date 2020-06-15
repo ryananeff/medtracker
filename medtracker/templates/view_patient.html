@@ -1,5 +1,5 @@
 {% extends "layout_sidebar.html" %}
-{% block title %}Patient Detail | Suretify {% endblock %}
+{% block title %}Patient Detail | ISMMS Health Check {% endblock %}
 {% block body %}
 	<div class="header">
 	    <table class="table table-responsive">
@@ -133,9 +133,9 @@
 			                            <div class="card-body">
 			                            {% if response.completed %}
 			                        		<a href="{{url_for('complete_survey',session_id=response.session_id)}}" class="card-link">Completion record</a>
-			                        	{% else %}
-			                        		<a href="#" class="card-link" disabled>No completion record found</a>
-			                        	{% endif %}
+			                        	{% elif response.exited %}
+			                        		<a href="{{url_for('exit_survey',session_id=response.session_id)}}" class="card-link">Exit record</a>
+			                     		{% endif %}
                             		</div>
 	                        </div>
 	                    {% elif type=="comment" %}

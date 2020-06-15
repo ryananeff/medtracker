@@ -1,5 +1,5 @@
 {% extends "layout_sidebar.html" %}
-{% block title %}Surveys | Suretify {% endblock %}
+{% block title %}Surveys | ISMMS Health Check {% endblock %}
 {% block body %}
 	    <div class="page-header">
 		    <h2><span style="color: grey;">{{current_user.username}} /</span> Surveys <a href="/surveys/new/" class="btn btn-sm btn-primary">Build a new survey</a></h2>
@@ -7,21 +7,20 @@
 	    
 	    <div class="row">
 		{% for survey in surveys %}
-			<div class="card card--medium col-xs-4">
-			  <h2 class="card__title"><a href="/surveys/{{ survey.id }}/responses/dashboard">{{ survey.title }}</a></h2>
-			  <span class="card__subtitle">(ID: {{survey.id}})</span>
+			<div class="card card--medium col-sm-4">
+			  <h2 class="card__title"><a href="/surveys/view/{{ survey.id }}">{{ survey.title }}</a></h2>
 			  <div class="card__text">{{ survey.description_html | safe }}</div></p>
 			  <div class="card__action-bar">
-			  	<button class="card__button"><a href="/surveys/{{survey.id}}/responses/dashboard"><i class="fa fa-dashboard"></i></a>
+			  	<button class="card__button"><a href="/surveys/{{ survey.id }}/responses/dashboard"><i class="fa fa-dashboard"></i></a>
+			  	<button class="card__button"><a href="/surveys/edit/{{survey.id}}"><i class="fa fa-edit"></i></a>
 			  	<button class="card__button"><a href="/patients/signup/{{survey.id}}"><i class="fa fa-play"></i></a>
-				<button class="card__button"><a href="/surveys/view/{{ survey.id }}"><i class="fa fa-edit"></i></button></a>
 				<button class="card__button"><a href="/surveys/delete/{{ survey.id }}" style="color:red" onclick="return confirm('Are you sure?')"><i class="fa fa-trash"></i></a></button>
 			  </div>
 			</div>		
 		{% endfor %}
 		</div>
 		
-	    {% if surveys.first() == None %}
+	    {% if surveys | length == 0%}
 	    <div class="well">
 		<div class="starter-template">
 		No surveys yet.

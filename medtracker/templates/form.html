@@ -1,5 +1,5 @@
 {% extends 'layout_sidebar.html' %}
-{% block title %}{{ action }} {{ data_type }} | Suretify{% endblock%}
+{% block title %}{{ action }} {{ data_type }} | ISMMS Health Check{% endblock%}
 {% import '_forms_edit.html' as forms %}
 {% block body %}
 		<div class="row">
@@ -7,7 +7,7 @@
 				<div class="form-group">
 				<h1>{{ action }} {{ data_type }}</h1>
 				<hr>
-				<form class="form" action="{{ form_action }}" method="{{ method | d("POST") }}" enctype="multipart/form-data">
+				<form class="form" action="{{ form_action }}" method='{{ method | d("POST") }}' enctype="multipart/form-data">
 				{{ forms.render(form) }}
 				{% if u %}
 					<input type="hidden" name="uniq_id" value="{{u}}">
@@ -25,6 +25,7 @@ $(document).ready(function() {
     var max_fields = 20;
     var wrapper = $(".choices-container");
     var add_button = $(".add_form_field");
+    var add_condition = $(".add_condition");
 
     var x = 1;
     $(add_button).click(function(e) {
@@ -37,6 +38,19 @@ $(document).ready(function() {
             $(".add_form_field").hide();
         }
     });
+
+    $(add_condition).click(function(e) {
+        e.preventDefault();
+        if (x < max_fields) {
+            x++;
+            $(wrapper).append('<div class="btn-group"><input class="form-control" type="text" name="choices"/><a href="#" class="delete"><span class="glyphicon glyphicon-remove-circle"></span></a></div>'); //add input box
+        } 
+        if (x >= max_fields){
+            $(".add_condition").hide();
+        }
+    });
+
+
 
     $(wrapper).on("click", ".delete", function(e) {
         e.preventDefault();

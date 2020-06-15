@@ -50,7 +50,7 @@ def detect_user_session():
 		def remember_pt_id(response):
 			response.set_cookie('flashed',b'True',max_age=0)
 			response.set_cookie('patient_ident', g.patient_ident, max_age=datetime.timedelta(weeks=52))
-			device = Device(g.patient_ident)
+			device = Device(device_id = g.patient_ident)
 			db.session.add(device)
 			db.session.commit()
 			g.device = device
@@ -194,12 +194,16 @@ def about():
 @flask_login.login_required
 def serve_survey_index():
 	'''GUI: serve the survey index page'''
-	surveys = current_user.surveys
-	for s in surveys:
+	surveys = []
+	for s in current_user.surveys:
 		try:
 			s.description_html = delta_html.render(json.loads(s.description)["ops"])
 		except:
 			s.description_html = '<p>' + s.description + '</p>'
+		surveys.append(s)
+	for s in surveys:
+		print(s)
+		print(s.description_html)
 	return render_template("surveys.html",
 	                        surveys = surveys)
 
@@ -229,7 +233,7 @@ def add_survey():
 	'''GUI: add a survey to the DB'''
 	formobj = SurveyForm(request.form)
 	if request.method == 'POST' and formobj.validate():
-		dbobj = Survey(formobj.title.data, formobj.description.data)
+		dbobj = Survey(title=formobj.title.data, description=formobj.description.data)
 		dbobj.user_id = current_user.id
 		db_session.add(dbobj)
 		db_session.commit()
@@ -285,15 +289,7 @@ def remove_survey(_id):
 @flask_login.login_required
 def view_survey(_id):
     dbobj = Survey.query.get_or_404(_id)
-    triggers = dict()
-    for question in dbobj.questions():
-    	if question.triggers != None:
-    		tlist=[]
-    		for trigger in question.triggers:
-	    		after = Survey.query.get(trigger.after_function) if trigger.after_function else None
-	    		tlist.append((trigger, after))
-	    	triggers[question.id] = tlist
-    return render_template("view_survey.html", survey = dbobj, triggers = triggers)
+    return render_template("view_survey.html", survey = dbobj)
 
 @app.route('/surveys/start/<int:survey_id>', methods=['GET', 'POST'])
 def start_survey(survey_id):
@@ -337,13 +333,21 @@ def serve_survey(survey_id):
 		survey_response = SurveyResponse.query.get_or_404(survey_response_id)
 	formobj = QuestionView().get(question)
 	if request.method == 'POST':
-		if uniq_id:
-			print("saving...")
-			trigger_survey = save_response(request.form, question_id, session_id = sess, survey_response_id = survey_response.id)
-			if trigger_survey != None:
-				return redirect(url_for('start_survey', survey_id=trigger_survey, u=uniq_id, s = sess))
-		if next_question == None:
+		print("saving...")
+		next_question, next_survey, exit, complete, message = save_response(request.form, question_id, session_id = sess, survey_response_id = survey_response.id)
+		if next_question != None:
+			return redirect(url_for("serve_survey",survey_id=survey.id,u=uniq_id,s=sess,sr=survey_response_id,question=next_question))
+		if next_survey != None:
+			return redirect(url_for('start_survey', survey_id=trigger_survey, u=uniq_id, s = sess))
+		if exit:
+			survey_response.exit()
+			survey_response.message = message
+			db_session.add(survey_response)
+			db_session.commit()
+			return redirect(url_for("exit_survey", session_id=survey_response.session_id))
+		if complete: ##complete survey!
 			survey_response.complete()
+			survey_response.message = message
 			db_session.add(survey_response)
 			db_session.commit()
 			return redirect(url_for("complete_survey", session_id=survey_response.session_id))
@@ -356,9 +360,34 @@ def serve_survey(survey_id):
 		return render_template("serve_question.html", survey = survey, question = question,
 		                       next_q = next_question, last_q = last_question, form=formobj, u=uniq_id, s = sess, sr = survey_response.id)
 
+@app.route("/exit/<session_id>")
+def exit_survey(session_id):
+	record = SurveyResponse.query.filter_by(session_id=session_id,exited=1).first()
+	if record==None:
+		return "Exit record not found.",404
+	survey = record.survey
+	if current_user.is_authenticated:
+		if record.exited:
+			patient = record.patient
+			qrcode_out = qrcode(url_for('exit_survey',session_id=record.session_id,_external=True))
+			return render_template("survey_exit.html",record=record, patient = patient,survey=survey,qrcode_out=qrcode_out)
+		else:
+			return "Exit record not found.",404
+	if g.patient:
+		if record.uniq_id != g.patient.id:
+			return "Your device isn't authorized to view this exit record.", 401
+		else:
+			if record.exited:
+				qrcode_out = qrcode(url_for('exit_survey',session_id=record.session_id,_external=True))
+				return render_template("survey_exit.html",record=record, patient = g.patient,survey=survey,qrcode_out=qrcode_out)
+			else:
+				return "Exit record not found.",404
+	else:
+		return "Your device appears to be unregistered. Only registered devices can view exit records.",401
+
 @app.route("/cr/<session_id>")
 def complete_survey(session_id):
-	record = SurveyResponse.query.filter_by(session_id=session_id).first()
+	record = SurveyResponse.query.filter_by(session_id=session_id,completed=1).first()
 	if record==None:
 		return "Completion record not found.",404
 	survey = record.survey
@@ -367,7 +396,7 @@ def complete_survey(session_id):
 			patient = record.patient
 			end_time = record.end_time.replace(tzinfo=pytz.utc).astimezone(pytz.timezone('America/New_York'))
 			day_num = end_time.timetuple().tm_yday % 46+1
-			img_path = "/home/ryan/medtracker/assets/images/animals/animal%d.jpg"%day_num
+			img_path = "/Users/ryanneff/suretify/medtracker/assets/images/animals/animal%d.jpg"%day_num
 			qrcode_out = qrcode(url_for('complete_survey',session_id=record.session_id,_external=True),error_correction='Q',icon_img=img_path)
 			return render_template("survey_complete.html",record=record, patient = patient,survey=survey,qrcode_out=qrcode_out)
 		else:
@@ -379,7 +408,7 @@ def complete_survey(session_id):
 			if record.completed:
 				end_time = record.end_time.replace(tzinfo=pytz.utc).astimezone(pytz.timezone('America/New_York'))
 				day_num = end_time.timetuple().tm_yday % 46+1
-				img_path = "/home/ryan/medtracker/assets/images/animals/animal%d.jpg"%day_num
+				img_path = "/Users/ryanneff/suretify/medtracker/assets/images/animals/animal%d.jpg"%day_num
 				qrcode_out = qrcode(url_for('complete_survey',session_id=record.session_id,_external=True),error_correction='Q',icon_img=img_path)
 				return render_template("survey_complete.html",record=record, patient = g.patient,survey=survey,qrcode_out=qrcode_out)
 			else:
@@ -391,14 +420,14 @@ def save_response(formdata, question_id, session_id=None, current_user = None, s
 	question = Question.query.get_or_404(question_id)
 	survey_response = SurveyResponse.query.get_or_404(survey_response_id)
 	_response = QuestionResponse(
-		formdata.getlist("response"),
-		formdata["uniq_id"],
-		session_id,
-		question_id,
-		survey_response_id
+		response=formdata.getlist("response"),
+		uniq_id=formdata["uniq_id"],
+		session_id=session_id,
+		question_id=question_id,
+		survey_response_id=survey_response_id
 	)
 	responses = formdata.getlist("response")
-	if (question.kind =="select") | (question.kind=="radio" ):
+	if (question.kind =="select") | (question.kind=="radio"):
 			try:
 				choices = json.loads(question.choices)
 				for ix,r in enumerate(responses):
@@ -411,10 +440,7 @@ def save_response(formdata, question_id, session_id=None, current_user = None, s
 	db_session.add(_response)
 	db_session.commit()
 	question = _response._question
-	if _response.uniq_id != None:
-		sys.stderr.write('starting trigger')
-		return run_trigger(question, _response, "web", session_id, current_user)
-	return "Response saved."
+	return run_trigger(question, _response)
 
 ### controller functions for questions
 
@@ -432,14 +458,15 @@ def add_question():
 	formobj.survey_id.data = survey.id
 	if request.method == 'POST' and formobj.validate():
 		dbobj = Question(
-				formobj.body.data,
-				formobj.description.data,
-				formobj.choices.data,
-				None,
-				formobj.kind.data,
-				formobj.survey_id.data
+				body=formobj.body.data,
+				description=formobj.description.data,
+				choices=formobj.choices.data,
+				image=None,
+				kind=formobj.kind.data,
+				survey_id = formobj.survey_id.data
 		)
 		dbobj.user_id = current_user.id
+		dbobj.choices = json.dumps({str(ix):a for ix,a in enumerate(request.form.getlist("choices"))})
 		if request.files["image"]:
 			imgfile = request.files["image"]
 			filename = secure_filename(imgfile.filename)
@@ -595,21 +622,35 @@ def add_trigger():
 	'''GUI: add a trigger to the DB'''
 	q = request.values.get("question", None)
 	formobj = TriggerForm(request.form)
-	if q:
-		question = Question.query.get(q)
-	if question:
-		formobj.question_id.query = [question]
-	else:
-		formobj.question_id.query = Question.query.filter(Survey.user_id==current_user.id).all()
-	formobj.subject.query = Survey.query.get(1)._questions
+	trigger = Trigger()
+	question = Question.query.get(q)
+	formobj.question_id.data = question.id
+	formobj.question_id.label = question.body
+	for ix in range(len(formobj.conditions)):
+		formobj.conditions[ix].subject.query = Survey.query.get(1)._questions
 	formobj.dest_yes.query = Survey.query.get(1)._questions
 	formobj.dest_no.query = Survey.query.get(1)._questions
+	
 	if request.method == 'POST' and formobj.validate():
+		formobj.populate_obj(trigger)
+		trigger.question_id = int(formobj.question_id.data)
+		trigger.dest_yes = trigger.dest_yes.id if trigger.dest_yes else None
+		trigger.dest_no = trigger.dest_no.id if trigger.dest_no else None
+		for ix in range(len(trigger.conditions)):
+			trigger.conditions[ix].subject_id = trigger.conditions[ix].subject.id
+		db.session.add(trigger)
+		db.session.commit()
 		flash('Trigger added.')
-		if question:
+		if q:
 			return redirect(url_for('view_survey', _id=question.survey.id))
 		else:
 			return redirect(url_for('serve_survey_index'))
+	else:
+		formobj.conditions._add_entry()
+		formobj.template = formobj.conditions[-1]
+		formobj.template.subject.query = Survey.query.get(1)._questions
+		if len(formobj.conditions)>1:
+			formobj.conditions = formobj.conditions[0:-1]
 	#formobj.questions.choices = [(q.id, "(ID: %s) "% str(q.id) + q.body) for q in Question.query]
 	return render_template("form_trigger.html", action="Add", data_type="a trigger", form=formobj)
 
@@ -618,30 +659,40 @@ def add_trigger():
 def edit_trigger(_id):
 	'''GUI: edit a trigger in the DB'''
 	trigger = Trigger.query.get_or_404(_id)
-	formout = TriggerForm(request.form, obj=trigger)
-	formout.question_id.query = Question.query.filter(Survey.user_id==current_user.id).all()
-	formout.after_function.query = Survey.query.filter_by(user_id=current_user.id).all()
-	if request.method == 'POST' and formout.validate():
-		if formout.after_function.data:
-			af = formout.after_function.data.id
-		else:
-			af = None
-		trigger.title = formout.title.data
-		trigger.kind = formout.kind.data
-		trigger.criteria = formout.criteria.data
-		trigger.recipients = formout.recipients.data
-		trigger.after_function = af
-		trigger.question_id = formout.question_id.data.id
-		db_session.add(trigger)
-		db_session.commit()
+	formobj = TriggerForm(request.form,obj=trigger)
+	question = trigger.question
+	formobj.dest_yes.query = trigger.question.survey._questions
+	formobj.dest_no.query = trigger.question.survey._questions
+	formobj.question_id.data = question.id
+	formobj.question_id.label = question.body
+	for ix in range(len(formobj.conditions)):
+		formobj.conditions[ix].subject.query = Survey.query.get(1)._questions
+	if request.method == 'POST' and formobj.validate():
+		formobj.populate_obj(trigger)
+		trigger.question_id = int(formobj.question_id.data)
+		trigger.dest_yes = trigger.dest_yes.id if trigger.dest_yes else None
+		trigger.dest_no = trigger.dest_no.id if trigger.dest_no else None
+		for ix in range(len(trigger.conditions)):
+			trigger.conditions[ix].subject_id = trigger.conditions[ix].subject.id
+		db.session.add(trigger)
+		db.session.commit()
 		flash('Trigger edited.')
-		return redirect(url_for('view_survey', _id=Question.query.get(trigger.question_id).survey.id))
+		return redirect(url_for('view_survey', _id=question.survey.id))
 	else:
-		formout.kind.data = trigger.kind
-		formout.question_id.data = Question.query.get(trigger.question_id)
-		if trigger.after_function:
-			formout.after_function.data = Survey.query.get(trigger.after_function)
-	return render_template("form_trigger.html", action="Edit", data_type="trigger #" + str(_id), form=formout)
+		formobj.alert_yes.data = trigger.alert_yes
+		formobj.alert_no.data = trigger.alert_no
+		formobj.yes_type.data = trigger.yes_type
+		formobj.no_type.data = trigger.no_type
+		formobj.dest_yes.data = Question.query.get(trigger.dest_yes) if trigger.dest_yes else None
+		formobj.dest_no.data = Question.query.get(trigger.dest_no) if trigger.dest_no else None
+		
+		formobj.conditions._add_entry()
+		formobj.template = formobj.conditions[-1]
+		formobj.template.subject.query = Survey.query.get(1)._questions
+		if len(formobj.conditions)>1:
+			formobj.conditions = formobj.conditions[0:-1]
+	#formobj.questions.choices = [(q.id, "(ID: %s) "% str(q.id) + q.body) for q in Question.query]
+	return render_template("form_trigger.html", action="Edit", data_type="trigger", form=formobj)
 
 @app.route('/triggers/delete/<int:_id>', methods=['GET', 'POST'])
 @flask_login.login_required
@@ -771,47 +822,55 @@ def survey_response_dashboard(survey_id):
 	for p in patients:
 	    sr = [s.to_dict() for s in p.surveys.all()]
 	    sres.extend(sr)
+	if len(sres)>0:
+		sres = pd.DataFrame(sres)
+		sres["date"] = sres.start_time.dt.floor('d')
+		sres = sres.groupby(["date","uniq_id"]).first()
+		sres = sres.reset_index()
 
-	sres = pd.DataFrame(sres)
-	sres["date"] = sres.end_time.dt.floor('d')
-	sres = sres.groupby(["date","uniq_id"]).first()
-	sres = sres.reset_index()
+		devs = pts = model_to_pd(models.Device)
+		devs_per_day = pd.DataFrame(devs.groupby([devs.creation_time.dt.floor("d")])["creation_time"].count())
+		devs_per_day.columns = ["daily_new_devices"]
+		pts = model_to_pd(models.Patient)
+		pts_per_day = pd.DataFrame(pts.groupby([pts.creation_time.dt.floor("d")])["creation_time"].count())
+		pts_per_day.columns = ["daily_registered_students"]
+		res_per_day = pd.DataFrame(sres.groupby([sres.start_time.dt.floor('d')])["start_time"].count())
+		res_per_day.columns = ["daily_completed_surveys"]
+		df = pd.merge(pts_per_day,res_per_day,left_index=True,right_index=True,how="outer")
+		df = pd.merge(df,devs_per_day,left_index=True,right_index=True,how="outer")
+		begin_time = datetime.datetime.utcnow().date() - datetime.timedelta(days=6)
+		df = df.reindex(pd.date_range(begin_time, datetime.datetime.utcnow().date())).fillna(0).astype(int)
+		df["total_registered_students"] = df["daily_registered_students"].cumsum()
+		df["total_completed_surveys"] = df["daily_registered_students"].cumsum()
+		df["total_devices"] = df["daily_new_devices"].cumsum()
+		df.reset_index(inplace=True)
+		df = df.sort_values(by="index",ascending=True)
+		df["index"] = [datetime.datetime.strftime(a,"%D") for a in df["index"]]
+		fig1 = plotlyBarplot(data=df,x="index",y="total_devices",width=None, height=300,title="Total Devices Seen")
+		fig2 = plotlyBarplot(data=df,x="index",y="total_registered_students",width=None, height=300,title="Total Registered Students")
+		df["daily_uncompleted_surveys"] = df["total_registered_students"] - df["daily_completed_surveys"]
+		df["daily_pct"] = df["daily_completed_surveys"]/df["total_registered_students"]*100
+		df2 = df.loc[:,["index","daily_uncompleted_surveys","daily_completed_surveys"]]
+		df2.columns = ["index","Not Completed","Completed"]
+		df3 = df2.melt(id_vars="index")
+		fig3 = plotlyBarplot(data=df3,x="index",y="value",hue="variable",width=None, height=300, title="Screening Status",stacked=True,show_legend=False)
 
-	devs = pts = model_to_pd(models.Device)
-	devs_per_day = pd.DataFrame(devs.groupby([devs.creation_time.dt.floor("d")])["creation_time"].count())
-	devs_per_day.columns = ["daily_new_devices"]
-	pts = model_to_pd(models.Patient)
-	pts_per_day = pd.DataFrame(pts.groupby([pts.creation_time.dt.floor("d")])["creation_time"].count())
-	pts_per_day.columns = ["daily_registered_students"]
-	res_per_day = pd.DataFrame(sres.groupby([sres.end_time.dt.floor('d')])["end_time"].count())
-	res_per_day.columns = ["daily_completed_surveys"]
-	df = pd.merge(pts_per_day,res_per_day,left_index=True,right_index=True,how="outer")
-	df = pd.merge(df,devs_per_day,left_index=True,right_index=True,how="outer")
-	begin_time = datetime.datetime.now().date() - datetime.timedelta(days=6)
-	df = df.reindex(pd.date_range(begin_time, datetime.datetime.now().date())).fillna(0).astype(int)
-	df["total_registered_students"] = df["daily_registered_students"].cumsum()
-	df["total_completed_surveys"] = df["daily_registered_students"].cumsum()
-	df["total_devices"] = df["daily_new_devices"].cumsum()
-	df.reset_index(inplace=True)
-	df = df.sort_values(by="index",ascending=True)
-	df["index"] = [datetime.datetime.strftime(a,"%D") for a in df["index"]]
-	fig1 = plotlyBarplot(data=df,x="index",y="total_devices",width=None, height=300,title="Total Devices Seen")
-	fig2 = plotlyBarplot(data=df,x="index",y="total_registered_students",width=None, height=300,title="Total Registered Students")
-	df["daily_uncompleted_surveys"] = df["total_registered_students"] - df["daily_completed_surveys"]
-	df["daily_pct"] = df["daily_completed_surveys"]/df["total_registered_students"]*100
-	df2 = df.loc[:,["index","daily_uncompleted_surveys","daily_completed_surveys"]]
-	df2.columns = ["index","Not Completed","Completed"]
-	df3 = df2.melt(id_vars="index")
-	fig3 = plotlyBarplot(data=df3,x="index",y="value",hue="variable",width=None, height=300, title="Screening Status",stacked=True,show_legend=False)
+		dash_figs = [fig1,fig2,fig3]
 
-	dash_figs = [fig1,fig2,fig3]
+		today_count = list(df["daily_completed_surveys"])[-1]
+		today_pct = list(df["daily_pct"])[-1]
+		week_count = sum(list(df["daily_completed_surveys"])[-7:])
+		week_pct = sum(list(df["daily_completed_surveys"])[-7:])/sum(list(df["total_registered_students"])[-7:])*100
+
+	else:
+		dash_figs = []
+		today_count = 0
+		today_pct = 0
+		week_count = 0
+		week_pct = 0
 
 	patient_count = len(patients)
 	device_count = len(devices)
-	today_count = list(df["daily_completed_surveys"])[-1]
-	today_pct = list(df["daily_pct"])[-1]
-	week_count = sum(list(df["daily_completed_surveys"])[-7:])
-	week_pct = sum(list(df["daily_completed_surveys"])[-7:])/sum(list(df["total_registered_students"])[-7:])*100
 
 	qres = pd.DataFrame(responses)
 	if len(qres)>0:
@@ -822,24 +881,26 @@ def survey_response_dashboard(survey_id):
 		question_ids = [q.id for q in survey.questions()]
 
 		for q in question_ids:
-			g = qres[qres["question_id"]==q]
-			g = g.loc[:,["response","question_id","question_title","question_choices","question_type"]]
-			refmt = []
-			for ix,row in g.iterrows():
-			    row = list(row)
-			    for rr in row[0].split(";"):
-			        refmt.append([rr,row[1],row[2],row[3],row[4]])
-			g = pd.DataFrame(refmt,columns=g.columns)
-			title = list(g.question_title)[0]
-			choices = list(g.question_choices)[0]
-			choices = ast.literal_eval(choices) if choices != "" else {}
-			kind = list(g.question_type)[0]
-			xtype = "category" if kind in ("select","radio") else None
-			pltdict = {v:0 for ix,v in choices.items()}
-			pltdict.update(g.groupby("response").count()["question_id"].to_dict())
-			df = pd.DataFrame(pltdict,index=["value"]).T.reset_index()
-			fig = plotlyBarplot(data=df,x="index",y="value",xtype=xtype,width=None, height=300,title=title)
-			question_figs.append(fig)
+			a = qres[qres["question_id"]==q]
+			if len(a.index) > 0:
+				a = a.loc[:,["response","question_id","question_title","question_choices","question_type"]]
+				refmt = []
+				for ix,row in a.iterrows():
+				    row = list(row)
+				    for rr in row[0].split(";"):
+				        refmt.append([rr,row[1],row[2],row[3],row[4]])
+				a = pd.DataFrame(refmt,columns=a.columns)
+				title = list(a.question_title)[0]
+				choices = list(a.question_choices)[0]
+				choices = ast.literal_eval(choices) if choices != "" else {}
+				kind = list(a.question_type)[0]
+				xtype = "category" if kind in ("select","radio") else None
+				pltdict = {v:0 for ix,v in choices.items()}
+				pltdict.update(a.groupby("response").count()["question_id"].to_dict())
+				df = pd.DataFrame(pltdict,index=["value"]).T.reset_index()
+				margins={"b":200,"t":75}
+				fig = plotlyBarplot(data=df,x="index",y="value",xtype=xtype,width=None, height=None,title=title,margins=margins)
+				question_figs.append(fig)
 
 	last7_figs = []
 	qres = pd.DataFrame(responses_last7)
@@ -873,7 +934,7 @@ def survey_response_dashboard(survey_id):
 		    pltdf.reset_index(inplace=True)
 		    pltdf=pltdf.fillna(method="bfill")
 		    fig = plotlyBarplot(data=pltdf,x="date",y="count",hue="response",
-		                        xtype=xtype,grouped=True,ordered=False,stacked=True,order2=True,width=None,height=300,show_legend=True,title=title)
+		                        xtype=xtype,grouped=True,ordered=False,stacked=True,order2=True,width=None,height=400,show_legend=True,title=title)
 		    last7_figs.append(fig)
 
 	for ix,fig in enumerate(dash_figs):
@@ -887,7 +948,7 @@ def survey_response_dashboard(survey_id):
 
 def plotlyBarplot(x=None,y=None,hue=None,data=None,ylabel="",xlabel="",title="",
                     width=600,height=400,colors=["rgba"+str(i) for i in cm.get_cmap("Dark2").colors],
-                    stacked=False,percent=False,ordered=False,xtype="category",grouped=False,order2=False,show_legend=False):
+                    stacked=False,percent=False,ordered=False,xtype="category",grouped=False,order2=False,show_legend=False,margins = None):
     yaxis=go.layout.YAxis(
             title=ylabel,
             automargin=True,
@@ -900,14 +961,24 @@ def plotlyBarplot(x=None,y=None,hue=None,data=None,ylabel="",xlabel="",title="",
             titlefont=dict(size=12),
             type=xtype
         )
-
-    layout = go.Layout(
-        autosize=True,
-        width=width,
-        height=height,
-        yaxis=yaxis,
-        xaxis=xaxis
-    )
+    if type(margins)==dict:
+        margin = go.Margin(**margins)
+        layout = go.Layout(
+            autosize=True,
+            width=width,
+            height=height,
+            yaxis=yaxis,
+            xaxis=xaxis,
+            margin=margin
+        )
+    else:
+    	layout = go.Layout(
+            autosize=True,
+            width=width,
+            height=height,
+            yaxis=yaxis,
+            xaxis=xaxis
+        )
     titledict= {'text': title,
             'y':0.9,
             'x':0.5,
