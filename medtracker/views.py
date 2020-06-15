@@ -898,7 +898,8 @@ def survey_response_dashboard(survey_id):
 				pltdict = {v:0 for ix,v in choices.items()}
 				pltdict.update(a.groupby("response").count()["question_id"].to_dict())
 				df = pd.DataFrame(pltdict,index=["value"]).T.reset_index()
-				fig = plotlyBarplot(data=df,x="index",y="value",xtype=xtype,width=None, height=300,title=title)
+				margins={"b":200,"t":75}
+				fig = plotlyBarplot(data=df,x="index",y="value",xtype=xtype,width=None, height=None,title=title,margins=margins)
 				question_figs.append(fig)
 
 	last7_figs = []
@@ -933,7 +934,7 @@ def survey_response_dashboard(survey_id):
 		    pltdf.reset_index(inplace=True)
 		    pltdf=pltdf.fillna(method="bfill")
 		    fig = plotlyBarplot(data=pltdf,x="date",y="count",hue="response",
-		                        xtype=xtype,grouped=True,ordered=False,stacked=True,order2=True,width=None,height=300,show_legend=True,title=title)
+		                        xtype=xtype,grouped=True,ordered=False,stacked=True,order2=True,width=None,height=400,show_legend=True,title=title)
 		    last7_figs.append(fig)
 
 	for ix,fig in enumerate(dash_figs):
@@ -947,7 +948,7 @@ def survey_response_dashboard(survey_id):
 
 def plotlyBarplot(x=None,y=None,hue=None,data=None,ylabel="",xlabel="",title="",
                     width=600,height=400,colors=["rgba"+str(i) for i in cm.get_cmap("Dark2").colors],
-                    stacked=False,percent=False,ordered=False,xtype="category",grouped=False,order2=False,show_legend=False):
+                    stacked=False,percent=False,ordered=False,xtype="category",grouped=False,order2=False,show_legend=False,margins = None):
     yaxis=go.layout.YAxis(
             title=ylabel,
             automargin=True,
@@ -960,14 +961,24 @@ def plotlyBarplot(x=None,y=None,hue=None,data=None,ylabel="",xlabel="",title="",
             titlefont=dict(size=12),
             type=xtype
         )
-
-    layout = go.Layout(
-        autosize=True,
-        width=width,
-        height=height,
-        yaxis=yaxis,
-        xaxis=xaxis
-    )
+    if type(margins)==dict:
+        margin = go.Margin(**margins)
+        layout = go.Layout(
+            autosize=True,
+            width=width,
+            height=height,
+            yaxis=yaxis,
+            xaxis=xaxis,
+            margin=margin
+        )
+    else:
+    	layout = go.Layout(
+            autosize=True,
+            width=width,
+            height=height,
+            yaxis=yaxis,
+            xaxis=xaxis
+        )
     titledict= {'text': title,
             'y':0.9,
             'x':0.5,
