@@ -3,11 +3,11 @@
 {{ body }}
 
 Thanks, 
-Suretify
+ISMMS Health Check
 
 ---
 Notice a bug? Let us know
 Phone: 973.960.8144
-E-mail: help@medtracker.com
+E-mail: ryan.neff@icahn.mssm.edu
 
 
