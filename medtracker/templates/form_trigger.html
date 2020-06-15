@@ -1,5 +1,5 @@
 {% extends 'layout_sidebar.html' %}
-{% block title %}{{ action }} {{ data_type }} | Suretify {% endblock %}
+{% block title %}{{ action }} {{ data_type }} | ISMMS Health Check {% endblock %}
 {% set template %}
 <div id="templateForm" style="color: grey;display:none;" data-index=0> 
 	<p>If {{form.template.subject(class="transparent-input")}} 
@@ -26,7 +26,7 @@
 				{% if form.errors %}
 					{{form.errors|join(" ")}}
 				{% endif %}
-				<form action="{{ form_action }}" method="{{ method | d("POST") }}" enctype="multipart/form-data">
+				<form action="{{ form_action }}" method='{{ method | d("POST") }}' enctype="multipart/form-data">
 				{% for field in form %}
 				{% if field.errors or field.help_text %}
 	              <span class="help-inline">
