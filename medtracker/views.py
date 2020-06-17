@@ -398,6 +398,7 @@ def complete_survey(session_id):
 			day_num = end_time.timetuple().tm_yday % 46+1
 			img_path = app.root_path+"/../assets/images/animals/animal%d.jpg"%day_num
 			qrcode_out = qrcode(url_for('complete_survey',session_id=record.session_id,_external=True),error_correction='Q',icon_img=img_path)
+			qrcode_out = None
 			return render_template("survey_complete.html",record=record, patient = patient,survey=survey,qrcode_out=qrcode_out)
 		else:
 			return "Completion record not found.",404
@@ -410,6 +411,7 @@ def complete_survey(session_id):
 				day_num = end_time.timetuple().tm_yday % 46+1
 				img_path = app.root_path+"/../assets/images/animals/animal%d.jpg"%day_num
 				qrcode_out = qrcode(url_for('complete_survey',session_id=record.session_id,_external=True),error_correction='Q',icon_img=img_path)
+				qrcode_out = None
 				return render_template("survey_complete.html",record=record, patient = g.patient,survey=survey,qrcode_out=qrcode_out)
 			else:
 				return "Completion record not found.",404
@@ -630,7 +632,7 @@ def add_trigger():
 		formobj.conditions[ix].subject.query = Survey.query.get(1)._questions
 	formobj.dest_yes.query = Survey.query.get(1)._questions
 	formobj.dest_no.query = Survey.query.get(1)._questions
-	
+
 	if request.method == 'POST' and formobj.validate():
 		formobj.populate_obj(trigger)
 		trigger.question_id = int(formobj.question_id.data)
@@ -685,7 +687,7 @@ def edit_trigger(_id):
 		formobj.no_type.data = trigger.no_type
 		formobj.dest_yes.data = Question.query.get(trigger.dest_yes) if trigger.dest_yes else None
 		formobj.dest_no.data = Question.query.get(trigger.dest_no) if trigger.dest_no else None
-		
+
 		formobj.conditions._add_entry()
 		formobj.template = formobj.conditions[-1]
 		formobj.template.subject.query = Survey.query.get(1)._questions

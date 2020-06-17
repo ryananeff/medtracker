@@ -12,7 +12,9 @@
 	    	<p><small>Your answers have been recorded successfully. Please screenshot or print out this page for your records. You can also bookmark this page on this device to refer to it later.</small></p>
 	    	<p>Device ID: <strong>{{ fmt_id(patient.mrn) }}</strong></p>
 	    	<p>Exit Date: <strong>{{ momentjs(record.end_time).format('MMMM Do YYYY, h:mm a') }}</strong></p>
+	    	{% if qrcode_out %}
 	    	<p>QR Code:</p><p><img src="{{qrcode_out|safe}}" style="max-width:100%"></p>
+	    	{% endif %}
 	    	<p><a type="button" class="btn btn-sm btn-primary" href="{{url_for('start_survey',survey_id=survey.id)}}">Submit another response</a></p>
 		    </div>
 	    </div><!-- /.container -->
