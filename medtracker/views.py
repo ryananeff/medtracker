@@ -1,3 +1,4 @@
+import medtracker
 from medtracker import *
 from medtracker.models import *
 from medtracker.forms import *
