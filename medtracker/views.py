@@ -15,6 +15,7 @@ import plotly.graph_objects as go
 import ast
 
 image_staticdir = 'assets/uploads/'
+base_dir = os.path.realpath(os.path.dirname(medtracker.__file__)+"/../")
 
 def randomword(length):
 	'''generate a random string of whatever length, good for filenames'''
@@ -133,7 +134,7 @@ def signup():
 
         return redirect(url_for("login"))
 
-    return render_template('form_signup.html', form=form, action="Sign up for Suretify", data_type="")
+    return render_template('form_signup.html', form=form, action="Sign up for ISMMS Health Check", data_type="")
 
 @app.route('/resend_confirmation', methods=["GET", "POST"])
 def resend_confirmation():
@@ -725,7 +726,11 @@ def remove_response(_id):
 
 @app.route('/assets/<path:path>')
 def send_js(path):
-    return send_from_directory('/Users/ryanneff/suretify/medtracker/assets', path)
+    return send_from_directory(base_dir+'/assets', path)
+
+@app.route('/manifest.json')
+def send_manifest(path):
+    return send_from_directory(base_dir+'/assets/manifest.json')
 
 @app.route('/patient_feed/', methods=["GET", "POST"])
 @app.route('/patient_feed/<int:id>/', methods=["GET", "POST"])
