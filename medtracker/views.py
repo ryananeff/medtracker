@@ -14,6 +14,7 @@ import numpy as np
 import datetime
 import plotly.graph_objects as go
 import ast
+from collections import defaultdict
 
 image_staticdir = 'assets/uploads/'
 base_dir = os.path.realpath(os.path.dirname(medtracker.__file__)+"/../")
@@ -60,6 +61,9 @@ def detect_user_session():
 	else:
 		g.patient_ident = g.device.device_id
 		g.patient = Patient.query.filter_by(mrn=g.patient_ident).first()
+	if current_user.is_authenticated:
+		current_user.surveys = Survey.query
+		current_user.patients = Patient.query
 
 @app.after_request
 def flash_warning(response):
@@ -75,6 +79,7 @@ def flash_warning(response):
 login_manager = flask_login.LoginManager()
 login_manager.init_app(app)
 login_manager.login_view =  "login"
+login_manager.session_protection = "strong"
 
 @login_manager.user_loader
 def user_loader(user_id):				# used by Flask internally to load logged-in user from session
@@ -217,16 +222,6 @@ def serve_responses_index():
 	return render_template("responses.html",
 							responses = responses)
 
-@app.route('/triggers', methods=['GET'])
-@flask_login.login_required
-def serve_triggers_index():
-	'''GUI: serve the trigger index page'''
-	triggers = Trigger.query.filter(Trigger.question==None, Trigger.user_id==current_user.id)
-	questions = Question.query.filter(Question.triggers != None, Trigger.user_id==current_user.id)
-	return render_template("triggers.html",
-		questions = questions,
-		triggers = triggers)
-
 ### controller functions for surveys
 
 @app.route('/surveys/new/', methods=['GET', 'POST'])
@@ -312,6 +307,14 @@ def start_survey(survey_id):
 @app.route('/surveys/serve/<int:survey_id>', methods=['GET', 'POST'])
 def serve_survey(survey_id):
 	survey = Survey.query.get_or_404(survey_id)
+	if g.patient == None:
+		return redirect(url_for('patient_signup',survey_id=survey_id))
+	today = datetime.datetime.now().date()
+	previous_responses = SurveyResponse.query.filter(SurveyResponse.uniq_id==g.patient.id,
+	                                                    SurveyResponse.end_time.isnot(None),SurveyResponse.start_time>today).first()
+	if previous_responses!=None:
+		return render_template("survey_quit.html",survey=survey, patient=g.patient,message="You can only take the survey once per day."), 403
+	
 	survey_response_id = request.values.get("sr", None)
 	question_id = request.values.get("question", None)
 	uniq_id = request.values.get("u", None)
@@ -362,11 +365,32 @@ def serve_survey(survey_id):
 		return render_template("serve_question.html", survey = survey, question = question,
 		                       next_q = next_question, last_q = last_question, form=formobj, u=uniq_id, s = sess, sr = survey_response.id)
 
+@app.errorhandler(404)
+def page_not_found(e):
+    # note that we set the 404 status explicitly
+    return render_template('404.html',message=e), 404
+
+@app.route("/patients/self/reset")
+def reset_device():
+	response = make_response(redirect(url_for("index")))
+	if g.patient_ident!=None:
+		g.patient_ident = randomword(16)
+		response.set_cookie('patient_ident', g.patient_ident, max_age=datetime.timedelta(weeks=52))
+		device = Device(device_id = g.patient_ident)
+		db.session.add(device)
+		db.session.commit()
+		g.device = device
+		g.patient = None
+		flash("Device ID reset. You will need to register with ISMMS Health Check again to complete surveys.")
+	return response
+
+
+
 @app.route("/exit/<session_id>")
 def exit_survey(session_id):
 	record = SurveyResponse.query.filter_by(session_id=session_id,exited=1).first()
 	if record==None:
-		return "Exit record not found.",404
+		return abort(404,"Exit record not found.")
 	survey = record.survey
 	if current_user.is_authenticated:
 		if record.exited:
@@ -374,24 +398,24 @@ def exit_survey(session_id):
 			qrcode_out = qrcode(url_for('exit_survey',session_id=record.session_id,_external=True))
 			return render_template("survey_exit.html",record=record, patient = patient,survey=survey,qrcode_out=qrcode_out)
 		else:
-			return "Exit record not found.",404
+			return abort(404,"Exit record not found.")
 	if g.patient:
 		if record.uniq_id != g.patient.id:
-			return "Your device isn't authorized to view this exit record.", 401
+			return abort(401,"Your device isn't authorized to view this exit record.")
 		else:
 			if record.exited:
 				qrcode_out = qrcode(url_for('exit_survey',session_id=record.session_id,_external=True))
 				return render_template("survey_exit.html",record=record, patient = g.patient,survey=survey,qrcode_out=qrcode_out)
 			else:
-				return "Exit record not found.",404
+				return abort(404,"Exit record not found.")
 	else:
-		return "Your device appears to be unregistered. Only registered devices can view exit records.",401
+		return abort(401,"Your device appears to be unregistered. Only registered devices can view exit records.")
 
 @app.route("/cr/<session_id>")
 def complete_survey(session_id):
 	record = SurveyResponse.query.filter_by(session_id=session_id,completed=1).first()
 	if record==None:
-		return "Completion record not found.",404
+		return abort(404,"Completion record not found.")
 	survey = record.survey
 	if current_user.is_authenticated:
 		if record.completed:
@@ -403,10 +427,10 @@ def complete_survey(session_id):
 			qrcode_out = None
 			return render_template("survey_complete.html",record=record, patient = patient,survey=survey,qrcode_out=qrcode_out)
 		else:
-			return "Completion record not found.",404
+			return abort(404,"Completion record not found.")
 	if g.patient:
 		if record.uniq_id != g.patient.id:
-			return "Your device isn't authorized to view this completion record.", 401
+			return abort(401,"Your device isn't authorized to view this completion record.")
 		else:
 			if record.completed:
 				end_time = record.end_time.replace(tzinfo=pytz.utc).astimezone(pytz.timezone('America/New_York'))
@@ -416,9 +440,9 @@ def complete_survey(session_id):
 				qrcode_out = None
 				return render_template("survey_complete.html",record=record, patient = g.patient,survey=survey,qrcode_out=qrcode_out)
 			else:
-				return "Completion record not found.",404
+				return abort(404,"Completion record not found.")
 	else:
-		return "Your device appears to be unregistered. Only registered devices can view completion records.",401
+		return abort(401,"Your device appears to be unregistered. Only registered devices can view completion records.")
 
 def save_response(formdata, question_id, session_id=None, current_user = None, survey_response_id = None):
 	question = Question.query.get_or_404(question_id)
@@ -454,7 +478,7 @@ def add_question():
 	'''GUI: add a question to a survey'''
 	_id = request.values.get("survey", None)
 	if _id == None:
-		return "could not find survey", 404
+		return abort(404,"Could not find survey matching that ID when adding question. Perhaps it was deleted?")
 	survey = Survey.query.get_or_404(_id)
 	survey_id = survey.id
 	formobj = QuestionForm(request.form, survey_id=survey_id)
@@ -555,8 +579,8 @@ def patient_signup(survey_id):
 		patient.mrn = g.patient_ident
 		db_session.add(patient)
 		db_session.commit()
-		flash("""You have registered this device and browser to take the COVID-19 screening.\n
-		      You will need to use this same device and browser to submit future screenings and show compliance.\n
+		flash("""You have registered this device and browser to take screenings.\n
+		      You will need to use this same device and browser to submit future screenings and/or show compliance.\n
 		      Do not clear your browser cookies from this device, or you will need to register your device again.\n
 		      Please keep this ID for your records: %s"""% fmt_id(g.patient_ident))
 		return redirect(url_for("start_survey",survey_id=survey_id))
@@ -585,15 +609,39 @@ def edit_patient(id=None):
 		db_session.add(patient)
 		db_session.commit()
 		return redirect(url_for('view_patients'))
-	return render_template("form.html", action="Edit", data_type="patient", form=formobj)
+	return render_template("form.html", action="Edit", data_type="student", form=formobj)
+
+@app.route('/patients/edit/self', methods=['GET', 'POST'])
+def edit_patient_self():
+	'''GUI: add a patient to the DB'''
+	patient = g.patient
+	if g.patient==None:
+		abort(404, "This device is not registered.")
+	formobj = PatientEditForm(obj=patient)
+	formobj.location.default = patient.location.code
+	formobj.program.default = patient.program.code
+	if formobj.validate_on_submit():
+		formobj.populate_obj(patient)
+		flash('Successfully updated my records.')
+		db_session.add(patient)
+		db_session.commit()
+		return redirect(url_for('view_patient_self'))
+	return render_template("form_self_edit.html", action="Update", data_type="my records", form=formobj)
 
 @app.route("/patients/")
 def view_patients():
-	patients = current_user.patients
+	patients = Patient.query.all()
+	today = datetime.datetime.now().date()
 	status = dict()
 	for p in patients:
-		incomplete = sum([1-i.complete for i in p.progress])
-		status[p.id] = incomplete
+		ptstat = 0
+		taken = p.surveys.filter(SurveyResponse.end_time.isnot(None),SurveyResponse.start_time>today).order_by(SurveyResponse.id.desc()).first()
+		if taken!=None:
+			if taken.completed:
+				ptstat = 1
+			if taken.exited:
+				ptstat = -1 
+		status[p.id] = ptstat
 	return render_template("patients.html", patients=patients, status = status)
 
 @app.route("/patients/delete/<string:id>")
@@ -706,7 +754,7 @@ def remove_trigger(_id):
     db_session.commit()
     flash('Trigger removed.')
     if request.referrer == None:
-    	return redirect(url_for('serve_triggers_index'))
+    	return redirect(url_for('serve_survey_index'))
     else:
     	return redirect(request.referrer)
 
@@ -774,7 +822,7 @@ def view_patient(id):
 @app.route('/patients/self', methods=["GET", "POST"])
 def view_patient_self():
 	if g.patient == None:
-		return "Please register your device first, then come back to this page.", 404
+		return abort(401,"Please register your device first, then come back to this page.")
 	p = g.patient
 	patients_feed = []
 	for s in p.surveys:
@@ -788,7 +836,7 @@ def view_patient_self():
 def add_comment(patient_id):
 	user_id = current_user.id
 	if patient_id not in [i.id for i in current_user.patients]:
-		return "Not Found", 404
+		return abort(404,"Comment not found with that ID.")
 	if request.method == 'POST':
 		body = request.form["body"] if request.form["body"] != "" else None
 	if body:
@@ -797,7 +845,7 @@ def add_comment(patient_id):
 		db_session.commit()
 		return redirect(url_for('view_patient', id=patient_id))
 	else:
-		return "Failure.", 400
+		return abort(400, "Couldn't add comment.")
 
 @app.route('/comment/delete/<int:_id>', methods=['GET', 'POST'])
 @flask_login.login_required
@@ -837,7 +885,7 @@ def survey_response_dashboard(survey_id):
 	if len(sres)>0:
 		sres = pd.DataFrame(sres)
 		sres["date"] = sres.start_time.dt.floor('d')
-		sres = sres.groupby(["date","uniq_id"]).first()
+		sres = sres.groupby(["date","uniq_id"]).last()
 		sres = sres.reset_index()
 
 		devs = pts = model_to_pd(models.Device)
@@ -846,28 +894,66 @@ def survey_response_dashboard(survey_id):
 		pts = model_to_pd(models.Patient)
 		pts_per_day = pd.DataFrame(pts.groupby([pts.creation_time.dt.floor("d")])["creation_time"].count())
 		pts_per_day.columns = ["daily_registered_students"]
-		res_per_day = pd.DataFrame(sres.groupby([sres.start_time.dt.floor('d')])["start_time"].count())
-		res_per_day.columns = ["daily_completed_surveys"]
+		res_per_day = pd.DataFrame(sres.groupby([sres.end_time.dt.floor('d')])["end_time"].count())
+		res_per_day.columns = ["daily_total_surveys"]
+		comp_per_day = pd.DataFrame(sres[sres.completed==True].groupby([sres.end_time.dt.floor('d')])["end_time"].count())
+		comp_per_day.columns = ["daily_completed_surveys"]
+		exit_per_day = pd.DataFrame(sres[sres.exited==True].groupby([sres.end_time.dt.floor('d')])["end_time"].count())
+		exit_per_day.columns = ["daily_exited_surveys"]
 		df = pd.merge(pts_per_day,res_per_day,left_index=True,right_index=True,how="outer")
+		df = pd.merge(df,comp_per_day,left_index=True,right_index=True,how="outer")
+		df = pd.merge(df,exit_per_day,left_index=True,right_index=True,how="outer")
 		df = pd.merge(df,devs_per_day,left_index=True,right_index=True,how="outer")
 		begin_time = datetime.datetime.utcnow().date() - datetime.timedelta(days=6)
 		df = df.reindex(pd.date_range(begin_time, datetime.datetime.utcnow().date())).fillna(0).astype(int)
 		df["total_registered_students"] = df["daily_registered_students"].cumsum()
-		df["total_completed_surveys"] = df["daily_registered_students"].cumsum()
+		df["total_completed_surveys"] = df["daily_completed_surveys"].cumsum()
 		df["total_devices"] = df["daily_new_devices"].cumsum()
 		df.reset_index(inplace=True)
 		df = df.sort_values(by="index",ascending=True)
 		df["index"] = [datetime.datetime.strftime(a,"%D") for a in df["index"]]
-		fig1 = plotlyBarplot(data=df,x="index",y="total_devices",width=None, height=300,title="Total Devices Seen")
-		fig2 = plotlyBarplot(data=df,x="index",y="total_registered_students",width=None, height=300,title="Total Registered Students")
-		df["daily_uncompleted_surveys"] = df["total_registered_students"] - df["daily_completed_surveys"]
+		pts_df = pts.set_index("creation_time")
+		years = list(range(2020,2024))
+		reg_per_year = defaultdict(list)
+		response_hits = defaultdict(list)
+		outdf = []
+		for i in pd.date_range(begin_time, datetime.datetime.utcnow().date()):
+		    for y in years:
+		        pts_yr = pts_df[pts_df.year==y]
+		        hits = pts_yr[(pts_yr.index<i+datetime.timedelta(days=1))&(pts_yr.index>i)]
+		        response_hits = set(sres[(sres.end_time<(i+datetime.timedelta(days=1)))&(sres.end_time>i)].uniq_id)
+		        complete_hits = set(sres[(sres.end_time<(i+datetime.timedelta(days=1)))&(sres.end_time>i)&(sres.completed==True)].uniq_id)
+		        exit_hits = set(sres[(sres.end_time<(i+datetime.timedelta(days=1)))&(sres.end_time>i)&(sres.exited==True)].uniq_id)
+		        reg_per_year[y].extend(hits["id"])
+		        outdf.append([i,y,len(reg_per_year[y]),
+		                      len(response_hits.intersection(set(reg_per_year[y]))),
+		                     len(complete_hits.intersection(set(reg_per_year[y]))),
+		                     len(exit_hits.intersection(set(reg_per_year[y]))),
+		                     len(set(reg_per_year[y]).difference(response_hits))])
+		outdf = pd.DataFrame(outdf,columns=["date","year","total_registered","total_responded","Completed","Exited","Not Completed"])
+		
+		todaydf = outdf[outdf["date"]==datetime.datetime.utcnow().date()].loc[:,["year","Completed","Exited","Not Completed"]].melt(id_vars="year")
+		fig2 = plotlyBarplot(data=todaydf,x="year",y="value",hue="variable",stacked=True,ylabel="# Students",xlabel="Program Year",
+		             title="Compliance by Year",colors=["green","red","orange"],height=300,width=None)
+		outdf["date"] = [datetime.datetime.strftime(a,"%D") for a in outdf["date"]]
+		fig1 = plotlyBarplot(data=outdf,x="date",y="total_registered",hue="year",stacked=True,width=None,height=300,
+		                     title="Students Registered",ylabel="# Students",show_legend=True,xlabel="Date")
+		df["daily_uncompleted_surveys"] = df["total_registered_students"] - df["daily_total_surveys"]
 		df["daily_pct"] = df["daily_completed_surveys"]/df["total_registered_students"]*100
-		df2 = df.loc[:,["index","daily_uncompleted_surveys","daily_completed_surveys"]]
-		df2.columns = ["index","Not Completed","Completed"]
+		df2 = df.loc[:,["index","daily_uncompleted_surveys","daily_completed_surveys","daily_exited_surveys"]]
+		df2.columns = ["index","Not Completed","Completed","Exited"]
 		df3 = df2.melt(id_vars="index")
-		fig3 = plotlyBarplot(data=df3,x="index",y="value",hue="variable",width=None, height=300, title="Screening Status",stacked=True,show_legend=False)
-
-		dash_figs = [fig1,fig2,fig3]
+		fig3 = plotlyBarplot(data=df3,x="index",y="value",hue="variable",width=None, height=300, 
+		                     title="Compliance History",stacked=True,show_legend=False,colors=["green","red","orange"],
+		                     ylabel="# Students",xlabel="Date")
+		pts["location"] = [str(i) for i in pts["location"]]
+		pts["program"] = [str(i) for i in pts["program"]]
+		reg_per_year = plotlyBarplot(data=pd.DataFrame(pts.groupby(["year","program"]).count()["id"]).reset_index(),y="id",x="year",hue="program",width=None, height=400, title="Registered by Year",stacked=True,xlabel="Year",ylabel="# Students")
+		reg_per_program = plotlyBarplot(data=pd.DataFrame(pts.groupby(["program","year"]).count()["id"]).reset_index(),y="id",x="program",hue="year",width=None, height=400, title="Registered by Program",show_legend=True,stacked=True,xlabel="Program",ylabel="# Students")
+		reg_per_location = plotlyBarplot(data=pd.DataFrame(pts.groupby(["program","location"]).count()["id"]).reset_index(),y="id",x="location",hue="program",
+             stacked=True, width=None, height=500, title="Registered by Location",show_legend=True,xlabel="Location",ylabel="# Students")
+		
+		dash_figs = [fig1,fig2,fig3,reg_per_program,reg_per_year,reg_per_location]
 
 		today_count = list(df["daily_completed_surveys"])[-1]
 		today_pct = list(df["daily_pct"])[-1]
@@ -911,7 +997,7 @@ def survey_response_dashboard(survey_id):
 				pltdict.update(a.groupby("response").count()["question_id"].to_dict())
 				df = pd.DataFrame(pltdict,index=["value"]).T.reset_index()
 				margins={"b":200,"t":75}
-				fig = plotlyBarplot(data=df,x="index",y="value",xtype=xtype,width=None, height=None,title=title,margins=margins)
+				fig = plotlyBarplot(data=df,x="index",y="value",xtype=xtype,width=None, height=None,title=title,margins=margins,colors=["darkblue"])
 				question_figs.append(fig)
 
 	last7_figs = []
@@ -959,7 +1045,7 @@ def survey_response_dashboard(survey_id):
 	                       today_count=today_count, today_pct=today_pct, week_count=week_count, week_pct=week_pct, survey=survey)
 
 def plotlyBarplot(x=None,y=None,hue=None,data=None,ylabel="",xlabel="",title="",
-                    width=600,height=400,colors=["rgba"+str(i) for i in cm.get_cmap("Dark2").colors],
+                    width=600,height=400,colors=["rgba"+str(i) for i in cm.get_cmap("Set1").colors],
                     stacked=False,percent=False,ordered=False,xtype="category",grouped=False,order2=False,show_legend=False,margins = None):
     yaxis=go.layout.YAxis(
             title=ylabel,
@@ -1052,5 +1138,7 @@ def plotlyBarplot(x=None,y=None,hue=None,data=None,ylabel="",xlabel="",title="",
             fig.update_layout(barmode='stack')
     if order2:
         fig.update_layout(xaxis={"categoryorder":"array","categoryarray":catorder})
+    fig.update_layout(legend=dict(x=1.01, y=0))
     fig.update_layout(showlegend=show_legend)
+
     return fig

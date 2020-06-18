@@ -23,15 +23,16 @@
 {% endblock %}
 {% block body %}
 	    <div class="page-header">
-		    <h2><span style="color: grey;">{{current_user.username}} /</span> Patients <a href="/patients/new/" class="btn btn-sm btn-primary">Add a new patient</a></h2>
+		    <h2>Students Registered</h2>
 	    </div>
 	    
 	    <div class="row">
-	    {% if patients.first() != None %}
+	    {% if patients | length != 0 %}
 	    <table class="table table-hover" id="activesort">
 		<thead>
 			<tr>
 			<th> Device ID </th>
+			<th> Year </th>
 			<th> Program </th>
 			<th> Location </th>
 			<th> Status </th>
@@ -42,66 +43,17 @@
 		{% for patient in patients %}
 		  <tr>
 			<td> <a href="/patients/{{patient.id}}">{{fmt_id(patient.mrn)}}</a></td>
+			<td> {{patient.year}}</td>
 			<td> {{patient.program}}</td>
 			<td> {{patient.location}}</td>
-			<td> {% if status[patient.id] == 0%}
-			<div class="dropdown">
-			  <button class="btn btn-xs btn-success dropdown-toggle" type="button" id="dropdownMenu1" data-toggle="dropdown" aria-haspopup="true" aria-expanded="true">
-			    Ready 
-			    <span class="caret"></span>
-			  </button>
-			  <ul class="dropdown-menu" aria-labelledby="dropdownMenu1">
-			  	<li class="dropdown-header">Actions</li>
-			  	<li class="dropdown-submenu"><a tabindex="-1" href="#">Give Survey</a>
-			  	<ul class="dropdown-menu">
-                  <li class="dropdown-submenu">
-                  {% for s in current_user.surveys %}
-                    <li class="dropdown-submenu"><a tabindex="-1" href="#">{{s.title}}</a>
-                    <ul tabindex="-1" class="dropdown-menu">
-                        <li><a href="/surveys/start/{{s.id}}?u={{patient.id}}">Web</a></li>
-                        <li><a href="/send_survey/voice/{{patient.id}}/{{s.id}}">Phone</a></li>
-                        <li><a href="/send_survey/sms/{{patient.id}}/{{s.id}}">SMS</a></li>
-                        <li><a href="/send_survey/email/{{patient.id}}/{{s.id}}">Email</a></li>
-                    </ul>
-                    </li>
-                  {% endfor %}
-                  </li>
-                </ul>
-			  	</li>
-			  </ul>
-			</div>
-			{% else %}
-			<div class="dropdown">
-			  <button class="btn btn-xs btn-warning dropdown-toggle" type="button" id="dropdownMenu1" data-toggle="dropdown" aria-haspopup="true" aria-expanded="true">
-			    Waiting <span class="badge">{{status}}</span>
-			    <span class="caret"></span>
-			  </button>
-			  <ul class="dropdown-menu" aria-labelledby="dropdownMenu1">
-			  	<li class="dropdown-header">Remind by</li>
-			    <li><a href="/prod/sms/{{patient.id}}">SMS</a></li>
-			    <li><a href="/prod/voice/{{patient.id}}">Phone call</a></li>
-			    <li><a href="/prod/email/{{patient.id}}">Email</a></li>			    
-			    <li role="separator" class="divider"></li>
-			    <li class="dropdown-header">Actions</li>
-			    <li><a href="/prod/clear/{{patient.id}}">Clear status</a></li>
-			  	<li class="dropdown-submenu"><a tabindex="-1" href="#">Give Survey</a>
-			  	<ul class="dropdown-menu">
-                  <li class="dropdown-submenu">
-                  {% for s in current_user.surveys %}
-                    <li class="dropdown-submenu"><a tabindex="-1" href="#">{{s.title}}</a>
-                    <ul tabindex="-1" class="dropdown-menu">
-                        <li><a href="/surveys/start/{{s.id}}?u={{patient.id}}">Web</a></li>
-                        <li><a href="/send_survey/voice/{{patient.id}}/{{s.id}}">Phone</a></li>
-                        <li><a href="/send_survey/sms/{{patient.id}}/{{s.id}}">SMS</a></li>
-                        <li><a href="/send_survey/email/{{patient.id}}/{{s.id}}">Email</a></li>
-                    </ul>
-                    </li>
-                  {% endfor %}
-                  </li>
-                </ul>
-			  	</li>
-			  </ul>
-			</div>
+			<td> {% if status[patient.id] == 1 %}
+				<button class="btn btn-xs btn-success">Admit</button>
+				{% elif status[patient.id]== 0 %}
+				<button class="btn btn-xs btn-warning">Unscreened</button>
+				{% elif status[patient.id]==-1 %}
+				<button class="btn btn-xs btn-danger">Reject</button>
+				{% else %}
+				<button class="btn btn-xs btn-light">Undefined</button>
 			{% endif %}
 			</td>
 			<td>
@@ -115,12 +67,11 @@
 		{% endif %}
 		</div>
 		
-	    {% if patients.first() == None %}
+	    {% if patients | length == 0 %}
 	    <div class="well">
 		<div class="starter-template">
-		No patients yet.
+		No students registered yet.
 		<h1>:(</h1>
-		<a href="/surveys/new/">How about adding a new patient?</a>
 		</div></div>
 	    {% else %}
 	    <div class="row" style="padding-top:20px;">
