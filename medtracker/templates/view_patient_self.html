@@ -1,31 +1,37 @@
 {% extends "layout.html" %}
 {% block title %}Your Records | ISMMS Health Check {% endblock %}
 {% block body %}
+	<div class="page-header">
+		<h2>My records </h2>
+	</div>
 	<div class="header">
+		<p><a href="/patients/edit/self" class="btn btn-sm btn-primary">Edit</a> <a href="/patients/self/reset" class="btn btn-sm btn-danger" onclick="return confirm('Are you sure? This will unlink your records from this device, and you will have to register again.')">Reset Device ID</a></p>
 	    <table class="table table-responsive">
 	    	<tbody>
 	    		<tr>
 	    			<td>Device ID:</td><td> {{ fmt_id(patient.mrn) }}</td>
 	    		</tr>
 	    		<tr>
-					<td>Name:</td><td>{{patient.fullname}}</td>
-					</tr>
-	    		<tr>
-					<td>Phone:</td><td>{{patient.phone}}</td>
-					</tr>
-	    		<tr>
-					<td>E-mail</td><td>{{patient.email}}</td>
-					</tr>
-	    		
-	    		<tr>
 					<td>Program:</td><td>{{patient.program}}</td>
 				</tr>
+				<tr>
 					<td>Location:</td><td>{{patient.location}}</td>
-					</tr>
-
-	    		
+				</tr>
+				<tr>
+					<td>Year:</td><td>{{patient.year}}</td>
+				</tr>
+	    		<tr>
+					<td>Name:</td><td>{{patient.fullname}}</td>
+				</tr>
+	    		<tr>
+					<td>Phone:</td><td>{{patient.phone}}</td>
+				</tr>
+	    		<tr>
+					<td>E-mail</td><td>{{patient.email}}</td>
+				</tr>
 	    		</tbody>
 	    	</table>
+
 	</div>
 	<div class="panel panel-self panel-default">
 		<div class="panel-body-self">

@@ -154,6 +154,7 @@ class NewUserForm(Form):
 class PatientForm(Form):
 	mrn = DisabledTextField('Patient Device ID')
 	program = RadioField("What program are you in?", choices=PROGRAM_CHOICES)
+	year = SelectField("What is your anticipated graduation date?",choices=[(i,i) for ix,i in enumerate(range(2020,2029))],coerce=int)
 	location = RadioField("Where are you currently living?", choices=LOCATION_CHOICES)
 	fullname = StringField('Name (optional)')
 	email = StringField('Email address (optional)')
@@ -161,11 +162,11 @@ class PatientForm(Form):
 	phone = StringField('Phone number (optional)')
 
 class PatientEditForm(Form):
-	mrn = DisabledTextField('Patient Device ID')
+	mrn = HiddenField('Patient Device ID')
+	program = RadioField("What program are you in?", choices=PROGRAM_CHOICES)
+	year = SelectField("What is your anticipated graduation date?",choices=[(i,i) for ix,i in enumerate(range(2020,2029))],coerce=int)
+	location = RadioField("Where are you currently living?", choices=LOCATION_CHOICES)
 	fullname = StringField('Name (optional)')
 	email = StringField('Email address (optional)')
 	age = StringField('Age (optional)')
 	phone = StringField('Phone number (optional)')
-	program = RadioField("What program are you in?", choices=PROGRAM_CHOICES)
-	location = RadioField("Where are you currently living?", choices=LOCATION_CHOICES)
-	

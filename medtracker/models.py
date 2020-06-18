@@ -379,6 +379,7 @@ class Patient(db.Model):
 	email = db.Column(EncryptedType(db.String, flask_secret_key))
 	location = db.Column(ChoiceType(LOCATION_CHOICES))
 	program = db.Column(ChoiceType(PROGRAM_CHOICES))
+	year = db.Column(db.Integer)
 	user_id = db.Column(db.Integer, db.ForeignKey('user.id'))
 	surveys = db.relationship("SurveyResponse", backref='patient', lazy="dynamic", cascade="all, delete-orphan")
 	responses = db.relationship("QuestionResponse", backref='patient', lazy='dynamic', cascade="all, delete-orphan")

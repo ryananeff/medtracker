@@ -1,5 +1,5 @@
 {% macro render_field(field) -%}
-<fieldset class="form-group">
+<fieldset class="form-group" id="{{field.id}}">
 {% if field.type in ['CSRFTokenField', 'HiddenField'] %}
   {{ field() }}
 {% else %}

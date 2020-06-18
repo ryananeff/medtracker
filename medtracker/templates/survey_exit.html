@@ -9,7 +9,7 @@
 	    	<div class="col-lg-2"></div>
 	    	<div class="col-lg-8">
 	    	{%if record.message %}<h2 style="color:red">{{record.message}}</h2>{% endif%}
-	    	<p><small>Your answers have been recorded successfully. Please screenshot or print out this page for your records. You can also bookmark this page on this device to refer to it later.</small></p>
+	    	<p><small>Follow your program requirements for reporting your absence.</small></p><p><small> Schedule a tele-health visit with your provider or Student Health should symptoms persist or if you have further questions. </small></p>
 	    	<p>Device ID: <strong>{{ fmt_id(patient.mrn) }}</strong></p>
 	    	<p>Exit Date: <strong>{{ momentjs(record.end_time).format('MMMM Do YYYY, h:mm a') }}</strong></p>
 	    	{% if qrcode_out %}
