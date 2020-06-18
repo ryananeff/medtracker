@@ -1,0 +1,16 @@
+{% extends "layout.html" %}
+{% block title %}Quit: {{survey.title}} | ISMMS Health Check{% endblock %}
+{% block body %}
+	    <div class="page-header">
+		    <h3>Page not found.</h3>
+	    </div>
+	    <div class="jumbotron survey-question">
+	    <div class="container">
+	    	<div class="col-lg-2"></div>
+	    	<div class="col-lg-8">
+	    	{%if message %}<h2>{{message}}</h2>{% endif%}
+	    	<p>Please try a different request.</p>
+	    	<img src="{{url_for('send_js','images/404.jpg')}}">
+	    	</div>
+	    </div><!-- /.container -->
+{% endblock %}
