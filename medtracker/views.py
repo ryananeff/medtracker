@@ -730,8 +730,12 @@ def send_js(path):
     return send_from_directory(base_dir+'/assets', path)
 
 @app.route('/manifest.json')
-def send_manifest(path):
-    return send_from_directory(base_dir+'/assets/manifest.json')
+def send_manifest():
+    return send_from_directory(base_dir+'/assets','manifest.json')
+
+@app.route("/.well-known/<path:path>")
+def send_certbot(path):
+    return send_from_directory(base_dir+'/assets',path)
 
 @app.route('/patient_feed/', methods=["GET", "POST"])
 @app.route('/patient_feed/<int:id>/', methods=["GET", "POST"])

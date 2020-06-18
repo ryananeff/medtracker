@@ -57,6 +57,8 @@ SQLAlchemy-Utils = "==0.36.5"
 Werkzeug = "==0.12.2"
 WTForms = "==2.3.1"
 simplekv = "*"
+wtforms-sqlalchemy = "*"
+wtforms-alchemy = "*"
 
 [requires]
 python_version = "3.6"
