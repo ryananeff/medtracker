@@ -395,7 +395,8 @@ def exit_survey(session_id):
 	if current_user.is_authenticated:
 		if record.exited:
 			patient = record.patient
-			qrcode_out = qrcode(url_for('exit_survey',session_id=record.session_id,_external=True))
+			qrcode_out = None
+			#qrcode_out = qrcode(url_for('exit_survey',session_id=record.session_id,_external=True))
 			return render_template("survey_exit.html",record=record, patient = patient,survey=survey,qrcode_out=qrcode_out)
 		else:
 			return abort(404,"Exit record not found.")
@@ -404,7 +405,8 @@ def exit_survey(session_id):
 			return abort(401,"Your device isn't authorized to view this exit record.")
 		else:
 			if record.exited:
-				qrcode_out = qrcode(url_for('exit_survey',session_id=record.session_id,_external=True))
+				qrcode_out = None
+				#qrcode_out = qrcode(url_for('exit_survey',session_id=record.session_id,_external=True))
 				return render_template("survey_exit.html",record=record, patient = g.patient,survey=survey,qrcode_out=qrcode_out)
 			else:
 				return abort(404,"Exit record not found.")
@@ -423,7 +425,7 @@ def complete_survey(session_id):
 			end_time = record.end_time.replace(tzinfo=pytz.utc).astimezone(pytz.timezone('America/New_York'))
 			day_num = end_time.timetuple().tm_yday % 46+1
 			img_path = app.root_path+"/../assets/images/animals/animal%d.jpg"%day_num
-			qrcode_out = qrcode(url_for('complete_survey',session_id=record.session_id,_external=True),error_correction='Q',icon_img=img_path)
+			#qrcode_out = qrcode(url_for('complete_survey',session_id=record.session_id,_external=True),error_correction='Q',icon_img=img_path)
 			qrcode_out = None
 			return render_template("survey_complete.html",record=record, patient = patient,survey=survey,qrcode_out=qrcode_out)
 		else:
@@ -436,7 +438,7 @@ def complete_survey(session_id):
 				end_time = record.end_time.replace(tzinfo=pytz.utc).astimezone(pytz.timezone('America/New_York'))
 				day_num = end_time.timetuple().tm_yday % 46+1
 				img_path = app.root_path+"/../assets/images/animals/animal%d.jpg"%day_num
-				qrcode_out = qrcode(url_for('complete_survey',session_id=record.session_id,_external=True),error_correction='Q',icon_img=img_path)
+				#qrcode_out = qrcode(url_for('complete_survey',session_id=record.session_id,_external=True),error_correction='Q',icon_img=img_path)
 				qrcode_out = None
 				return render_template("survey_complete.html",record=record, patient = g.patient,survey=survey,qrcode_out=qrcode_out)
 			else:
