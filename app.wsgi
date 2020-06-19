@@ -1,6 +1,6 @@
 import sys
 
-python_home="/home/ryan/.local/share/virtualenvs/medtracker-RL-AVtFA"
+python_home="/home/ubuntu/.local/share/virtualenvs/medtracker-VyznFaYC"
 
 import sys
 import site
@@ -13,6 +13,6 @@ site_packages = python_home + '/lib/python%s/site-packages' % python_version
 # Add the site-packages directory.
 
 site.addsitedir(site_packages)
-sys.path.insert(0, '/home/ryan/medtracker')
+sys.path.insert(0, '/home/ubuntu/medtracker')
 
 from medtracker import app as application
