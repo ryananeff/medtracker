@@ -21,14 +21,24 @@ ts = URLSafeTimedSerializer(flask_secret_key)
 
 #Flask init
 app = Flask(__name__, static_folder='')
-app.config["APPLICATION_ROOT"] = "/medtracker"
+app.config["APPLICATION_ROOT"] = "/"
 app.config['SQLALCHEMY_DATABASE_URI'] = sqlalchemy_db
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
-app.config['REMEMBER_COOKIE_SECURE'] = False
+app.config['REMEMBER_COOKIE_SECURE'] = True
 app.config['SESSION_COOKIE_SECURE'] = False
 app.config['SECRET_KEY'] = flask_secret_key
-app.config['WTF_CSRF_ENABLED']=False
-app.debug = True
+app.config['WTF_CSRF_ENABLED']=True
+app.debug = False
+
+app.config.update(
+	#EMAIL SETTINGS
+	MAIL_SERVER=mail_server_address,
+	MAIL_PORT=465,
+	MAIL_USE_SSL=True,
+	MAIL_USERNAME = mail_server_user,
+	MAIL_PASSWORD = mail_server_password
+)
+mail = Mail(app)
 
 qrcode = QRcode(app)
 

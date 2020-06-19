@@ -335,7 +335,7 @@ class User(db.Model):
 	active = db.Column(db.Boolean, default=False)
 	admin = db.Column(db.Boolean, default=False)
 	superadmin = db.Column(db.Boolean, default=False)
-	google_token = db.Column(EncryptedType(db.String, flask_secret_key))
+	reset_token = db.Column(EncryptedType(db.String, flask_secret_key))
 	authenticated = db.Column(db.Boolean, default=False)
 	surveys = db.relationship("Survey", backref='user', lazy='dynamic')
 	triggers = db.relationship("Trigger", backref='user', lazy='dynamic')

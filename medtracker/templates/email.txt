@@ -1,13 +1,10 @@
-{{ subject line }}
+Reset Password Request for ISMMS Student Health Check Admin
 
-{{ body }}
+You (or somebody else) requested to change the password associated with this account. 
+
+If this wasn't you, please disregard this email. 
+
+Reset password here: {{url_for("reset_password_with_token",token=token)}}
 
 Thanks, 
-ISMMS Health Check
-
----
-Notice a bug? Let us know
-Phone: 973.960.8144
-E-mail: ryan.neff@icahn.mssm.edu
-
-
+ISMMS Student Health Check Team
