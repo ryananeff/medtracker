@@ -7,6 +7,7 @@
 			<tr>
 			<th style="font-size:28px">{% if patient.fullname != "" %}{{patient.fullname}}{% else %}Anonymous User{% endif %}</th>
 			<th> </th>
+			<th> Year </th>
 			<th> Program </th>
 			<th> Location </th>
 			<th> Age </th>
@@ -14,82 +15,32 @@
 			<th> Email </th>
 			<th> Status </th>
 			<th> Actions </th>
-			<th> Notes </th>
 			</tr>
 		</thead>
 		<tbody>
 		  <tr>
 			<td> Device ID: {{ fmt_id(patient.mrn) }}</td>
 			<td> </td>
+			<td> {{patient.year}}</td>
 			<td> {{patient.program}}</td>
 			<td> {{patient.location}}</td>
 			<td> {{patient.age}}</td>
 			<td> {{patient.phone}}</td>
 			<td> {{patient.email}}</td>
-			<td> {% if status == 0%}
-			<div class="dropdown">
-			  <button class="btn btn-xs btn-success dropdown-toggle" type="button" id="dropdownMenu1" data-toggle="dropdown" aria-haspopup="true" aria-expanded="true">
-			    Ready 
-			    <span class="caret"></span>
-			  </button>
-			  <ul class="dropdown-menu" aria-labelledby="dropdownMenu1">
-			  	<li class="dropdown-header">Actions</li>
-			  	<li class="dropdown-submenu"><a tabindex="-1" href="#">Give Survey</a>
-			  	<ul class="dropdown-menu">
-                  <li class="dropdown-submenu">
-                  {% for s in current_user.surveys %}
-                    <li class="dropdown-submenu"><a tabindex="-1" href="#">{{s.title}}</a>
-                    <ul tabindex="-1" class="dropdown-menu">
-                        <li><a href="/surveys/start/{{s.id}}?u={{patient.id}}">Web</a></li>
-                        <li><a href="/send_survey/voice/{{patient.id}}/{{s.id}}">Phone</a></li>
-                        <li><a href="/send_survey/sms/{{patient.id}}/{{s.id}}">SMS</a></li>
-                        <li><a href="/send_survey/email/{{patient.id}}/{{s.id}}">Email</a></li>
-                    </ul>
-                    </li>
-                  {% endfor %}
-                  </li>
-                </ul>
-			  	</li>
-			  </ul>
-			</div>
-			{% else %}
-			<div class="dropdown">
-			  <button class="btn btn-xs btn-warning dropdown-toggle" type="button" id="dropdownMenu1" data-toggle="dropdown" aria-haspopup="true" aria-expanded="true">
-			    Waiting <span class="badge">{{status}}</span>
-			    <span class="caret"></span>
-			  </button>
-			  <ul class="dropdown-menu" aria-labelledby="dropdownMenu1">
-			  	<li class="dropdown-header">Remind by</li>
-			    <li><a href="/prod/sms/{{patient.id}}">SMS</a></li>
-			    <li><a href="/prod/voice/{{patient.id}}">Phone call</a></li>
-			    <li><a href="/prod/email/{{patient.id}}">Email</a></li>			    
-			    <li role="separator" class="divider"></li>
-			    <li class="dropdown-header">Actions</li>
-			    <li><a href="/prod/clear/{{patient.id}}">Clear status</a></li>
-			  	<li class="dropdown-submenu"><a tabindex="-1" href="#">Give Survey</a>
-			  	<ul class="dropdown-menu">
-                  <li class="dropdown-submenu">
-                  {% for s in current_user.surveys %}
-                    <li class="dropdown-submenu"><a tabindex="-1" href="#">{{s.title}}</a>
-                    <ul tabindex="-1" class="dropdown-menu">
-                        <li><a href="/surveys/start/{{s.id}}?u={{patient.id}}">Web</a></li>
-                        <li><a href="/send_survey/voice/{{patient.id}}/{{s.id}}">Phone</a></li>
-                        <li><a href="/send_survey/sms/{{patient.id}}/{{s.id}}">SMS</a></li>
-                        <li><a href="/send_survey/email/{{patient.id}}/{{s.id}}">Email</a></li>
-                    </ul>
-                    </li>
-                  {% endfor %}
-                  </li>
-                </ul>
-			  	</li>
-			  </ul>
-			</div>
+			<td> {% if status == 1 %}
+				<button class="btn btn-xs btn-success">Admit</button>
+				{% elif status== 0 %}
+				<button class="btn btn-xs btn-warning">Unscreened</button>
+				{% elif status==-1 %}
+				<button class="btn btn-xs btn-danger">Reject</button>
+				{% else %}
+				<button class="btn btn-xs btn-light">Undefined</button>
 			{% endif %}
 			</td>
-			<td> <a href="/patients/{{patient.mrn}}/give_survey" class="btn btn-xs btn-default">Give Survey</a>
+			<td>
 			<a href="/patients/edit/{{patient.mrn}}" class="btn btn-xs btn-default">Edit</a>
-			<a href="/patients/delete/{{patient.mrn}}" class="btn btn-xs btn-danger">Delete</a></td>
-			<td>{{patient.notes}}</td>
+			<a href="/patients/delete/{{patient.mrn}}" class="btn btn-xs btn-danger">Delete</a>
+		</td>
 		  </tr>
 		</tbody>
 		</table>
