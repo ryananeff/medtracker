@@ -841,7 +841,15 @@ def view_patient(id):
 	for c in comments:
 		patients_feed.append((c.time.strftime("%Y-%m-%d %H:%M:%S"), "comment", c))
 	patients_feed = sorted(patients_feed, key=lambda x:x[0],reverse=False)
-	status = sum([1-i.complete for i in p.progress])
+	today = datetime.datetime.now().date()
+	status = 0
+	taken = p.surveys.filter(SurveyResponse.end_time.isnot(None),
+	                         SurveyResponse.start_time>today).order_by(SurveyResponse.id.desc()).first()
+	if taken!=None:
+		if taken.completed:
+			ptstat = 1
+		if taken.exited:
+			ptstat = -1 
 	return render_template('view_patient.html', patients_feed = patients_feed, patient=p, status=status)
 
 @app.route('/patients/self', methods=["GET", "POST"])
