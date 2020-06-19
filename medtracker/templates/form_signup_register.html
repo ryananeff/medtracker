@@ -8,6 +8,9 @@
 			<div class="col-lg-3">
 				</div>
 			<div class="col-md-6">
+				{% if form.errors %}
+				<p>Errors: {{form.errors}}</p>
+				{% endif %}
 				{% block form %}
 				<section>
 				<h1>Sign up a new device</h1>
@@ -15,6 +18,20 @@
 				This process will only happen once and take a few seconds. Clearing your browser cookies will delete your registration.</p>
 				<p>Please use the same device and browser for future visits to skip this step and track your responses.</p>
 				<form action="{{ form_action }}" method="{{ method | d("POST") }}" enctype="multipart/form-data">
+					{% for field in form %}
+						{% if field.type in ['CSRFTokenField', 'HiddenField'] %}
+						  {{ field() }}
+						{% endif %}
+						{% if field.errors or field.help_text %}
+						      <span class="help-inline">
+						      {% if field.errors %}
+						        {{ field.errors|join(' ') }}
+						      {% else %}
+						        {{ field.help_text }}
+						      {% endif %}
+						      </span> 
+						    {% endif %}
+					{% endfor %}
 				<h3>Required questions</h3>
 				<ol>
 				<li>{{form.program.label}}{{render_field(form.program)}}</li>

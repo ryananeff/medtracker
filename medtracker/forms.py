@@ -1,8 +1,8 @@
 from wtforms import *
 from flask_wtf import FlaskForm as Form
 from wtforms.ext.sqlalchemy.fields import *
-from wtforms.fields.html5 import DateField, IntegerRangeField
-from wtforms.validators import DataRequired, Length, EqualTo
+from wtforms.fields.html5 import DateField, IntegerRangeField, EmailField
+from wtforms.validators import DataRequired, Length, EqualTo, InputRequired
 from wtforms.widgets.core import HTMLString, html_params, escape, HiddenInput
 from medtracker.models import *
 from flask.views import MethodView
@@ -152,7 +152,36 @@ class NewUserForm(Form):
 	                         Length(min=8, max=40),
 	                         EqualTo('confirm', message='Passwords must match')])
 	confirm = PasswordField('Confirm Password')
-    
+
+class ChangePasswordForm(Form):
+	current_password = PasswordField('Current Password', validators=[DataRequired()])
+	new_password = PasswordField('New Password', validators=[DataRequired(),
+	                         Length(min=8, max=40),
+	                         EqualTo('confirm', message='New passwords must match')])
+	confirm = PasswordField('Confirm New Password')
+
+class ForgotPasswordForm(Form):
+    email = EmailField(
+        'Email', validators=[DataRequired()])
+
+    # We don't validate the email address so we don't confirm to attackers
+    # that an account with the given email exists.
+
+class ResetPasswordForm(Form):
+    email = EmailField(
+        'Email', validators=[DataRequired()])
+    new_password = PasswordField(
+        'New password',
+        validators=[
+            InputRequired(),
+            EqualTo('new_password2', 'Passwords must match.')
+        ])
+    new_password2 = PasswordField(
+        'Confirm new password', validators=[InputRequired()])
+
+    def validate_email(self, field):
+        if User.query.filter_by(email=field.data).first() is None:
+            raise ValidationError('Unknown email address.')
 
 class PatientForm(Form):
 	mrn = DisabledTextField('Patient Device ID')

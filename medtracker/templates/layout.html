@@ -98,7 +98,7 @@
 	  {% if messages %}
 		<div class="alert alert-info" role="alert"><ul>
 	    {% for message in messages %}
-      		<li>{{ message }}</li>
+      		<li>{{ message | safe }}</li>
 	    {% endfor %}
 	    </ul></div>
 	  {% endif %}

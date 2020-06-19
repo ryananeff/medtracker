@@ -4,10 +4,11 @@ from medtracker.models import *
 from medtracker.forms import *
 from medtracker.email_helper import send_email
 from medtracker.triggers import *
+from werkzeug.exceptions import InternalServerError
+from flask_mail import Mail, Message
 
 import matplotlib as mpl
 import matplotlib.cm as cm
-import matplotlib.dates as mdates
 from plotly import offline
 import pandas as pd
 import numpy as np
@@ -18,6 +19,27 @@ from collections import defaultdict
 
 image_staticdir = 'assets/uploads/'
 base_dir = os.path.realpath(os.path.dirname(medtracker.__file__)+"/../")
+
+@app.errorhandler(404)
+def page_not_found(e):
+    # note that we set the 404 status explicitly
+    return render_template('404.html',message=e), 404
+
+@app.errorhandler(401)
+def page_unauth(e):
+    # note that we set the 401 status explicitly
+    return render_template('401.html',message=e), 401
+
+@app.errorhandler(500)
+def handle_500(e):
+    original = getattr(e, "original_exception", None)
+
+    if original is None:
+        # direct 500 error, such as abort(500)
+        return render_template("500.html"), 500
+
+    # wrapped unhandled error
+    return render_template("500.html", message=original), 500
 
 def randomword(length):
 	'''generate a random string of whatever length, good for filenames'''
@@ -51,7 +73,6 @@ def detect_user_session():
 		# when the response exists, set a cookie with the language
 		@after_this_request
 		def remember_pt_id(response):
-			response.set_cookie('flashed',b'True',max_age=0)
 			response.set_cookie('patient_ident', g.patient_ident, max_age=datetime.timedelta(weeks=52))
 			device = Device(device_id = g.patient_ident)
 			db.session.add(device)
@@ -65,15 +86,6 @@ def detect_user_session():
 		current_user.surveys = Survey.query
 		current_user.patients = Patient.query
 
-@app.after_request
-def flash_warning(response):
-	flashed = request.cookies.get('flashed',False)
-	g.patient = Patient.query.filter_by(mrn=g.patient_ident).first()
-	if (g.patient == None)&(flashed==False):
-		flash("Your device appears to be unregistered. Please register your device.")
-		response.set_cookie('flashed',b'True',max_age=0)
-	return response
-
 #### logins
 
 login_manager = flask_login.LoginManager()
@@ -83,7 +95,10 @@ login_manager.session_protection = "strong"
 
 @login_manager.user_loader
 def user_loader(user_id):				# used by Flask internally to load logged-in user from session
-	return User.query.get(user_id)
+	user = User.query.get(user_id)
+	if user.active == False:
+		user = None
+	return user
 
 @login_manager.unauthorized_handler
 @app.route("/login", methods=["GET", "POST"])
@@ -94,7 +109,7 @@ def login():					# not logged-in callback
 		if user == None:
 			return str("Error: '" + form.username.data + "'")
 		if user.active == False:
-			msg = Markup('Please confirm your email to log in. <a href="/resend_confirmation?email=' + user.email + '">Resend Confirmation</a>')
+			msg = Markup('Your account is currently deactivated until an administrator activates it.')
 			flash(msg)
 		elif user.verify_password(form.password.data):
 			login_user(user, remember=True, duration = datetime.timedelta(weeks=52))
@@ -126,11 +141,81 @@ def signup():
 
     return render_template('form_signup.html', form=form, action="Sign up for ISMMS Health Check", data_type="")
 
+@app.route('/change-password', methods=['GET', 'POST'])
+@flask_login.login_required
+def change_password():
+	form = ChangePasswordForm()
+	if form.validate_on_submit():
+		user = current_user
+		if user.verify_password(form.current_password.data):
+		    user.hash_password(form.new_password.data)
+		    db.session.add(user)
+		    db.session.commit()
+		    flash('Your password was successfully changed.')
+		    if request.referrer == None:
+		    	return redirect(url_for('serve_survey_index'))
+		    else:
+		    	return redirect(request.referrer)
+		form.current_password.errors.append('Invalid password.')
+	return render_template('change_password.html', form=form, action="Change password", data_type="")
+
+@app.route('/forgot-password', methods=['GET', 'POST'])
+def forgot_password():
+    if current_user.is_authenticated:
+        flash('You are already logged in.')
+        return redirect(url_for('index'))
+    form = ForgotPasswordForm()
+    if form.validate_on_submit():
+        user = User.query.filter_by(email=form.email.data).first()
+        if user:
+            send_reset_email(user = user)
+        flash("Password reset requested.")
+        return redirect(url_for('index'))
+    return render_template('forgot_password.html', form=form)
+
+@app.route('/reset/<token>', methods=['GET', 'POST'])
+def reset_password_with_token(token):
+    if current_user.is_authenticated:
+        flash('You are already logged in.')
+        return redirect(url_for("index"))
+    user = User.query.filter_by(reset_token = token).first()
+    if user is None:
+        return abort(404)
+    form = ResetPasswordForm()
+    if form.validate_on_submit():
+        user.hash_password(form.new_password.data)
+        user.reset_token = None
+        login_user(user,remember=True, duration = datetime.timedelta(weeks=52))
+        db.session.add(user)
+        db.session.commit()
+        flash('Your password was successfully changed.')
+        return redirect(url_for('serve_survey_index'))     
+    return render_template('reset_password.html', form=form)
+
+def send_reset_email(user, app=app):
+	'''send an email to reset the user's password'''
+	# look for configuration variables in params.conf file...
+	msg = Message(sender="ryan.neff@icahn.mssm.edu")
+	msg.subject = "ISMMS Student Health Check Password Reset Request"		
+	msg.sender  = "ryan.neff@icahn.mssm.edu"
+	msg.recipients = [user.email]
+	user.reset_token = randomword(24)
+	with app.app_context():
+		msg.html = render_template('email.html', token = user.reset_token)
+		msg.body = render_template('email.txt', token = user.reset_token)
+	mail.send(msg)
+	db.session.add(user)
+	db.session.commit()
+	return None
+
 #### index pages
 
 @app.route("/", methods=['GET'])
 @app.route("/index.html", methods=['GET'])
 def index():
+	g.patient = Patient.query.filter_by(mrn=g.patient_ident).first()
+	if g.patient == None:
+		flash("Your device appears to be unregistered. Please <a href='/patients/signup/1'>register</a> your device.")
 	return render_template("index.html")
 
 @app.route("/about", methods=["GET"])
@@ -253,7 +338,7 @@ def serve_survey(survey_id):
 	previous_responses = SurveyResponse.query.filter(SurveyResponse.uniq_id==g.patient.id,
 	                                                    SurveyResponse.end_time.isnot(None),SurveyResponse.start_time>today).first()
 	if previous_responses!=None:
-		return render_template("survey_quit.html",survey=survey, patient=g.patient,message="You can only take the survey once per day."), 403
+		return render_template("survey_quit.html",survey=survey, patient=g.patient,message="You can only take the survey once per day.")
 	
 	survey_response_id = request.values.get("sr", None)
 	question_id = request.values.get("question", None)
@@ -268,7 +353,6 @@ def serve_survey(survey_id):
 	question = Question.query.get_or_404(question_id)
 	next_question = question.next_q.id if question.next_q != None else None
 	last_question = question.prev_q.id if question.prev_q != None else None
-
 	if survey_response_id==None:
 		curuser = current_user.id if id in current_user.__dict__ else None
 		survey_response = SurveyResponse(survey_id=survey.id, uniq_id=uniq_id, session_id=sess, user_id=curuser)
@@ -277,7 +361,7 @@ def serve_survey(survey_id):
 	else:
 		survey_response = SurveyResponse.query.get_or_404(survey_response_id)
 	formobj = QuestionView().get(question)
-	if request.method == 'POST':
+	if (request.method == 'POST') & len(request.form.getlist("response"))!=0:
 		print("saving...")
 		next_question, next_survey, exit, complete, message = save_response(request.form, question_id, session_id = sess, survey_response_id = survey_response.id)
 		if next_question != None:
@@ -298,17 +382,14 @@ def serve_survey(survey_id):
 			return redirect(url_for("complete_survey", session_id=survey_response.session_id))
 		return redirect(url_for('serve_survey', survey_id=survey_id, question=next_question, u=uniq_id, s=sess, sr = survey_response.id))
 	else:
+		if (request.method == 'POST') & len(request.form.getlist("response"))==0:
+			flash("Please select a response")
 		try:
 			question.description_html = delta_html.render(json.loads(question.description)["ops"])
 		except:
 			question.description_html = '<p>' + question.description + '</p>'
 		return render_template("serve_question.html", survey = survey, question = question,
 		                       next_q = next_question, last_q = last_question, form=formobj, u=uniq_id, s = sess, sr = survey_response.id)
-
-@app.errorhandler(404)
-def page_not_found(e):
-    # note that we set the 404 status explicitly
-    return render_template('404.html',message=e), 404
 
 @app.route("/patients/self/reset")
 def reset_device():
@@ -323,8 +404,6 @@ def reset_device():
 		g.patient = None
 		flash("Device ID reset. You will need to register with ISMMS Health Check again to complete surveys.")
 	return response
-
-
 
 @app.route("/exit/<session_id>")
 def exit_survey(session_id):
@@ -387,6 +466,7 @@ def complete_survey(session_id):
 		return abort(401,"Your device appears to be unregistered. Only registered devices can view completion records.")
 
 def save_response(formdata, question_id, session_id=None, current_user = None, survey_response_id = None):
+	print(formdata.getlist("response"))
 	question = Question.query.get_or_404(question_id)
 	survey_response = SurveyResponse.query.get_or_404(survey_response_id)
 	_response = QuestionResponse(
@@ -540,7 +620,7 @@ def patient_signup(survey_id):
 @flask_login.login_required
 def edit_patient(id=None):
 	'''GUI: add a patient to the DB'''
-	patient = Patient.query.filter_by(user_id=current_user.id, mrn=id).first_or_404()
+	patient = Patient.query.filter_by(mrn=id).first_or_404()
 	formobj = PatientEditForm(obj=patient)
 	formobj.location.default = patient.location.code
 	formobj.program.default = patient.program.code
@@ -571,6 +651,7 @@ def edit_patient_self():
 	return render_template("form_self_edit.html", action="Update", data_type="my records", form=formobj)
 
 @app.route("/patients/")
+@flask_login.login_required
 def view_patients():
 	patients = Patient.query.all()
 	today = datetime.datetime.now().date()
@@ -587,6 +668,7 @@ def view_patients():
 	return render_template("patients.html", patients=patients, status = status)
 
 @app.route("/patients/delete/<string:id>")
+@flask_login.login_required
 def delete_patient(id):
 	patient = Patient.query.filter_by(mrn=id).first_or_404()
 	db_session.delete(patient)
@@ -595,6 +677,7 @@ def delete_patient(id):
 	return redirect(url_for('view_patients'))
 
 @app.route('/patients/<int:id>/give_survey', methods=['GET'])
+@flask_login.login_required
 def patient_survey_selector(id):
 	'''GUI: serve the survey select page for a patient'''
 	patient = Patient.query.get_or_404(id)
@@ -732,7 +815,7 @@ def send_certbot(path):
 @flask_login.login_required
 def patient_feed(id=None):
 	if id:
-		patients = Patient.query.filter_by(id=id, user_id=current_user.id)
+		patients = Patient.query.filter_by(id=id)
 	else:
 		patients = current_user.patients
 	patients_feed = []
@@ -750,7 +833,7 @@ def patient_feed(id=None):
 @app.route('/patients/<int:id>', methods=["GET", "POST"])
 @flask_login.login_required
 def view_patient(id):
-	p = Patient.query.filter_by(id=id, user_id=current_user.id).first()
+	p = Patient.query.get_or_404(id)
 	patients_feed = []
 	for s in p.surveys:
 		patients_feed.append((s.start_time.strftime("%Y-%m-%d %H:%M:%S"),"patient", s))
@@ -1086,3 +1169,38 @@ def plotlyBarplot(x=None,y=None,hue=None,data=None,ylabel="",xlabel="",title="",
     fig.update_layout(showlegend=show_legend)
 
     return fig
+
+@app.route("/users/")
+@flask_login.fresh_login_required
+def view_users():
+	users = User.query.all()
+	return render_template("users.html", users=users)
+
+@app.route("/users/active/<int:user_id>")
+@flask_login.fresh_login_required
+def active_user(user_id):
+	user = User.query.get_or_404(user_id)
+	user.active = True
+	db.session.add(user)
+	db.session.commit()
+	flash("Admin activated.")
+	return redirect(url_for("view_users"))
+
+@app.route("/users/deactivate/<int:user_id>")
+@flask_login.fresh_login_required
+def deactivate_user(user_id):
+	user = User.query.get_or_404(user_id)
+	user.active = False
+	db.session.add(user)
+	db.session.commit()
+	flash("Admin deactivated.")
+	return redirect(url_for("view_users"))
+
+@app.route("/users/delete/<int:user_id>")
+@flask_login.fresh_login_required
+def delete_user(user_id):
+	user = User.query.get_or_404(user_id)
+	db.session.delete(user)
+	db.session.commit()
+	flash("Admin deleted.")
+	return redirect(url_for("view_users"))
