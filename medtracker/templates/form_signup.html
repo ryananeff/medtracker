@@ -1,15 +1,20 @@
 {% extends 'layout.html' %}
 {% import '_forms_edit.html' as forms %}
 {% block body %}
+	<div class="page-header">
+		<h1>Register as an admin for the ISMMS Student Health Check</h1>
+	</div>
+
     <div class="container">
 		<div class="row">
-			<div class="col-lg-3">
+			<div class="col-sm-2">
 				</div>
-			<div class="col-lg-8">
+			<div class="col-sm-8">
+				<p>If you have already been authorized to sign up as an admin, please use the registration form below to sign up as an admin for the ISMMS Student Health Check. 
+					<strong> All new accounts must be approved by a current admin before they become active. All registrations are closely monitored and logged, 
+					and any inappropriate attempts to register will be investigated.</strong></p>
 				{% block form %}
-				<div class="form-group" style="background-color: lightgray; width:40em; padding:2em;margin-top:2em; border-radius: 1em 1em">
-				<h1 style="margin-top:0; margin-bottom:12px">{{ action }} {{ data_type }}</h1>
-				<hr>
+				<div class="form-group">
 				<form action="{{ form_action }}" method="{{ method | d("POST") }}" enctype="multipart/form-data">
 				{{ forms.render(form) }}
 				{% if u %}
@@ -21,7 +26,7 @@
 				</div>
 				{% endblock form %}
 			  </div>
-			<div class="col-lg-6">
+			<div class="col-sm-2">
 			  </div> 
 		</div>
     </div><!-- /.container -->

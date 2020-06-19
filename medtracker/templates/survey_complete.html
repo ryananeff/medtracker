@@ -15,7 +15,7 @@
 	    	{% if qrcode_out %}
 	    	<p>QR Code:</p><p><img src="{{qrcode_out|safe}}" style="max-width:100%"></p>
 	    	{% endif %}
-	    	<p><a type="button" class="btn btn-sm btn-primary" href="{{url_for('start_survey',survey_id=survey.id)}}">Submit another response</a></p>
+	    	<p><a type="button" class="btn btn-sm btn-primary" href="{{url_for('view_patient_self',survey_id=survey.id)}}">See your records</a></p>
 		    </div>
 	    </div><!-- /.container -->
 {% endblock %}

@@ -9,26 +9,30 @@
 	    <table class="table table-responsive">
 	    	<tbody>
 	    		<tr>
-	    			<td>Device ID:</td><td> {{ fmt_id(patient.mrn) }}</td>
+	    			<td><strong>Device ID:</strong></td><td> {{ fmt_id(patient.mrn) }}</td>
 	    		</tr>
 	    		<tr>
-					<td>Program:</td><td>{{patient.program}}</td>
+					<td><strong>Program:</strong></td><td>{{patient.program}}</td>
 				</tr>
 				<tr>
-					<td>Location:</td><td>{{patient.location}}</td>
+					<td><strong>Location:</strong></td><td>{{patient.location}}</td>
 				</tr>
 				<tr>
-					<td>Year:</td><td>{{patient.year}}</td>
+					<td><strong>Year:</strong></td><td>{{patient.year}}</td>
 				</tr>
 	    		<tr>
-					<td>Name:</td><td>{{patient.fullname}}</td>
+					<td><strong>Name:</strong></td><td>{% if patient.fullname %}{{patient.fullname}}{% else %}<span style="color:grey">(Not Provided)</span>{% endif %}</td>
+				</tr>
+				<tr>
+					<td><strong>Age:</strong></td><td>{% if patient.age %}{{patient.age}}{% else %}<span style="color:grey">(Not Provided)</span>{% endif %}</td>
+				</tr>
+				<tr>
+					<td><strong>E-mail:</strong></td><td>{% if patient.email %}{{patient.email}}{% else %}<span style="color:grey">(Not Provided)</span>{% endif %}</td>
 				</tr>
 	    		<tr>
-					<td>Phone:</td><td>{{patient.phone}}</td>
+					<td><strong>Phone:</strong></td><td>{% if patient.phone %}{{patient.phone}}{% else %}<span style="color:grey">(Not Provided)</span>{% endif %}</td>
 				</tr>
-	    		<tr>
-					<td>E-mail</td><td>{{patient.email}}</td>
-				</tr>
+	    		
 	    		</tbody>
 	    	</table>
 

@@ -1,7 +1,7 @@
 from flask import *
 from requests.auth import HTTPBasicAuth
 import random, string, pytz, sys, random, urllib.parse, datetime, os
-from werkzeug import secure_filename
+from werkzeug.utils import secure_filename
 from itertools import groupby
 from delta import html as delta_html #https://github.com/forgeworks/quill-delta-python
 from flask_login import login_user, logout_user, current_user
@@ -11,8 +11,8 @@ from flask_qrcode import QRcode
 import twilio.twiml
 from twilio.rest import TwilioRestClient
 
-from flask.ext.mail import Mail
-import flask.ext.login as flask_login
+from flask_mail import Mail
+import flask_login as flask_login
 
 from ftplib import FTP_TLS
 from flask import flash
