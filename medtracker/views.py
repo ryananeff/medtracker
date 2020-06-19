@@ -129,7 +129,7 @@ def signup():
     form = NewUserForm()
     if form.validate_on_submit():
         user = User(
-            email = form.email.data,
+            email = form.email.data.lower(),
             username = form.username.data,
             name = form.name.data,
         )
@@ -167,7 +167,7 @@ def forgot_password():
         return redirect(url_for('index'))
     form = ForgotPasswordForm()
     if form.validate_on_submit():
-        user = User.query.filter_by(email=form.email.data).first()
+        user = User.query.filter_by(email=form.email.data.lower()).first()
         if user:
             send_reset_email(user = user)
         flash("Password reset requested.")
