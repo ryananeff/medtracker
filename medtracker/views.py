@@ -128,9 +128,12 @@ def signout():
 def signup():
     form = NewUserForm()
     if form.validate_on_submit():
+    	olduser = User.query.filter_by(email=form.email.data.lower()).first()
+    	if olduser:
+    		flash("Already registered with that address. Log in or reset password.")
+    		return redirect(url_for("login"))
         user = User(
             email = form.email.data.lower(),
-            username = form.username.data,
             name = form.name.data,
         )
         user.hash_password(form.password.data)
