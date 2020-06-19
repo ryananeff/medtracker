@@ -105,9 +105,10 @@ def user_loader(user_id):				# used by Flask internally to load logged-in user f
 def login():					# not logged-in callback
 	form = UsernamePasswordForm()
 	if form.validate_on_submit():
-		user = User.query.filter_by(email=form.username.data).first()
+		user = User.query.filter_by(email=form.username.data.lower()).first()
 		if user == None:
-			return str("Error: '" + form.username.data + "'")
+			return flash("Error: '" + form.username.data + "'")
+			render_template('form_login.html', form=form, action="Please log in", data_type="")
 		if user.active == False:
 			msg = Markup('Your account is currently deactivated until an administrator activates it.')
 			flash(msg)
