@@ -2,7 +2,7 @@
 from medtracker import *
 from medtracker.models import *
 from medtracker.forms import *
-from flask.ext.mail import Message
+from flask_mail import Message
 from email.mime.text import MIMEText
 
 def send_email(address, subject, html):

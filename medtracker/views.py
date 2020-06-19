@@ -121,70 +121,10 @@ def signup():
         db.session.add(user)
         db.session.commit()
 
-        # Now we'll send the email confirmation link
-        subject = "Confirm your email"
-
-        token = ts.dumps(user.email, salt='email-confirm-key')
-
-        confirm_url = url_for(
-            'confirm_email',
-            token=token,
-            _external=True)
-
-        html = render_template(
-            'activate_user_by_email.html',
-            confirm_url=confirm_url)
-
-        # We'll assume that send_email has been defined in myapp/util.py
-        #send_email(user.email, subject, html)
-
+        flash("Successfully registered. Your account is currently inactive. You must wait for another current admin to grant your admin access.")
         return redirect(url_for("login"))
 
     return render_template('form_signup.html', form=form, action="Sign up for ISMMS Health Check", data_type="")
-
-@app.route('/resend_confirmation', methods=["GET", "POST"])
-def resend_confirmation():
-	email = request.values.get('email', None)
-
-	user = User.query.filter_by(email=email).first_or_404()
-	if user.active == True:
-		flash('Email address already confirmed, please try signing in again.')
-		return redirect(url_for("login"))
-
-	# Now we'll send the email confirmation link
-	subject = "Confirm your email"
-
-	token = ts.dumps(user.email, salt='email-confirm-key')
-
-	confirm_url = url_for(
-	    'confirm_email',
-	    token=token,
-	    _external=True)
-
-	html = render_template(
-	    'activate_user_by_email.html',
-	    confirm_url=confirm_url)
-
-	# We'll assume that send_email has been defined in myapp/util.py
-	send_email(user.email, subject, html)
-	flash("Sent you a confirmation email.")
-	return redirect(url_for("login"))
-
-@app.route('/confirm/<token>')
-def confirm_email(token):
-    try:
-        email = ts.loads(token, salt="email-confirm-key", max_age=86400)
-    except:
-        abort(404)
-
-    user = User.query.filter_by(email=email).first_or_404()
-
-    user.active = True
-
-    db.session.add(user)
-    db.session.commit()
-    flash("Your email address has been successfully confirmed.")
-    return redirect(url_for('login'))
 
 #### index pages
 
@@ -936,31 +876,31 @@ def survey_response_dashboard(survey_id):
 		
 		todaydf = outdf[outdf["date"]==datetime.datetime.utcnow().date()].loc[:,["year","Completed","Exited","Not Completed"]].melt(id_vars="year")
 		fig2 = plotlyBarplot(data=todaydf,x="year",y="value",hue="variable",stacked=True,ylabel="# Students",xlabel="Program Year",
-		             title="Compliance by Year",colors=["green","red","orange"],height=300,width=None)
+		             title="Compliance by Year",colors=["green","red","orange"],height=400,width=None,show_legend=True)
 		outdf["date"] = [datetime.datetime.strftime(a,"%D") for a in outdf["date"]]
-		fig1 = plotlyBarplot(data=outdf,x="date",y="total_registered",hue="year",stacked=True,width=None,height=300,
+		fig1 = plotlyBarplot(data=outdf,x="date",y="total_registered",hue="year",stacked=True,width=None,height=400,
 		                     title="Students Registered",ylabel="# Students",show_legend=True,xlabel="Date")
 		df["daily_uncompleted_surveys"] = df["total_registered_students"] - df["daily_total_surveys"]
-		df["daily_pct"] = df["daily_completed_surveys"]/df["total_registered_students"]*100
+		df["daily_pct"] = df["daily_total_surveys"]/df["total_registered_students"]*100
 		df2 = df.loc[:,["index","daily_uncompleted_surveys","daily_completed_surveys","daily_exited_surveys"]]
 		df2.columns = ["index","Not Completed","Completed","Exited"]
 		df3 = df2.melt(id_vars="index")
-		fig3 = plotlyBarplot(data=df3,x="index",y="value",hue="variable",width=None, height=300, 
-		                     title="Compliance History",stacked=True,show_legend=False,colors=["green","red","orange"],
+		fig3 = plotlyBarplot(data=df3,x="index",y="value",hue="variable",width=None, height=400, 
+		                     title="Compliance History",stacked=True,show_legend=True,colors=["green","red","orange"],
 		                     ylabel="# Students",xlabel="Date")
 		pts["location"] = [str(i) for i in pts["location"]]
 		pts["program"] = [str(i) for i in pts["program"]]
-		reg_per_year = plotlyBarplot(data=pd.DataFrame(pts.groupby(["year","program"]).count()["id"]).reset_index(),y="id",x="year",hue="program",width=None, height=400, title="Registered by Year",stacked=True,xlabel="Year",ylabel="# Students")
-		reg_per_program = plotlyBarplot(data=pd.DataFrame(pts.groupby(["program","year"]).count()["id"]).reset_index(),y="id",x="program",hue="year",width=None, height=400, title="Registered by Program",show_legend=True,stacked=True,xlabel="Program",ylabel="# Students")
-		reg_per_location = plotlyBarplot(data=pd.DataFrame(pts.groupby(["program","location"]).count()["id"]).reset_index(),y="id",x="location",hue="program",
-             stacked=True, width=None, height=500, title="Registered by Location",show_legend=True,xlabel="Location",ylabel="# Students")
+		reg_per_year = plotlyBarplot(data=pd.DataFrame(pts.groupby(["year","program"]).count()["id"]).reset_index(),y="id",x="year",hue="program",width=None, height=400, title="Registered by Year",stacked=True,xlabel="Year",ylabel="# Students",show_legend=True,)
+		reg_per_program = plotlyBarplot(data=pd.DataFrame(pts.groupby(["program","year"]).count()["id"]).reset_index(),y="id",x="program",hue="year",width=None, height=500, title="Registered by Program",show_legend=True,stacked=True,xlabel="Program",ylabel="# Students")
+		reg_per_location = plotlyBarplot(data=pd.DataFrame(pts.groupby(["location"]).count()["id"]).reset_index(),y="id",x="location",
+             stacked=True, width=None, height=500, title="Registered by Location",show_legend=False,xlabel="Location",ylabel="# Students")
 		
 		dash_figs = [fig1,fig2,fig3,reg_per_program,reg_per_year,reg_per_location]
 
-		today_count = list(df["daily_completed_surveys"])[-1]
+		today_count = list(df["daily_total_surveys"])[-1]
 		today_pct = list(df["daily_pct"])[-1]
-		week_count = sum(list(df["daily_completed_surveys"])[-7:])
-		week_pct = sum(list(df["daily_completed_surveys"])[-7:])/sum(list(df["total_registered_students"])[-7:])*100
+		week_count = sum(list(df["daily_total_surveys"])[-7:])
+		week_pct = sum(list(df["daily_total_surveys"])[-7:])/sum(list(df["total_registered_students"])[-7:])*100
 
 	else:
 		dash_figs = []
@@ -999,7 +939,7 @@ def survey_response_dashboard(survey_id):
 				pltdict.update(a.groupby("response").count()["question_id"].to_dict())
 				df = pd.DataFrame(pltdict,index=["value"]).T.reset_index()
 				margins={"b":200,"t":75}
-				fig = plotlyBarplot(data=df,x="index",y="value",xtype=xtype,width=None, height=None,title=title,margins=margins,colors=["darkblue"])
+				fig = plotlyBarplot(data=df,x="index",y="value",xtype=xtype,width=None, height=None,title=title,margins=margins,ylabel="# Responses",colors=["darkblue"])
 				question_figs.append(fig)
 
 	last7_figs = []
@@ -1034,7 +974,7 @@ def survey_response_dashboard(survey_id):
 		    pltdf.reset_index(inplace=True)
 		    pltdf=pltdf.fillna(method="bfill")
 		    fig = plotlyBarplot(data=pltdf,x="date",y="count",hue="response",
-		                        xtype=xtype,grouped=True,ordered=False,stacked=True,order2=True,width=None,height=400,show_legend=True,title=title)
+		                        xtype=xtype,grouped=True,ordered=False,stacked=True,order2=True,width=None,height=None,show_legend=True,ylabel="# Responses",xlabel="Date",title=title)
 		    last7_figs.append(fig)
 
 	for ix,fig in enumerate(dash_figs):
@@ -1047,7 +987,7 @@ def survey_response_dashboard(survey_id):
 	                       today_count=today_count, today_pct=today_pct, week_count=week_count, week_pct=week_pct, survey=survey)
 
 def plotlyBarplot(x=None,y=None,hue=None,data=None,ylabel="",xlabel="",title="",
-                    width=600,height=400,colors=["rgba"+str(i) for i in cm.get_cmap("Set1").colors],
+                    width=600,height=400,colors=["rgba"+str(tuple(i[0:3])) for i in cm.get_cmap("Set1").colors+cm.get_cmap("Set2").colors],
                     stacked=False,percent=False,ordered=False,xtype="category",grouped=False,order2=False,show_legend=False,margins = None):
     yaxis=go.layout.YAxis(
             title=ylabel,
@@ -1102,12 +1042,13 @@ def plotlyBarplot(x=None,y=None,hue=None,data=None,ylabel="",xlabel="",title="",
                 counts = round(counts/totalcounts.loc[counts.index,]*100,1)
             x = [str(i) for i in counts.index]
             y = counts.values
+            name = str(hue)[0:8] + ".." if len(str(hue))>10 else str(hue)
             trace = go.Bar(x=x,y=y,
                            text=y,
                            textposition='auto',
                            orientation='v',
                          marker=dict(color=colors[ix]),
-                         name="%s"%(hue))
+                         name="%s"%name)
             ix += 1
             fig.add_trace(trace)
     else:
@@ -1118,12 +1059,13 @@ def plotlyBarplot(x=None,y=None,hue=None,data=None,ylabel="",xlabel="",title="",
             counts = data[ylab]
             x = [str(i) for i in data[xlab]]
         y = counts.values
+        name = str(ylabel)[0:8] + ".." if len(str(ylabel))>10 else str(ylabel)
         trace = go.Bar(x=x,y=y,
                        text=y,
                        textposition='auto',
                        orientation='v',
                      marker=dict(color=colors[ix]),
-                     name="%s"%(ylabel))
+                     name="%s"%name)
         ix += 1
         fig.add_trace(trace)
     fig.update_layout(title=titledict)

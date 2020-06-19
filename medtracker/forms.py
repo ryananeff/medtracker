@@ -1,8 +1,8 @@
 from wtforms import *
-from flask_wtf import Form
+from flask_wtf import FlaskForm as Form
 from wtforms.ext.sqlalchemy.fields import *
 from wtforms.fields.html5 import DateField, IntegerRangeField
-from wtforms.validators import DataRequired
+from wtforms.validators import DataRequired, Length, EqualTo
 from wtforms.widgets.core import HTMLString, html_params, escape, HiddenInput
 from medtracker.models import *
 from flask.views import MethodView
@@ -146,10 +146,13 @@ class UsernamePasswordForm(Form):
     password = PasswordField('Password', validators=[DataRequired()])
 
 class NewUserForm(Form):
-    email = StringField('Email', validators=[DataRequired()])
-    password = PasswordField('Password', validators=[DataRequired()])
-    username = StringField('Username', validators=[DataRequired()])
-    name = StringField('Full Name', validators=[DataRequired()])
+	name = StringField('Full Name', validators=[DataRequired()])
+	email = StringField('Email', validators=[DataRequired()])
+	password = PasswordField('Password', validators=[DataRequired(),
+	                         Length(min=8, max=40),
+	                         EqualTo('confirm', message='Passwords must match')])
+	confirm = PasswordField('Confirm Password')
+    
 
 class PatientForm(Form):
 	mrn = DisabledTextField('Patient Device ID')
@@ -157,8 +160,8 @@ class PatientForm(Form):
 	year = SelectField("What is your anticipated graduation date?",choices=[(i,i) for ix,i in enumerate(range(2020,2029))],coerce=int)
 	location = RadioField("Where are you currently living?", choices=LOCATION_CHOICES)
 	fullname = StringField('Name (optional)')
-	email = StringField('Email address (optional)')
 	age = StringField('Age (optional)')
+	email = StringField('Email address (optional)')
 	phone = StringField('Phone number (optional)')
 
 class PatientEditForm(Form):
@@ -167,6 +170,6 @@ class PatientEditForm(Form):
 	year = SelectField("What is your anticipated graduation date?",choices=[(i,i) for ix,i in enumerate(range(2020,2029))],coerce=int)
 	location = RadioField("Where are you currently living?", choices=LOCATION_CHOICES)
 	fullname = StringField('Name (optional)')
-	email = StringField('Email address (optional)')
 	age = StringField('Age (optional)')
+	email = StringField('Email address (optional)')
 	phone = StringField('Phone number (optional)')
