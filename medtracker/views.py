@@ -126,24 +126,24 @@ def signout():
 
 @app.route('/signup', methods=["GET", "POST"])
 def signup():
-    form = NewUserForm()
-    if form.validate_on_submit():
-    	olduser = User.query.filter_by(email=form.email.data.lower()).first()
-    	if olduser:
-    		flash("Already registered with that address. Log in or reset password.")
-    		return redirect(url_for("login"))
-        user = User(
-            email = form.email.data.lower(),
-            name = form.name.data,
-        )
-        user.hash_password(form.password.data)
-        db.session.add(user)
-        db.session.commit()
+	form = NewUserForm()
+	if form.validate_on_submit():
+		olduser = User.query.filter_by(email=form.email.data.lower()).first()
+		if olduser:
+			flash("Already registered with that address. Log in or reset password.")
+			return redirect(url_for("login"))
+		user = User(
+		    email = form.email.data.lower(),
+		    name = form.name.data,
+		)
+		user.hash_password(form.password.data)
+		db.session.add(user)
+		db.session.commit()
 
-        flash("Successfully registered. Your account is currently inactive. You must wait for another current admin to grant your admin access.")
-        return redirect(url_for("login"))
+		flash("Successfully registered. Your account is currently inactive. You must wait for another current admin to grant your admin access.")
+		return redirect(url_for("login"))
 
-    return render_template('form_signup.html', form=form, action="Sign up for ISMMS Health Check", data_type="")
+	return render_template('form_signup.html', form=form, action="Sign up for ISMMS Health Check", data_type="")
 
 @app.route('/change-password', methods=['GET', 'POST'])
 @flask_login.login_required
