@@ -659,7 +659,8 @@ def edit_patient_self():
 def view_patients():
 	patients = Patient.query.all()
 	for p in patients:
-		p.last_seen = p.surveys.order_by(SurveyResponse.end_time.desc()).first().start_time
+		ls = p.surveys.order_by(SurveyResponse.end_time.desc()).first()
+		p.last_seen = ls.start_time if ls else None
 	today = datetime.datetime.now().date()
 	status = dict()
 	for p in patients:
@@ -840,6 +841,8 @@ def patient_feed(id=None):
 @flask_login.login_required
 def view_patient(id):
 	p = Patient.query.get_or_404(id)
+	ls = p.surveys.order_by(SurveyResponse.end_time.desc()).first()
+	p.last_seen = ls.start_time if ls else None
 	patients_feed = []
 	for s in p.surveys:
 		patients_feed.append((s.start_time.strftime("%Y-%m-%d %H:%M:%S"),"patient", s))

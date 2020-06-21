@@ -49,7 +49,7 @@
 			<td> {{patient.program}}</td>
 			<td> {{patient.location}}</td>
 			<td> {{momentjs(patient.creation_time).calendar()}}</td>
-			<td> {{momentjs(patient.last_seen).calendar()}}
+			<td> {% if patient.last_seen %}{{momentjs(patient.last_seen).calendar()}}{% else %}Never{%endif%}</td>
 			<td> {% if status[patient.id] == 1 %}
 				<button class="btn btn-xs btn-success">Admit</button>
 				{% elif status[patient.id]== 0 %}
