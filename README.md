@@ -1,9 +1,12 @@
-# Suretify
+# ISMMS Student Health Check
 <img src="https://github.com/nosarcasm/medtracker/blob/master/assets/images/suretify-logo.png?raw=true" height=100 />
 
 COVID-19 tracking app, and more!
 
-Recent News: 
+News:
+Release 1.0 is around the corner! Woo hoo!
+
+Recent-er News: 
 * Editing survey doesn't work (fixed)
 * Questions don't have body description text (fixed)
 * Questions don't have radio select or checkbox select (fixed!)
