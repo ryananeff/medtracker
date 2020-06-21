@@ -97,7 +97,7 @@ class Progress(db.Model):
 	session_id = db.Column(db.String)
 	complete = db.Column(db.Integer)
 
-	def __init__(**kwargs):
+	def __init__(self, **kwargs):
 		super(Progress, self).__init__(**kwargs)
 		self.user = str(user)
 		self.task = str(task)
@@ -174,7 +174,7 @@ class Comment(db.Model):
 	user_id = db.Column(db.Integer, db.ForeignKey('user.id'))
 	patient_id = db.Column(db.Integer, db.ForeignKey('patients.id'))
 
-	def __init__(**kwargs):
+	def __init__(self, **kwargs):
 		super(Comment, self).__init__(**kwargs)
 		self.time = datetime.datetime.utcnow()
 

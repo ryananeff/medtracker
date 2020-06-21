@@ -35,6 +35,8 @@
 			<th> Year </th>
 			<th> Program </th>
 			<th> Location </th>
+			<th> Registered At</th>
+			<th> Last Screened</th>
 			<th> Status </th>
 			<th> Actions </th>
 			</tr>
@@ -46,6 +48,8 @@
 			<td> {{patient.year}}</td>
 			<td> {{patient.program}}</td>
 			<td> {{patient.location}}</td>
+			<td> {{momentjs(patient.creation_time).calendar()}}</td>
+			<td> {{momentjs(patient.last_seen).calendar()}}
 			<td> {% if status[patient.id] == 1 %}
 				<button class="btn btn-xs btn-success">Admit</button>
 				{% elif status[patient.id]== 0 %}
