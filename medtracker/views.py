@@ -247,7 +247,7 @@ def serve_survey_index():
 @flask_login.login_required
 def serve_responses_index():
 	'''GUI: serve the response index page'''
-	responses = current_user.responses
+	responses = QuestionResponse.query
 	return render_template("responses.html",
 							responses = responses)
 
@@ -658,6 +658,8 @@ def edit_patient_self():
 @flask_login.login_required
 def view_patients():
 	patients = Patient.query.all()
+	for p in patients:
+		p.last_seen = p.surveys.order_by(SurveyResponse.end_time.desc()).first().start_time
 	today = datetime.datetime.now().date()
 	status = dict()
 	for p in patients:
@@ -846,7 +848,7 @@ def view_patient(id):
 		patients_feed.append((c.time.strftime("%Y-%m-%d %H:%M:%S"), "comment", c))
 	patients_feed = sorted(patients_feed, key=lambda x:x[0],reverse=False)
 	today = datetime.datetime.now().date()
-	status = 0
+	ptstat = 0
 	taken = p.surveys.filter(SurveyResponse.end_time.isnot(None),
 	                         SurveyResponse.start_time>today).order_by(SurveyResponse.id.desc()).first()
 	if taken!=None:
@@ -854,7 +856,7 @@ def view_patient(id):
 			ptstat = 1
 		if taken.exited:
 			ptstat = -1 
-	return render_template('view_patient.html', patients_feed = patients_feed, patient=p, status=status)
+	return render_template('view_patient.html', patients_feed = patients_feed, patient=p, status=ptstat)
 
 @app.route('/patients/self', methods=["GET", "POST"])
 def view_patient_self():
@@ -877,7 +879,7 @@ def add_comment(patient_id):
 	if request.method == 'POST':
 		body = request.form["body"] if request.form["body"] != "" else None
 	if body:
-		comment = Comment(body, patient_id, user_id)
+		comment = Comment(body=body, patient_id=patient_id, user_id=user_id)
 		db_session.add(comment)
 		db_session.commit()
 		return redirect(url_for('view_patient', id=patient_id))

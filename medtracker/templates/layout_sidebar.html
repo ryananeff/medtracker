@@ -167,7 +167,9 @@
     <script src="/assets/vendor/datatables-responsive/dataTables.responsive.js"></script>
     <script src="/assets/bootstrap/js/sb-admin-2.js"></script>    
     <script type="text/javascript">$(document).ready(function(){
-                 $('#activesort').DataTable();
+                 $('#activesort').DataTable( {
+                    "order": [[ 0, "desc" ]]
+                } );
              });
     </script>
     {% block scripts %}{% endblock %}

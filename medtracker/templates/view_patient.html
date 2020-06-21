@@ -10,6 +10,7 @@
 			<th> Year </th>
 			<th> Program </th>
 			<th> Location </th>
+			<th> Registered At </th>
 			<th> Age </th>
 			<th> Phone </th>
 			<th> Email </th>
@@ -24,6 +25,7 @@
 			<td> {{patient.year}}</td>
 			<td> {{patient.program}}</td>
 			<td> {{patient.location}}</td>
+			<td> {{momentjs(patient.creation_time).calendar()}}</td>
 			<td> {{patient.age}}</td>
 			<td> {{patient.phone}}</td>
 			<td> {{patient.email}}</td>
@@ -58,7 +60,7 @@
                             <div class="header">
                                 <strong class="primary-font" style="font-size:18px">{{patient.fullname}} <span style="color: grey; font-size:14px">{% if response.completed %} completed {%else%} started {%endif%}</span></strong><br>
                                 	<small class="pull-right text-muted">
-	                                    <i class="fa fa-clock-o fa-fw"></i>{{momentjs(time).calendar()}}<a href="/responses/survey/delete/{{response.id}}" class="btn btn-xs btn-secondary">Delete</a>
+	                                    <i class="fa fa-clock-o fa-fw"></i>{{momentjs(time).calendar()}}
 	                                </small>
                                 </div>
 								<div class="card sr-container">
