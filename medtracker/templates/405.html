@@ -1,0 +1,16 @@
+{% extends "layout.html" %}
+{% block title %}Unauthorized | ISMMS Health Check{% endblock %}
+{% block body %}
+	    <div class="page-header">
+	    </div>
+	    <div class="jumbotron survey-question">
+	    <div class="container">
+	    	<div class="col-lg-2"></div>
+	    	<div class="col-lg-8">
+	    	<h1>Something's not right.</h1>
+	    	<p>You tried to submit a request type that you weren't supposed to at this URL.</p>
+	    	<img src="https://i.imgur.com/cADbziS.gif" width=100%><br><br>
+	    	{% if message %}<p><strong>Details:</strong><br>{{message}}{% endif %}</p>
+	    	</div>
+	    </div><!-- /.container -->
+{% endblock %}
