@@ -169,7 +169,7 @@ class Survey(db.Model):
 class Comment(db.Model):
 	__tablename__ = 'comment'
 	id = db.Column(db.Integer, primary_key=True)
-	body = db.Column(db.String)
+	body = db.Column(EncryptedType(db.String, flask_secret_key))
 	time = db.Column(db.DateTime)
 	user_id = db.Column(db.Integer, db.ForeignKey('user.id'))
 	patient_id = db.Column(db.Integer, db.ForeignKey('patients.id'))
