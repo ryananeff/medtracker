@@ -5,13 +5,13 @@
 		<h2>My records </h2>
 	</div>
 	<div class="header">
-		<p><a href="/patients/edit/self" class="btn btn-sm btn-primary">Edit</a> <a href="/patients/self/reset" class="btn btn-sm btn-danger" onclick="return confirm('Are you sure? This will unlink your records from this device, and you will have to register again.')">Reset Device ID</a></p>
+		<p><!--<a href="/patients/edit/self" class="btn btn-sm btn-primary">Edit</a> !--><a href="/patients/self/reset" class="btn btn-sm btn-danger" onclick="return confirm('Are you sure? This will unlink your records from this device, and you will have to register again.')">Reset Device ID</a></p>
 	    <table class="table table-responsive">
 	    	<tbody>
 	    		<tr>
 	    			<td><strong>Device ID:</strong></td><td> {{ fmt_id(patient.mrn) }}</td>
 	    		</tr>
-	    		<tr>
+	    		<!-- disabled temporarily <tr>
 					<td><strong>Program:</strong></td><td>{{patient.program}}</td>
 				</tr>
 				<tr>
@@ -31,7 +31,7 @@
 				</tr>
 	    		<tr>
 					<td><strong>Phone:</strong></td><td>{% if patient.phone %}{{patient.phone}}{% else %}<span style="color:grey">(Not Provided)</span>{% endif %}</td>
-				</tr>
+				</tr> !-->
 	    		
 	    		</tbody>
 	    	</table>
@@ -56,6 +56,7 @@
 										<h5 class="card-title">{{response.survey.title}}</h5>
 									</div>
 			                            	<ul class="list-group list-group flush">
+			                               {# disabled temporarily
 			                                {% for q in response.responses %}
 			                            		<li>{{q.question.body}}
 			                            			{% if q.response is iterable and q.response is not string %}
@@ -71,6 +72,7 @@
 			                        			<i>No responses submitted</i>
 			                        			{% endif %}
 			                            	</ul>
+			                            	#}
 			                            <div class="card-body">
 			                            {% if response.completed %}
 			                        		<a href="{{url_for('complete_survey',session_id=response.session_id)}}" class="card-link">Completion record</a>

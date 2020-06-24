@@ -645,7 +645,7 @@ def edit_patient(id=None):
 @app.route('/patients/edit/self', methods=['GET', 'POST'])
 def edit_patient_self():
 	'''GUI: add a patient to the DB'''
-	patient = g.patient
+	'''patient = g.patient
 	if g.patient==None:
 		abort(404, "This device is not registered.")
 	formobj = PatientEditForm(obj=patient)
@@ -657,7 +657,9 @@ def edit_patient_self():
 		db_session.add(patient)
 		db_session.commit()
 		return redirect(url_for('view_patient_self'))
-	return render_template("form_self_edit.html", action="Update", data_type="my records", form=formobj)
+	return render_template("form_self_edit.html", action="Update", data_type="my records", form=formobj)'''
+	abort(403, "Editing your own information is temporarily disabled, please check back later.")
+	return redirect(url_for('view_patient_self'))
 
 @app.route("/patients/")
 @flask_login.login_required
@@ -872,6 +874,7 @@ def view_patient_self():
 		return abort(401,"Please register your device first, then come back to this page.")
 	p = g.patient
 	patients_feed = []
+	p.surveys = p.surveys.all()
 	for s in p.surveys:
 		patients_feed.append((s.start_time.strftime("%Y-%m-%d %H:%M:%S"),"patient", s))
 	patients_feed = sorted(patients_feed, key=lambda x:x[0],reverse=True)
