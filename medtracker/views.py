@@ -30,6 +30,11 @@ def page_unauth(e):
     # note that we set the 401 status explicitly
     return render_template('401.html',message=e), 401
 
+@app.errorhandler(403)
+def page_unauth_forbidden(e):
+    # note that we set the 401 status explicitly
+    return render_template('401.html',message=e), 403
+
 @app.errorhandler(405)
 def page_badmethod(e):
     # note that we set the 405 status explicitly
