@@ -976,7 +976,7 @@ def survey_response_dashboard(survey_id):
 		reg_per_year = defaultdict(list)
 		response_hits = defaultdict(list)
 		outdf = []
-		for i in pd.date_range(begin_time, datetime.datetime.now().date()).tz_localize('UTC').tz_convert('US/Eastern'):
+		for i in pd.date_range(begin_time, datetime.datetime.now().date()).tz_localize('US/Eastern'):
 		    for y in years:
 		        pts_yr = pts_df[pts_df.year==y]
 		        hits = pts_yr[(pts_yr.index<i+datetime.timedelta(days=1))&(pts_yr.index>i)]
@@ -990,8 +990,7 @@ def survey_response_dashboard(survey_id):
 		                     len(exit_hits.intersection(set(reg_per_year[y]))),
 		                     len(set(reg_per_year[y]).difference(response_hits))])
 		outdf = pd.DataFrame(outdf,columns=["date","year","total_registered","total_responded","Completed","Exited","Not Completed"])
-		outdf.date = [i.date() for i in outdf.date.dt.tz_convert('UTC')]
-		outdf.to_csv("test.tsv",sep="\t")
+		outdf.date = [i.date() for i in outdf.date]
 		todaydf = outdf[outdf["date"]==datetime.datetime.now().date()].loc[:,["year","Completed","Exited","Not Completed"]].melt(id_vars="year")
 		fig2 = plotlyBarplot(data=todaydf,x="year",y="value",hue="variable",stacked=True,ylabel="# Students",xlabel="Expected Graduation",
 		             title="Compliance by Year",colors=["green","red","orange"],height=400,width=None,show_legend=True)
