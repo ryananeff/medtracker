@@ -142,46 +142,31 @@ def phone_trigger(message, recipients, callback=None):
 		)
 	return None
 
-@app.route("/triggers/phone", methods=["GET", "POST"])
-def read_phone_trigger_message():
-	resp = twilio.twiml.Response()
-	message = request.values.get("m", None)
-	if message:
-		resp.say("Hello, you have a new message from Sure tiff fy.")
-		resp.pause(length=1)
-		resp.say(message)
-	else:
-		resp.say("Hello, you have a new message from Sure tiff fy, but at this time we are having trouble playing it. Goodbye.")
-	return str(resp)
-
-def sms_trigger(message, recipients, callback=None):
-	formatted_recipients = []
-	for r in recipients.split(";"):
-		call = client.messages.create(body=message,
+def sms_trigger(message, r, callback=None):
+	call = client.messages.create(body=message,
 		to = r,
-		from_ = twilio_number,
-		)
-		formatted_recipients.append(call.to)
-	return formatted_recipients
+		from_ = twilio_number)
+	return call
 
-@app.route("/test_sms/<int:survey_id>/<phone_number>", methods=["GET", "POST"])
+@app.route("/sms_reminder/<int:survey_id>/<int:patient_id>", methods=["GET", "POST"])
 @flask_login.login_required
-def test_sms_survey(survey_id, phone_number, uniq_id = None):
-	hello = "Hello! You have a new incoming survey from Suretify! Reply STOP to stop" #TODO: opt-in flow
-	r_out = sms_trigger(hello, phone_number, None)
-	if uniq_id == None:
-		uniq_id = randomword(64)
+def send_reminder(survey_id,patient_id):
+	return remind_sms(survey_id,patient_id)
+
+def remind_sms(survey_id, patient_id):
+	p = Patient.query.get_or_404(patient_id)
 	survey = Survey.query.get_or_404(survey_id)
-	for r in r_out:
-		task = Progress(
-			user = r, 
-			task = survey.id,
-			parent_id = uniq_id)
-		db_session.add(task)
-	db_session.commit()
-	msg = serve_sms_survey(task)
-	recipients = sms_trigger(msg, phone_number, None)
-	return "Task successfully queued."
+	if (p.phone != None):
+		if len(p.phone[-10:])==10:
+			phone_number = p.phone[-10:]
+			hello = "Hello! This is a reminder from the ISMMS Student Health Check app. (STOP to opt-out)" #TODO: opt-in flow
+			hello += "\n\nPlease complete the " + survey.title + " at the following link: " + url_for('start_survey',survey_id=survey.id,_external=True)
+			meg_hello = sms_trigger(hello, phone_number, None)
+			return "Reminder successfully sent."
+		else:
+			return "Patient phone number too short."
+	else:
+		return "No phone number listed for patient."
 
 
 @app.route("/sms", methods=["GET", "POST"])
@@ -207,10 +192,13 @@ def sms_gather_information():
 	return str(resp)
 
 def serve_sms_survey(task):
-	# TODO: this function will allow us to specify a survey as one of the callback functions and to ask it. Think a template is overkill here though.
 	question, question_id, next_question, last_question = get_current_question(task)
 	qlabel = [b for a,b in QUESTION_KIND_CHOICES if a==question.kind][0]
-	return question.body + " (" + qlabel.lower() + ")"
+	output = question.body + " (" + qlabel + ")"
+	choices = json.loads(question.choices,strict=False)
+	for k,v in choices.items():
+		output += "\n"+str(k)+"- " + str(v)
+	return output
 
 def save_sms_survey(task, body):
 	# TODO: this function will allow us to specify a survey as one of the callback functions and to ask it. Think a template is overkill here though.
@@ -253,17 +241,17 @@ def save_basic_response(message, uniq_id, question_id, session_id = None):
 
 def get_current_question(task):
 	survey = Survey.query.get_or_404(int(task.task))
-	question_id = task.iterator
-	question_ids = [q.id for q in survey.questions]
-	if len(question_ids) == 0:
-			return None, None, None, None
-	if (question_id == None) | (question_id == ''): # if on first question
-		question_id = question_ids[0]
-	question_id = int(question_id)
-	curpos = question_ids[question_id]
-	question = Question.query.get_or_404(curpos)
-	next_question = question_id+1 if question_id+1 < len(question_ids) else None
-	last_question = question_id-1 if question_id-1 >= 0 else None
+	questions = survey.questions()
+	if len(questions)==0:
+		return None, None, None, None
+	if task.iterator == None:
+		task.iterator = 0
+		db_session.add(task)
+		db_session.commit()
+	question = questions[task.iterator]
+	curpos = question.id
+	next_question = question.next_q.id if question.next_q else None
+	last_question = question.prev_q.id if question.prev_q else None
 	sys.stderr.write("current: " + str(curpos) + " next: " + str(next_question) + " last: " + str(last_question))
 	sys.stderr.flush()
 	return question, curpos, next_question, last_question
@@ -276,105 +264,6 @@ def increment_iterator(task):
 	db_session.add(task)
 	db_session.commit()
 	return task
-
-@app.route("/voice", methods=["GET", "POST"])
-def voice_gather_information():
-	# TODO: this function needs to connect to a database that has a list of phone numbers, the current task that they are on, the iterator, and the initiator ID.
-	# this will then allow us to handle survey answers and ask the next question
-	resp = twilio.twiml.Response()
-	from_phone = request.values.get("To", "+10000000000")
-	say_hello = int(request.values.get("hello", 0))
-	from_phone = from_phone[-10:]
-	message = request.values.get("RecordingUrl", None)
-	digits = request.values.get("Digits", None)
-	current_tasks = Progress.query.filter_by(user=from_phone, complete=0).all()
-	if say_hello == 1:
-		resp.say("Hello! You have a new incoming survey from Sure tiff eye!")
-	if len(current_tasks) == 0:
-		resp.say("You're already done responding!")
-	else:
-		last_task = current_tasks[0]
-		# now we need to save the response if correct
-		if say_hello == 0:
-			next_task, error = save_voice_survey(last_task, message, digits)
-			if error:
-				resp.say(error)
-		else:
-			next_task = last_task
-		if next_task:
-			msg, record = serve_voice_survey(next_task)
-			if record:
-				resp.say(msg)
-				resp.record(maxLength=300, action="/voice", method="POST", finishOnKey="#")
-			else:
-				with resp.gather(numDigits=1, action="/voice", method="POST") as g:
-					resp.say(msg)
-	return str(resp)
-
-@app.route("/test_voice/<int:survey_id>/<phone_number>", methods=["GET", "POST"])
-@flask_login.login_required
-def test_voice_out(survey_id, phone_number, uniq_id = None):
-	if uniq_id == None:
-		uniq_id = randomword(64)
-	survey = Survey.query.get_or_404(survey_id)
-	task = Progress(
-		user = phone_number, 
-		task = survey.id,
-		parent_id = uniq_id)
-	db_session.add(task)
-	db_session.commit()
-	call = client.calls.create(url="https://suretify.co/voice?hello=1",
-	  to = phone_number,
-	  from_ = twilio_number)
-	return "Task successfully queued."
-
-def save_recording(recording_url):
-	save_name = randomword(64) + ".mp3"
-	base_dir = '/var/wsgiapps/suretify'
-	save_dir = '/assets/audio/'
-	with open(base_dir + save_dir + save_name, 'wb') as fp:
-		response = requests.get(recording_url + ".mp3", auth=auth_combo, stream=True)
-		for chunk in response.iter_content(chunk_size=2048):
-			fp.write(chunk)
-	return save_dir + save_name
-
-def serve_voice_survey(task):
-	# TODO: this function will allow us to specify a survey as one of the callback functions and to ask it. Think a template is overkill here though.
-	question, question_id, next_question, last_question = get_current_question(task)
-	qlabel = 'Please say your answer, followed by the pound key.'
-	record = True
-	if question.kind == 'numeric':
-		qlabel = "Please rate the question from one to 9 on your keypad now."
-		record = False
-	if question.kind == 'yes-no':
-		qlabel = "Please type 1 for yes and 2 for no on your keypad now."
-		record = False
-	return question.body + " " + qlabel, record
-
-def save_voice_survey(task, message, digits):
-	# TODO: this function will allow us to specify a survey as one of the callback functions and to ask it. Think a template is overkill here though.
-	question, question_id, next_question, last_question = get_current_question(task)
-	if question.kind != "text":
-		if question.kind == "numeric":
-			if digits not in [str(i) for i in range(1,9)]:
-				return (task, "I'm sorry, I didn't get that. Please press a number from one to 9 on your keypad now.")
-		if question.kind == "yes-no":
-			if digits not in ['1','2']:
-				return (task, "I'm sorry, I didn't get that. Please press 1 for yes and 2 for no on your keypad.")
-			else:
-				if digits == '1':
-					digits = '0'
-				else:
-					digits="1"
-		body = digits
-	else:
-		body = save_recording(message)
-	save_basic_response(body, task.parent_id, question_id, session_id=task.session_id)
-	if next_question == None:
-		_ = increment_iterator(task)
-		return (None, "Thank you for your responses. You're done!")
-	new_task = increment_iterator(task)
-	return (new_task, None)
 
 def email_trigger(message, recipients, callback=None):
 	for r in recipients.split(";"):

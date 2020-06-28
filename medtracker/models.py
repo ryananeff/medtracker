@@ -89,21 +89,18 @@ PROGRAM_CHOICES = [
 class Progress(db.Model):
 	__tablename__ = 'progress'
 	id = db.Column(db.Integer, primary_key=True)
-	user = db.Column(EncryptedType(db.String, flask_secret_key))
+	user = db.Column(db.Integer, db.ForeignKey('user.id'))
 	task = db.Column(db.String)
-	time = db.Column(EncryptedType(db.DateTime, flask_secret_key))
+	time = db.Column(db.DateTime)
 	iterator = db.Column(db.Integer)
 	parent_id = db.Column(db.Integer, db.ForeignKey('patients.id')) # this is the uniq_id?
 	session_id = db.Column(db.String)
-	complete = db.Column(db.Integer)
+	complete = db.Column(db.Boolean)
 
 	def __init__(self, **kwargs):
+		self.time = datetime.datetime.now()
+		self.complete = False
 		super(Progress, self).__init__(**kwargs)
-		self.user = str(user)
-		self.task = str(task)
-		self.iterator = int(iterator)
-		self.parent_id = str(parent_id)
-		self.complete = int(complete)
 
 	def to_dict(self):
 		return {col.name: getattr(self, col.name) for col in self.__table__.columns}

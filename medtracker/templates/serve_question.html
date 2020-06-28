@@ -16,9 +16,6 @@
 	    {{ question.description_html | safe }}	
 	    
 	    {% include 'form_survey.html' %}
-	    {% if last_q != None %}
-	    <a href="#" class="btn btn-sm btn-primary" onclick='form.submit();'>Back</a>
-	    {% endif %}
 	    {% if next_q != None %}
 	    <a href="#" class="btn btn-sm btn-primary" onclick='form.submit();'>Next</a>
 	    {% else %}
