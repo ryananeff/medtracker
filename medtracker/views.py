@@ -16,6 +16,7 @@ import datetime
 import plotly.graph_objects as go
 import ast
 from collections import defaultdict
+from datetime import timezone
 
 image_staticdir = 'assets/uploads/'
 base_dir = os.path.realpath(os.path.dirname(medtracker.__file__)+"/../")
@@ -673,7 +674,7 @@ def view_patients():
 	for p in patients:
 		ls = p.surveys.order_by(SurveyResponse.end_time.desc()).first()
 		p.last_seen = ls.start_time if ls else None
-	today = datetime.datetime.now().date()
+	today = datetime.datetime.now().replace(hour=0,minute=0,second=0,microsecond=0).astimezone(tz=timezone.utc)
 	status = dict()
 	for p in patients:
 		ptstat = 0
@@ -862,7 +863,7 @@ def view_patient(id):
 	for c in comments:
 		patients_feed.append((c.time.strftime("%Y-%m-%d %H:%M:%S"), "comment", c))
 	patients_feed = sorted(patients_feed, key=lambda x:x[0],reverse=False)
-	today = datetime.datetime.now().date()
+	today = datetime.datetime.now().replace(hour=0,minute=0,second=0,microsecond=0).astimezone(tz=timezone.utc)
 	ptstat = 0
 	taken = p.surveys.filter(SurveyResponse.end_time.isnot(None),
 	                         SurveyResponse.start_time>today).order_by(SurveyResponse.id.desc()).first()
@@ -939,13 +940,13 @@ def survey_response_dashboard(survey_id):
 	    sres.extend(sr)
 	if len(sres)>0:
 		sres = pd.DataFrame(sres)
+		sres.end_time = sres.end_time.dt.tz_localize('UTC').dt.tz_convert('US/Eastern')
+		sres.start_time = sres.start_time.dt.tz_localize('UTC').dt.tz_convert('US/Eastern')
 		sres["date"] = sres.start_time.dt.floor('d')
 		sres = sres.groupby(["date","uniq_id"]).last()
 		sres = sres.reset_index()
-		sres.end_time = sres.end_time.dt.tz_localize('UTC').dt.tz_convert('US/Eastern')
-		sres.start_time = sres.start_time.dt.tz_localize('UTC').dt.tz_convert('US/Eastern')
 
-		devs = pts = model_to_pd(models.Device)
+		devs = model_to_pd(models.Device)
 		devs.creation_time = devs.creation_time.dt.tz_localize('UTC').dt.tz_convert('US/Eastern')
 		devs_per_day = pd.DataFrame(devs.groupby([devs.creation_time.dt.floor("d")])["creation_time"].count())
 		devs_per_day.columns = ["daily_new_devices"]
@@ -963,14 +964,13 @@ def survey_response_dashboard(survey_id):
 		df = pd.merge(df,comp_per_day,left_index=True,right_index=True,how="outer")
 		df = pd.merge(df,exit_per_day,left_index=True,right_index=True,how="outer")
 		df = pd.merge(df,devs_per_day,left_index=True,right_index=True,how="outer")
-		begin_time = datetime.datetime.now().date() - datetime.timedelta(days=6)
+		begin_time = pts.creation_time[0].date()
 		df = df.tz_localize(None).reindex(pd.date_range(begin_time, datetime.datetime.now().date())).fillna(0).astype(int)
 		df["total_registered_students"] = df["daily_registered_students"].cumsum()
 		df["total_completed_surveys"] = df["daily_completed_surveys"].cumsum()
 		df["total_devices"] = df["daily_new_devices"].cumsum()
-		df.reset_index(inplace=True)
-		df = df.sort_values(by="index",ascending=True)
-		df["index"] = [datetime.datetime.strftime(a,"%D") for a in df["index"]]
+		df["daily_uncompleted_surveys"] = df["total_registered_students"] - df["daily_total_surveys"]
+		df["daily_pct"] = df["daily_total_surveys"]/df["total_registered_students"]*100
 		pts_df = pts.set_index("creation_time")
 		years = list(range(2020,2024))
 		reg_per_year = defaultdict(list)
@@ -991,14 +991,18 @@ def survey_response_dashboard(survey_id):
 		                     len(set(reg_per_year[y]).difference(response_hits))])
 		outdf = pd.DataFrame(outdf,columns=["date","year","total_registered","total_responded","Completed","Exited","Not Completed"])
 		outdf.date = [i.date() for i in outdf.date]
+		begin_time = datetime.datetime.now().date() - datetime.timedelta(days=6)
+		outdf = outdf[[i in pd.date_range(begin_time, datetime.datetime.now().date()) for i in outdf["date"]]]
+		df = df.tz_localize(None).reindex(pd.date_range(begin_time, datetime.datetime.now().date())).fillna(0).astype(int)
 		todaydf = outdf[outdf["date"]==datetime.datetime.now().date()].loc[:,["year","Completed","Exited","Not Completed"]].melt(id_vars="year")
 		fig2 = plotlyBarplot(data=todaydf,x="year",y="value",hue="variable",stacked=True,ylabel="# Students",xlabel="Expected Graduation",
 		             title="Compliance by Year",colors=["green","red","orange"],height=400,width=None,show_legend=True)
 		outdf["date"] = [datetime.datetime.strftime(a,"%D") for a in outdf["date"]]
 		fig1 = plotlyBarplot(data=outdf,x="date",y="total_registered",hue="year",stacked=True,width=None,height=400,
 		                     title="Students Registered",ylabel="# Students",show_legend=True,xlabel="Date")
-		df["daily_uncompleted_surveys"] = df["total_registered_students"] - df["daily_total_surveys"]
-		df["daily_pct"] = df["daily_total_surveys"]/df["total_registered_students"]*100
+		df.reset_index(inplace=True)
+		df = df.sort_values(by="index",ascending=True)
+		df["index"] = [datetime.datetime.strftime(a,"%D") for a in df["index"]]
 		df2 = df.loc[:,["index","daily_uncompleted_surveys","daily_completed_surveys","daily_exited_surveys"]]
 		df2.columns = ["index","Not Completed","Completed","Exited"]
 		df3 = df2.melt(id_vars="index")
