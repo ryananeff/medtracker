@@ -674,7 +674,7 @@ def view_patients():
 	for p in patients:
 		ls = p.surveys.order_by(SurveyResponse.end_time.desc()).first()
 		p.last_seen = ls.start_time if ls else None
-	today = datetime.datetime.now().replace(hour=0,minute=0,second=0,microsecond=0).astimezone(tz=timezone.utc)
+	today = datetime.datetime.now().astimezone(pytz.timezone('US/Eastern')).replace(hour=0,minute=0,second=0,microsecond=0).astimezone(timezone.utc).replace(tzinfo=None)
 	status = dict()
 	for p in patients:
 		ptstat = 0
@@ -863,7 +863,7 @@ def view_patient(id):
 	for c in comments:
 		patients_feed.append((c.time.strftime("%Y-%m-%d %H:%M:%S"), "comment", c))
 	patients_feed = sorted(patients_feed, key=lambda x:x[0],reverse=False)
-	today = datetime.datetime.now().replace(hour=0,minute=0,second=0,microsecond=0).astimezone(tz=timezone.utc)
+	today = datetime.datetime.now().astimezone(pytz.timezone('US/Eastern')).replace(hour=0,minute=0,second=0,microsecond=0).astimezone(timezone.utc).replace(tzinfo=None)
 	ptstat = 0
 	taken = p.surveys.filter(SurveyResponse.end_time.isnot(None),
 	                         SurveyResponse.start_time>today).order_by(SurveyResponse.id.desc()).first()
