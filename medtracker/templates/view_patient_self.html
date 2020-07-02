@@ -39,7 +39,9 @@
 	</div>
 	<div class="panel panel-self panel-default">
 		<div class="panel-body-self">
+			<div class="container">
                 	{% for time, type, response in patients_feed %}
+			<div class="row">
                 		{% if type=="patient" %}
                         <span class="chat-img pull-left">
                             <i class="fa fa-user"></i>
@@ -81,6 +83,7 @@
 			                     		{% endif %}
                             		</div>
 	                        </div>
+			</div>
 	                    {% elif type=="comment" %}
 	                    {% set commenter = response.user %}
 	                    <li class="left clearfix">
@@ -100,7 +103,9 @@
 	                        </div>
 	                    
 	                    {% endif %}
+			</div>
 	                {% endfor %}
+			</div>
                 
-			</div></div></div></div></div></div>
+		</div></div></div></div>
 {% endblock %}
