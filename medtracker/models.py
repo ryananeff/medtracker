@@ -88,13 +88,13 @@ PROGRAM_CHOICES = [
 
 class Progress(db.Model):
 	__tablename__ = 'progress'
-	id = db.Column(db.Integer, primary_key=True)
+	id = db.Column(db.Integer, primary_key=True, autoincrement=True)
 	user = db.Column(db.Integer, db.ForeignKey('user.id'))
-	task = db.Column(db.String)
+	task = db.Column(db.String(255))
 	time = db.Column(db.DateTime)
 	iterator = db.Column(db.Integer)
 	parent_id = db.Column(db.Integer, db.ForeignKey('patients.id')) # this is the uniq_id?
-	session_id = db.Column(db.String)
+	session_id = db.Column(db.String(255))
 	complete = db.Column(db.Boolean)
 
 	def __init__(self, **kwargs):
@@ -107,8 +107,8 @@ class Progress(db.Model):
 	
 class Survey(db.Model):
 	__tablename__ = 'survey'
-	id = db.Column(db.Integer, primary_key=True)
-	title = db.Column(db.String)
+	id = db.Column(db.Integer, primary_key=True, autoincrement=True)
+	title = db.Column(db.String(255))
 	description = db.Column(db.Text)
 	head_id = db.Column(db.Integer, db.ForeignKey('question.id'))
 	head = db.relationship("Question",uselist=False, foreign_keys=[head_id])
@@ -165,8 +165,8 @@ class Survey(db.Model):
 
 class Comment(db.Model):
 	__tablename__ = 'comment'
-	id = db.Column(db.Integer, primary_key=True)
-	body = db.Column(EncryptedType(db.String, flask_secret_key))
+	id = db.Column(db.Integer, primary_key=True, autoincrement=True)
+	body = db.Column(EncryptedType(db.String(255), flask_secret_key))
 	time = db.Column(db.DateTime)
 	user_id = db.Column(db.Integer, db.ForeignKey('user.id'))
 	patient_id = db.Column(db.Integer, db.ForeignKey('patients.id'))
@@ -180,11 +180,11 @@ class Comment(db.Model):
 
 class QuestionResponse(db.Model):
 	__tablename__ = 'question_response'
-	id = db.Column(db.Integer, primary_key=True)
-	_response = db.Column(db.String)
+	id = db.Column(db.Integer, primary_key=True, autoincrement=True)
+	_response = db.Column(db.String(255))
 	time = db.Column(db.DateTime)
 	uniq_id = db.Column(db.Integer, db.ForeignKey('patients.id'))
-	session_id = db.Column(db.String)
+	session_id = db.Column(db.String(255))
 	question_id = db.Column(db.Integer, db.ForeignKey('question.id'))
 	survey_response_id = db.Column(db.Integer, db.ForeignKey('survey_response.id'))
 	user_id = db.Column(db.Integer, db.ForeignKey('user.id'))
@@ -219,11 +219,11 @@ class QuestionResponse(db.Model):
 
 class SurveyResponse(db.Model):
 	__tablename__ = 'survey_response'
-	id = db.Column(db.Integer, primary_key=True)
+	id = db.Column(db.Integer, primary_key=True, autoincrement=True)
 	survey_id = db.Column(db.Integer, db.ForeignKey('survey.id'))
 	uniq_id = db.Column(db.Integer, db.ForeignKey('patients.id'))
 	user_id = db.Column(db.Integer, db.ForeignKey('user.id'))
-	session_id = db.Column(db.String)
+	session_id = db.Column(db.String(255))
 	start_time = db.Column(db.DateTime)
 	end_time = db.Column(db.DateTime)
 	exited = db.Column(db.Boolean,default=False)
@@ -254,7 +254,7 @@ class SurveyResponse(db.Model):
 class Trigger(db.Model):
 	__tablename__ = 'trigger'
 	
-	id = db.Column(db.Integer, primary_key=True)
+	id = db.Column(db.Integer, primary_key=True, autoincrement=True)
 	question_id = db.Column(db.Integer, db.ForeignKey('question.id'))
 	conditions = db.relationship("TriggerCondition",backref="trigger",cascade="all,delete-orphan")
 	user_id = db.Column(db.Integer, db.ForeignKey('user.id'))
@@ -280,21 +280,21 @@ class Trigger(db.Model):
 class TriggerCondition(db.Model):
 	__tablename__= 'trigger_condition'
 
-	id = db.Column(db.Integer, primary_key=True)
+	id = db.Column(db.Integer, primary_key=True, autoincrement=True)
 	trigger_id = db.Column(db.Integer, db.ForeignKey('trigger.id'))
 	subject_id = db.Column(db.Integer, db.ForeignKey('question.id'))
 	question = db.relationship("Question")
 	comparator = db.Column(ChoiceType(TRIGGER_COMPARATORS))
-	condition_value = db.Column(db.String)
+	condition_value = db.Column(db.String(255))
 	next_comparator = db.Column(ChoiceType(TRIGGER_NEXT_COMPARATORS))
 
 class Question(db.Model):
 	__tablename__ = 'question'
 	
-	id = db.Column(db.Integer, primary_key=True)
-	body = db.Column(db.String)
+	id = db.Column(db.Integer, primary_key=True, autoincrement=True)
+	body = db.Column(db.String(255))
 	description = db.Column(db.Text)
-	image = db.Column(db.String)
+	image = db.Column(db.String(255))
 	kind = db.Column(ChoiceType(QUESTION_KIND_CHOICES))
 	choices = db.Column(db.Text)
 	survey_id = db.Column(db.Integer, db.ForeignKey('survey.id'))
@@ -313,8 +313,8 @@ class Question(db.Model):
 
 class QuestionMeta(db.Model):
 	__tablename__ = 'question_meta'
-	id = db.Column(db.Integer, primary_key=True)
-	body = db.Column(db.String)
+	id = db.Column(db.Integer, primary_key=True, autoincrement=True)
+	body = db.Column(db.String(255))
 	question_id = db.Column(db.Integer, db.ForeignKey('question.id'))
 	
 	def to_dict(self):
@@ -324,15 +324,15 @@ class User(db.Model):
 	"""A user capable of listening to voicemails"""
 	__tablename__ = 'user'
 
-	id = db.Column(db.Integer, primary_key=True)
-	email = db.Column(EncryptedType(db.String, flask_secret_key), unique=True)
-	username = db.Column(EncryptedType(db.String, flask_secret_key), unique=True)
-	name = db.Column(EncryptedType(db.String, flask_secret_key))
-	password_hash = db.Column(db.String(256))
+	id = db.Column(db.Integer, primary_key=True, autoincrement=True)
+	email = db.Column(EncryptedType(db.String(255), flask_secret_key), unique=True)
+	username = db.Column(EncryptedType(db.String(255), flask_secret_key), unique=True)
+	name = db.Column(EncryptedType(db.String(255), flask_secret_key))
+	password_hash = db.Column(db.String(255))
 	active = db.Column(db.Boolean, default=False)
 	admin = db.Column(db.Boolean, default=False)
 	superadmin = db.Column(db.Boolean, default=False)
-	reset_token = db.Column(EncryptedType(db.String, flask_secret_key))
+	reset_token = db.Column(EncryptedType(db.String(255), flask_secret_key))
 	authenticated = db.Column(db.Boolean, default=False)
 	surveys = db.relationship("Survey", backref='user', lazy='dynamic')
 	triggers = db.relationship("Trigger", backref='user', lazy='dynamic')
@@ -368,12 +368,12 @@ class Patient(db.Model):
 	'''A patient record capable of taking surveys'''
 	__tablename__= "patients"
 
-	id = db.Column(db.Integer, primary_key=True)
-	mrn = db.Column(EncryptedType(db.String, flask_secret_key))
-	fullname = db.Column(EncryptedType(db.String, flask_secret_key))
-	age = db.Column(EncryptedType(db.String, flask_secret_key))
-	phone = db.Column(EncryptedType(db.String, flask_secret_key))
-	email = db.Column(EncryptedType(db.String, flask_secret_key))
+	id = db.Column(db.Integer, primary_key=True, autoincrement=True)
+	mrn = db.Column(EncryptedType(db.String(255), flask_secret_key))
+	fullname = db.Column(EncryptedType(db.String(255), flask_secret_key))
+	age = db.Column(EncryptedType(db.String(255), flask_secret_key))
+	phone = db.Column(EncryptedType(db.String(255), flask_secret_key))
+	email = db.Column(EncryptedType(db.String(255), flask_secret_key))
 	location = db.Column(ChoiceType(LOCATION_CHOICES))
 	program = db.Column(ChoiceType(PROGRAM_CHOICES))
 	year = db.Column(db.Integer)
@@ -390,8 +390,8 @@ class Device(db.Model):
 
 	__tablename__= "devices"
 
-	id = db.Column(db.Integer, primary_key=True)
-	device_id = db.Column(EncryptedType(db.String, flask_secret_key))
+	id = db.Column(db.Integer, primary_key=True, autoincrement=True)
+	device_id = db.Column(EncryptedType(db.String(255), flask_secret_key))
 	creation_time = db.Column(db.DateTime, default=func.now())
 
 	def to_dict(self):

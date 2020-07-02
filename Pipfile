@@ -59,6 +59,7 @@ WTForms = "==2.3.1"
 simplekv = "*"
 wtforms-sqlalchemy = "*"
 wtforms-alchemy = "*"
+mysqlclient = "*"
 
 [requires]
 python_version = "3.6"

@@ -22,7 +22,7 @@ ts = URLSafeTimedSerializer(flask_secret_key)
 #Flask init
 app = Flask(__name__, static_folder='')
 app.config["APPLICATION_ROOT"] = "/"
-app.config['SQLALCHEMY_DATABASE_URI'] = sqlalchemy_db
+app.config['SQLALCHEMY_DATABASE_URI'] = mysql_db
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 app.config['REMEMBER_COOKIE_SECURE'] = True
 app.config['SESSION_COOKIE_SECURE'] = False

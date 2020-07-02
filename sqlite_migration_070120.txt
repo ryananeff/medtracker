@@ -1,0 +1,34 @@
+2020-07-01 19:05:28 INFO     Adding foreign key to comment.patient_id referencing patients.id
+2020-07-01 19:05:28 INFO     Adding foreign key to comment.user_id referencing user.id
+2020-07-01 19:05:28 INFO     Transferring table devices
+2020-07-01 19:05:32 INFO     Transferring table patients
+2020-07-01 19:05:32 INFO     Adding foreign key to patients.user_id referencing user.id
+2020-07-01 19:05:32 INFO     Adding foreign key to progress.parent_id referencing patients.id
+2020-07-01 19:05:32 INFO     Transferring table question
+2020-07-01 19:05:32 INFO     Adding foreign key to question.next_id referencing question.id
+2020-07-01 19:05:32 INFO     Adding foreign key to question.survey_id referencing survey.id
+2020-07-01 19:05:33 INFO     Adding foreign key to question_meta.question_id referencing question.id
+2020-07-01 19:05:33 INFO     Transferring table question_response
+2020-07-01 19:05:34 INFO     Adding foreign key to question_response.user_id referencing user.id
+2020-07-01 19:05:34 INFO     Adding foreign key to question_response.survey_response_id referencing survey_response.id
+2020-07-01 19:05:35 INFO     Adding foreign key to question_response.question_id referencing question.id
+2020-07-01 19:05:35 INFO     Adding foreign key to question_response.uniq_id referencing patients.id
+2020-07-01 19:05:35 INFO     Transferring table survey
+2020-07-01 19:05:35 INFO     Adding foreign key to survey.user_id referencing user.id
+2020-07-01 19:05:35 INFO     Adding foreign key to survey.head_id referencing question.id
+2020-07-01 19:05:35 INFO     Transferring table survey_response
+2020-07-01 19:05:36 INFO     Adding foreign key to survey_response.user_id referencing user.id
+2020-07-01 19:05:36 INFO     Adding foreign key to survey_response.uniq_id referencing patients.id
+2020-07-01 19:05:36 INFO     Adding foreign key to survey_response.survey_id referencing survey.id
+2020-07-01 19:05:36 INFO     Transferring table trigger
+2020-07-01 19:05:36 INFO     Adding foreign key to trigger.user_id referencing user.id
+2020-07-01 19:05:36 INFO     Adding foreign key to trigger.dest_yes referencing question.id
+2020-07-01 19:05:36 INFO     Adding foreign key to trigger.question_id referencing question.id
+2020-07-01 19:05:37 INFO     Adding foreign key to trigger.dest_no referencing question.id
+2020-07-01 19:05:37 INFO     Transferring table trigger_condition
+2020-07-01 19:05:37 INFO     Adding foreign key to trigger_condition.subject_id referencing question.id
+2020-07-01 19:05:37 INFO     Adding foreign key to trigger_condition.trigger_id referencing trigger.id
+2020-07-01 19:05:37 INFO     Transferring table user
+2020-07-01 19:05:37 INFO     Adding unique index to column "username" in table user
+2020-07-01 19:05:37 INFO     Adding unique index to column "email" in table user
+2020-07-01 19:05:37 INFO     Done!
