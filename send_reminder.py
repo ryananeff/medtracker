@@ -2,7 +2,7 @@ import os
 os.chdir("/home/ubuntu/medtracker")
 import datetime, pytz, time
 from medtracker import *
-already_sent = ["3366156292"]
+already_sent = []
 app.config["SERVER_NAME"]="ismmshealthcheck.com"
 with app.app_context():
     pts = models.Patient.query.filter(models.Patient.phone.isnot("")).all()
