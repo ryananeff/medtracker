@@ -4,6 +4,8 @@ url = "https://pypi.org/simple"
 verify_ssl = true
 
 [dev-packages]
+black = "*"
+pytest = "*"
 
 [packages]
 amqp = "==2.6.0"
@@ -59,7 +61,9 @@ WTForms = "==2.3.1"
 simplekv = "*"
 wtforms-sqlalchemy = "*"
 wtforms-alchemy = "*"
-pytest = "*"
 
 [requires]
 python_version = "3.6"
+
+[pipenv]
+allow_prereleases = true
