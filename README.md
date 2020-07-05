@@ -13,6 +13,13 @@ COVID-19 tracking app, and more!
 
 This will set up a minimal configuration which uses a SQLite database located in the `medtracker` directory.
 
+## Usage
+
+```bash
+~/medtracker $ pipenv shell
+(medtracker) ~/medtracker $ ./run.py
+```
+
 ## Testing
 
 Because of how `pytest` handles the Python path, we run into a
