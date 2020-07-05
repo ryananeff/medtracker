@@ -7,7 +7,7 @@ COVID-19 tracking app, and more!
 
 ```bash
 ~/medtracker $ pip install pipenv
-~/medtracker $ pipenv install
+~/medtracker $ pipenv install --dev
 ~/medtracker $ cp medtracker/config.py.example medtracker/config.py
 ```
 
