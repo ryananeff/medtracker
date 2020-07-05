@@ -23,6 +23,13 @@ Because of how `pytest` handles the Python path, we run into a
 ~/medtracker $ ./run_tests.sh
 ```
 
+You can pass any arguments you'd normally pass to `pytest`:
+
+```bash
+~/medtracker $ ./run_tests.sh -h # get help
+~/medtracker $ ./run_tests.sh -k "test_login" # only run tests for this pattern
+```
+
 ## Updates
 
 News:
