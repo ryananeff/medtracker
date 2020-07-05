@@ -3,6 +3,28 @@
 
 COVID-19 tracking app, and more!
 
+## Installation
+
+```bash
+~/medtracker $ pip install pipenv
+~/medtracker $ pipenv install
+~/medtracker $ cp medtracker/config.py.example medtracker/config.py
+```
+
+This will set up a minimal configuration which uses a SQLite database located in the `medtracker` directory.
+
+## Testing
+
+Because of how `pytest` handles the Python path, we run into a
+`ModuleNotFoundError` when trying to run `pytest` from the root directory.
+`run_tests.sh` sets the Python path properly before calling `pytest`.
+
+```bash
+~/medtracker $ ./run_tests.sh
+```
+
+## Updates
+
 News:
 Release 1.0 is around the corner! Woo hoo!
 

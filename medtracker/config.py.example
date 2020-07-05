@@ -1,6 +1,6 @@
 # examples for how to set up a config file
-sqlalchemy_db = ''
-flask_secret_key = ''
+sqlalchemy_db = "sqlite:///test.db"
+flask_secret_key = "something secret"
 
 twilio_number = ''
 twilio_AccountSID = ''
