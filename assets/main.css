@@ -1,6 +1,24 @@
+@font-face{
+  font-family: Neue_Helvetica;
+  src:url("/assets/fonts/neue_helvetica_reg.woff2");
+}
+body{
+  font-family: Neue_Helvetica;
+}
+
+.btn-primary{
+  background-color:#D80B8C;
+  border-color:#fff;
+}
+
+.btn-primary:hover{
+  background-color:#90005b;
+  border-color:#fff;
+}
+
 /* navbar */
 .navbar-default {
-    background-color: #6a3a8b;
+    background-color: #221F72;
     border-color: #E7E7E7;
 }
 /* title */
@@ -13,7 +31,7 @@
 }
 /* link */
 .navbar-default .navbar-nav > li > a {
-    color: #ccc;
+    color: #eee;
 }
 .navbar-default .navbar-nav > li > a:hover,
 .navbar-default .navbar-nav > li > a:focus {
@@ -22,19 +40,19 @@
 .navbar-default .navbar-nav > .active > a, 
 .navbar-default .navbar-nav > .active > a:hover, 
 .navbar-default .navbar-nav > .active > a:focus {
-    color: #fff;
-    background-color: #a16dc2;
+    color: #000;
+    background-color: #55DEFF;
 }
 .navbar-default .navbar-nav > .open > a, 
 .navbar-default .navbar-nav > .open > a:hover, 
 .navbar-default .navbar-nav > .open > a:focus {
-    color: #fff;
-    background-color: #a16dc2;
+    color: #000;
+    background-color: #55DEFF;
 }
 /* caret */
 .navbar-default .navbar-nav > .dropdown > a .caret {
-    border-top-color: #777;
-    border-bottom-color: #777;
+    border-top-color: #FFF;
+    border-bottom-color: #FFF;
 }
 
 .img-circle {
