@@ -258,7 +258,7 @@ def serve_survey_index():
 @flask_login.login_required
 def serve_responses_index():
 	'''GUI: serve the response index page'''
-	responses = QuestionResponse.query
+	responses = QuestionResponse.query.filter(QuestionResponse.time > datetime.datetime.utcnow()-datetime.timedelta(days=3))
 	return render_template("responses.html",
 							responses = responses)
 
@@ -352,7 +352,7 @@ def serve_survey(survey_id):
 	today = datetime.datetime.now().date()
 	previous_responses = SurveyResponse.query.filter(SurveyResponse.uniq_id==g.patient.id,
 	                                                    SurveyResponse.end_time.isnot(None),SurveyResponse.start_time>today).first()
-	if previous_responses!=None:
+	if (current_user.is_authenticated==False) & (previous_responses!=None):
 		return render_template("survey_quit.html",survey=survey, patient=g.patient,message="You can only take the survey once per day.")
 	
 	survey_response_id = request.values.get("sr", None)
@@ -651,7 +651,7 @@ def edit_patient(id=None):
 @app.route('/patients/edit/self', methods=['GET', 'POST'])
 def edit_patient_self():
 	'''GUI: add a patient to the DB'''
-	'''patient = g.patient
+	patient = g.patient
 	if g.patient==None:
 		abort(404, "This device is not registered.")
 	formobj = PatientEditForm(obj=patient)
@@ -663,9 +663,10 @@ def edit_patient_self():
 		db_session.add(patient)
 		db_session.commit()
 		return redirect(url_for('view_patient_self'))
-	return render_template("form_self_edit.html", action="Update", data_type="my records", form=formobj)'''
-	abort(403, "Editing your own information is temporarily disabled, please check back later.")
-	return redirect(url_for('view_patient_self'))
+	return render_template("form_self_edit.html", action="Update", data_type="my records", form=formobj)
+	
+        #abort(403, "Editing your own information is temporarily disabled, please check back later.")
+	#return redirect(url_for('view_patient_self'))
 
 @app.route("/patients/")
 @flask_login.login_required

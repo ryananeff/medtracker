@@ -159,8 +159,9 @@ def remind_sms(survey_id, patient_id):
 	if (p.phone != None):
 		if len(p.phone[-10:])==10:
 			phone_number = p.phone[-10:]
-			hello = "Hello! This is a reminder from the ISMMS Student Health Check app. (STOP to opt-out)" #TODO: opt-in flow
-			hello += "\n\nPlease complete the " + survey.title + " at the following link: " + url_for('start_survey',survey_id=survey.id,_external=True)
+			hello = datetime.datetime.now().strftime('%b %-d')
+			hello += "- Reminder from ISMMS Student Health Check (STOP to opt-out):" #TODO: opt-in flow
+			hello += "\n\nPlease complete the " + survey.title + " here: " + url_for('start_survey',survey_id=survey.id,_external=True)
 			meg_hello = sms_trigger(hello, phone_number, None)
 			return "Reminder successfully sent."
 		else:
