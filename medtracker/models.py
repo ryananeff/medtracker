@@ -382,7 +382,7 @@ class Patient(db.Model):
 	responses = db.relationship("QuestionResponse", backref='patient', lazy="dynamic", cascade="all, delete-orphan")
 	progress = db.relationship("Progress", backref='patient', lazy="dynamic", cascade="all, delete-orphan")
 	creation_time = db.Column(db.DateTime, default=func.now())
-	deactivate = db.Column(db.Boolean)
+	deactivate = db.Column(db.Boolean, default=False)
 
 	def to_dict(self):
 		return {col.name: getattr(self, col.name) for col in self.__table__.columns}

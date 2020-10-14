@@ -17,6 +17,7 @@ import plotly.graph_objects as go
 import ast
 from collections import defaultdict
 from datetime import timezone
+from sqlalchemy import or_
 
 image_staticdir = 'assets/uploads/'
 base_dir = os.path.realpath(os.path.dirname(medtracker.__file__)+"/../")
@@ -940,7 +941,7 @@ def survey_response_dashboard(survey_id):
 	survey = models.Survey.query.get_or_404(survey_id)
 
 	
-	patients = models.Patient.query.filter(models.Patient.deactivate!=True).all()
+	patients = models.Patient.query.filter(or_(models.Patient.deactivate!=True,models.Patient.deactivate==None)).all()
 	
 	#devices = models.Device.query.all()
 
