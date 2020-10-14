@@ -922,6 +922,11 @@ def remove_comment(_id):
 @app.route("/surveys/<int:survey_id>/responses/dashboard",methods=["GET"])
 @flask_login.login_required
 def survey_response_dashboard(survey_id):
+	flash("""Ryan: I am updating the dashboard over the next few days. Stay tuned for the remainder of the fixes!
+	      I will be adding a breakdown of cases/positivity by location, positivity rate graphs over time, ways to 
+	      check which student records are positive at a given time, more robust housekeeping of devices no longer 
+	      seen, export options, and some sort of minimal student-facing metrics dashboard. I've already quashed
+	      some bugs.""")
 	start_request = request.values.get("start_date",None)
 	end_request = request.values.get("end_date",None)
 
