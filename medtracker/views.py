@@ -941,7 +941,7 @@ def survey_response_dashboard(survey_id):
 
 	dash_figs = []
 	question_figs = []
-	sr = survey.responses.filter(models.SurveyResponse.start_time > end_time).all()
+	sr = survey.responses.filter(models.SurveyResponse.start_time <= (end_time+datetime.timedelta(days=1))).filter(models.SurveyResponse.start_time > (end_time)).all()
 
 	responses = []
 	for sre in sr: responses.extend([r.to_dict() for r in sre.responses])
@@ -1071,7 +1071,7 @@ def survey_response_dashboard(survey_id):
 	qres = pd.DataFrame(responses)
 	
 	if len(qres)>0:
-		qres.time = qres.time.dt.tz_localize('UTC').dt.tz_convert('US/Eastern')
+		qres.time = qres.time
 		qres["date"] = [i.date() for i in qres.time]
 		qres = qres[qres["date"]==end_time]
 		qres = qres.groupby(["date","question_id","uniq_id"]).first()
@@ -1105,7 +1105,7 @@ def survey_response_dashboard(survey_id):
 	qres = pd.DataFrame(responses_last7)
 	
 	if len(qres)>0:
-		qres.time = qres.time.dt.tz_localize('UTC')
+		qres.time = qres.time
 		qres["date"] = [i.date() for i in qres.time]
 		qres = qres.groupby(["date","question_id","uniq_id"]).first()
 		qres = qres.reset_index()
