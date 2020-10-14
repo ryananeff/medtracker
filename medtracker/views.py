@@ -941,7 +941,8 @@ def survey_response_dashboard(survey_id):
 	survey = models.Survey.query.get_or_404(survey_id)
 
 	
-	patients = models.Patient.query.filter(or_(models.Patient.deactivate!=True,models.Patient.deactivate==None)).all()
+	pres = db.session.query(models.SurveyResponse).join(models.Patient)\
+    		.filter(or_(models.Patient.deactivate!=True,models.Patient.deactivate==None)).all()
 	
 	#devices = models.Device.query.all()
 
@@ -958,13 +959,11 @@ def survey_response_dashboard(survey_id):
 	
 
 	def pt_to_pd():
-	    res = [r.to_dict() for r in models.Patient.query.filter(or_(models.Patient.deactivate!=True,models.Patient.deactivate==None)).all()]
+	    res = [dict(r) for r in db.session.execute(models.Patient.query.filter(
+	                                 or_(models.Patient.deactivate!=True,models.Patient.deactivate==None)).statement)]
 	    return pd.DataFrame(res)
 
-	sres = []
-	for p in patients:
-	    sr = [s.to_dict() for s in p.surveys]
-	    sres.extend(sr)
+	sres = [r.to_dict() for r in pres]
 
 	if len(sres)>0:
 		sres = pd.DataFrame(sres)
@@ -1071,7 +1070,7 @@ def survey_response_dashboard(survey_id):
 		week_count = 0
 		week_pct = 0
 
-	patient_count = len(patients)
+	patient_count = db.session.query(models.Patient).filter(or_(models.Patient.deactivate!=True,models.Patient.deactivate==None)).count()
 	#device_count = len(devices)
 
 	qres = pd.DataFrame(responses)
