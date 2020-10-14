@@ -958,7 +958,7 @@ def survey_response_dashboard(survey_id):
 	
 
 	def pt_to_pd():
-	    res = [r.to_dict() for r in models.Patient.query.filter(models.Patient.deactivate!=True).all()]
+	    res = [r.to_dict() for r in models.Patient.query.filter(or_(models.Patient.deactivate!=True,models.Patient.deactivate==None)).all()]
 	    return pd.DataFrame(res)
 
 	sres = []
