@@ -1,0 +1,70 @@
+{% extends "layout.html" %}
+{% block title %}Dashboard | ISMMS Health Check{% endblock %}
+{% block headscripts %}<script src="https://cdn.plot.ly/plotly-latest.min.js"></script>{% endblock%}
+{% block body %}
+	    <div class="page-header">
+		    <h2><span style="color: grey;">{{survey.title}} /</span> Student Dashboard</h2>
+    
+		  <form method="GET" action="{{ request.path }}" class="form-inline">
+			    
+			  <span style="padding-right:5px">Start Date</span><input type="date" id="start_date" name="start_date" class="form-control" value="{{start_date}}">
+			  <span style="padding-left:20px; padding-right:5px;">End Date</span><input type="date" id="end_date" name="end_date" class="form-control" value="{{end_date}}">
+			  <input type="submit" value="Filter" class="form-control" class="btn btn-secondary">
+			</form>
+	    </div>
+	    <div class="row">
+	    	<div class="col-md-4" style="min-width:300px">
+	    		<div class="card card-auto text-center">
+	    			<div class="card-body">
+	    				<h1 class="card-title">{{today_positive}}</h1>
+	    				<h5 class="card-subtitle">Staying Home (last day)</h5>
+	    			</div>
+	    		</div>
+	    	</div>
+	    	<div class="col-md-4" style="min-width:300px">
+	    		<div class="card card-auto text-center">
+	    			<div class="card-body">
+	    				<h1 class="card-title">{{today_negative}}</h1>
+	    				<h5 class="card-subtitle">Cleared to Attend (last day)</h5>
+	    			</div>
+	    		</div>
+	    	</div>
+	    	<div class="col-md-4" style="min-width:300px">
+	    		<div class="card card-auto text-center">
+	    			<div class="card-body">
+	    				<h1 class="card-title">{{(today_pct_pos)|round(3)}}%</h1>
+	    				<h5 class="card-subtitle">Percent Positive Screenings (last day)</h5>
+	    			</div>
+	    		</div>
+	    	</div>
+	    </div>
+	    <h3>Survey Responses (last day)</h3>
+	    <div class="row justify-content-md-center">
+	    	{% for fig in question_figs %}
+		    <div class="col-lg-6" style="min-width:400px">{{fig|safe}}</div>
+		    {% endfor %}
+		    {% if question_figs | length==0 %}
+		    <div class="well">
+				<div class="starter-template">
+				No responses yet.
+				<h1>:(</h1>
+				</div>
+			</div>
+			{% endif %}
+	    </div>
+	    <h3>Survey Responses (over time period)</h3>
+	    <div class="row justify-content-md-center">
+	    	{% for fig in last7_figs %}
+		    <div class="col-lg-6" style="min-width:400px">{{fig|safe}}</div>
+		    {% endfor %}
+		    {% if last7_figs | length==0 %}
+		    <div class="well">
+				<div class="starter-template">
+				No responses yet.
+				<h1>:(</h1>
+				</div>
+			</div>
+			{% endif %}
+	    </div>
+		
+{% endblock %}
