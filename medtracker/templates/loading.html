@@ -5,6 +5,6 @@
 <p><img src="/assets/loading.svg"></p>
 <p><small><a href="{{dest_url}}">Click here if not redirected</a></small></p>
 <script>
-	window.location.href = "{{dest_url}}";
+	$(document).ready(function(){window.location.href = "{{dest_url}}";});
 </script>
 {% endblock %}
