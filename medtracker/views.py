@@ -928,7 +928,7 @@ def survey_response_dashboard(survey_id):
 	      check which student records are positive at a given time, more robust housekeeping of devices no longer 
 	      seen, export options, and some sort of minimal student-facing metrics dashboard. I've already quashed
 	      some bugs.""")
-	start_request = request.values.get("start_date","2020-06-29")
+	start_request = request.values.get("start_date",None)
 	end_request = request.values.get("end_date",None)
 	dash_figs = []
 	question_figs = []
@@ -1198,7 +1198,6 @@ def survey_response_dashboard(survey_id):
 		last7_figs[ix] = offline.plot(fig,show_link=False, output_type="div", include_plotlyjs=False)
 	start_time = datetime.datetime.strftime(start_time,"%Y-%m-%d")
 	end_time = datetime.datetime.strftime(end_time,"%Y-%m-%d")
-	print(today_pct_pos)
 	return render_template("dashboard.html",dash_figs = dash_figs, question_figs = question_figs,
 	                       last7_figs=last7_figs,patient_count=patient_count,device_count=0,
 	                       today_count=today_count, today_pct=today_pct, week_count=week_count, 

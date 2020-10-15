@@ -6,6 +6,12 @@ body{
   font-family: Neue_Helvetica;
 }
 
+select {
+    -webkit-appearance: none;
+   -moz-appearance: none;
+   appearance: none;
+}
+
 .btn-primary{
   background-color:#D80B8C;
   border-color:#fff;

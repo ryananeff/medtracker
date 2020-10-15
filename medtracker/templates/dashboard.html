@@ -4,13 +4,14 @@
 {% block body %}
 	    <div class="page-header">
 		    <h2><span style="color: grey;">{{survey.title}} /</span> Dashboard</h2>
-    
+    	
+    	<div class="d-none d-lg-block">
 		  <form method="GET" action="{{ request.path }}" class="form-inline">
-			    
 			  <span style="padding-right:5px">Start Date</span><input type="date" id="start_date" name="start_date" class="form-control" value="{{start_date}}">
 			  <span style="padding-left:20px; padding-right:5px;">End Date</span><input type="date" id="end_date" name="end_date" class="form-control" value="{{end_date}}">
 			  <input type="submit" value="Filter" class="form-control" class="btn btn-secondary">
 			</form>
+		</div>
 	    </div>
 	    <div class="row justify-content-md-center">
 	    	{% for fig in special_figs %}
@@ -28,7 +29,7 @@
 	    <h3>Last day</h3>
 	    <div class="row">
 	    	<div class="col-md-3" style="min-width:300px">
-	    		<div class="text-center">
+	    		<div class="card card-auto text-center">
 	    			<div class="card-body">
 	    				<h1 class="card-title">{{today_count|int}}</h1>
 	    				<h5 class="card-subtitle">Screenings Taken</h5>
@@ -36,7 +37,7 @@
 	    		</div>
 	    	</div>
 	    	<div class="col-md-3" style="min-width:300px">
-	    		<div class="text-center">
+	    		<div class="card card-auto text-center">
 	    			<div class="card-body">
 	    				<h1 class="card-title">{{today_negative|int}}</h1>
 	    				<h5 class="card-subtitle">Cleared to Attend</h5>
@@ -44,7 +45,7 @@
 	    		</div>
 	    	</div>
 	    	<div class="col-md-3" style="min-width:300px">
-	    		<div class="text-center">
+	    		<div class="card card-auto text-center">
 	    			<div class="card-body">
 	    				<h1 class="card-title">{{today_positive|int}}</h1>
 	    				<h5 class="card-subtitle">Staying Home</h5>
@@ -53,10 +54,10 @@
 	    	</div>
 	    	
 	    	<div class="col-md-3" style="min-width:300px">
-	    		<div class="text-center">
+	    		<div class="card card-auto text-center">
 	    			<div class="card-body">
 	    				<h1 class="card-title">{{today_pct_pos|round(2)}}%</h1>
-	    				<h5 class="card-subtitle">Percent Positive Screenings (last day)</h5>
+	    				<h5 class="card-subtitle">Percent Positive Screenings</h5>
 	    			</div>
 	    		</div>
 	    	</div>
@@ -69,15 +70,13 @@
 	    {% if patients | length != 0 %}
 	    <h4>Students staying home</h4>
 	    <div class="row">
-	    <table class="table table-hover" id="activesort">
+	    <table class="table table-hover">
 		<thead>
 			<tr>
 			<th> Device ID </th>
 			<th> Year </th>
 			<th> Program </th>
 			<th> Location </th>
-			<th> Registered At</th>
-			<th> Status </th>
 			</tr>
 		</thead>
 		<tbody>
@@ -87,8 +86,6 @@
 			<td> {{patient.year}}</td>
 			<td> {{patient.program}}</td>
 			<td> {{patient.location}}</td>
-			<td> {{momentjs(patient.creation_time).calendar()}}</td>
-			<td> <button class="btn btn-xs btn-danger">Reject</button>
 			</td></tr>
 		{% endfor %}
 		</tbody>
@@ -99,7 +96,7 @@
 	    <h3>Entire time period</h3>
 	    <div class="row">
 	    	<div class="col-md-3" style="min-width:300px">
-	    		<div class="text-center">
+	    		<div class="card card-auto text-center">
 	    			<div class="card-body">
 	    				<h1 class="card-title">{{patient_count|int}}</h1>
 	    				<h5 class="card-subtitle">New Student Registrations</h5>
@@ -107,7 +104,7 @@
 	    		</div>
 	    	</div>
 	    	<div class="col-md-3" style="min-width:300px">
-	    		<div class="text-center">
+	    		<div class="card card-auto text-center">
 	    			<div class="card-body">
 	    				<h1 class="card-title">{{week_count|int}}</h1>
 	    				<h5 class="card-subtitle">Total Screenings</h5>
