@@ -30,8 +30,8 @@
 	    	<div class="col-md-3" style="min-width:300px">
 	    		<div class="text-center">
 	    			<div class="card-body">
-	    				<h1 class="card-title">{{today_count|int}} ({{today_pct|round(1)}}%)</h1>
-	    				<h5 class="card-subtitle">Compliance</h5>
+	    				<h1 class="card-title">{{today_count|int}}</h1>
+	    				<h5 class="card-subtitle">Screenings Taken</h5>
 	    			</div>
 	    		</div>
 	    	</div>
@@ -101,7 +101,7 @@
 	    	<div class="col-md-3" style="min-width:300px">
 	    		<div class="text-center">
 	    			<div class="card-body">
-	    				<h1 class="card-title">{{patient_count}}</h1>
+	    				<h1 class="card-title">{{patient_count|int}}</h1>
 	    				<h5 class="card-subtitle">New Student Registrations</h5>
 	    			</div>
 	    		</div>
@@ -109,7 +109,7 @@
 	    	<div class="col-md-3" style="min-width:300px">
 	    		<div class="text-center">
 	    			<div class="card-body">
-	    				<h1 class="card-title">{{week_count}}</h1>
+	    				<h1 class="card-title">{{week_count|int}}</h1>
 	    				<h5 class="card-subtitle">Total Screenings</h5>
 	    			</div>
 	    		</div>
