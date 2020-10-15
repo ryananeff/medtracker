@@ -13,20 +13,17 @@
 			  <th>Survey</th>
 			  <th>Question</th>
 			  <th>Response</th>
-			  <th>Actions</th>
 			  </thead>
 			  <tbody>
 		    {% for response in responses %}
 			  <tr>
 			  <td>{{loop.index}}</td>
 			  <td>{{momentjs(response.time).calendar()}}</td>
-			  <td>{{response.patient.fullname}} ({{response.patient.mrn}})</td>
+			  <td><a href="/patients/{{response.patient.id}}">{{response.patient.fullname}} ({{response.patient.mrn}})</a></td>
 			  <td>{{response.question.survey.title}}</td>
 			  <td>{{response.question.body}}</td>
 			<td>{{response._response}}</td>
-			<td>
-			<a href="/responses/delete/{{ response.id }}" class="btn btn-xs btn-secondary">Delete</a>
-			</td></tr>	
+			</tr>	
 			{% endfor %}
 			</tbody>
 			</table>
