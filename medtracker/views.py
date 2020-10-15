@@ -998,10 +998,10 @@ def survey_response_dashboard(survey_id):
 		df = pd.merge(pts_per_day,res_per_day,left_index=True,right_index=True,how="outer")
 		df = pd.merge(df,comp_per_day,left_index=True,right_index=True,how="outer")
 		df = pd.merge(df,exit_per_day,left_index=True,right_index=True,how="outer")
-		df["positivity_rate"] = df["daily_exited_surveys"]/df["daily_total_surveys"]*100
+		df["positivity_rate"] = df["daily_exited_surveys"]/df["daily_total_surveys"].astype(float)*100.
 		#df = pd.merge(df,devs_per_day,left_index=True,right_index=True,how="outer")
 		begin_time = pts.creation_time[0].date()
-		df = df.tz_localize(None).reindex(pd.date_range(begin_time, end_time)).fillna(0).astype(int)
+		df = df.tz_localize(None).reindex(pd.date_range(begin_time, end_time)).fillna(0)
 		df["total_registered_students"] = df["daily_registered_students"].cumsum()
 		df["total_completed_surveys"] = df["daily_completed_surveys"].cumsum()
 		#df["total_devices"] = df["daily_new_devices"].cumsum()
@@ -1061,7 +1061,7 @@ def survey_response_dashboard(survey_id):
 		outdf.date = [i.date() for i in outdf.date]
 		begin_time = start_time
 		outdf = outdf[[i in pd.date_range(start_time, end_time) for i in outdf["date"]]]
-		df = df.tz_localize(None).reindex(pd.date_range(start_time, end_time)).fillna(0).astype(int)
+		df = df.tz_localize(None).reindex(pd.date_range(start_time, end_time)).fillna(0)
 		todaydf = outdf[outdf["date"]==end_time].loc[:,["year","Cleared","Sent Home"]].melt(id_vars="year")
 
 		fig1 = plotlyBarplot(data=todaydf,x="year",y="value",hue="variable",stacked=True,ylabel="# Students",xlabel="Expected Graduation",
@@ -1071,7 +1071,7 @@ def survey_response_dashboard(survey_id):
 		outdf.date = [i.date() for i in outdf.date]
 		begin_time = start_time
 		outdf = outdf[[i in pd.date_range(start_time, end_time) for i in outdf["date"]]]
-		df = df.tz_localize(None).reindex(pd.date_range(start_time, end_time)).fillna(0).astype(int)
+		df = df.tz_localize(None).reindex(pd.date_range(start_time, end_time)).fillna(0)
 		todaydf = outdf[outdf["date"]==end_time].loc[:,["program","Cleared","Sent Home"]].melt(id_vars="program")
 
 		fig2 = plotlyBarplot(data=todaydf,x="program",y="value",hue="variable",stacked=True,ylabel="# Students",xlabel="Expected Graduation",
@@ -1081,7 +1081,7 @@ def survey_response_dashboard(survey_id):
 		outdf.date = [i.date() for i in outdf.date]
 		begin_time = start_time
 		outdf = outdf[[i in pd.date_range(start_time, end_time) for i in outdf["date"]]]
-		df = df.tz_localize(None).reindex(pd.date_range(start_time, end_time)).fillna(0).astype(int)
+		df = df.tz_localize(None).reindex(pd.date_range(start_time, end_time)).fillna(0)
 		todaydf = outdf[outdf["date"]==end_time].loc[:,["location","Cleared","Sent Home"]].melt(id_vars="location")
 
 		fig3 = plotlyBarplot(data=todaydf,x="location",y="value",hue="variable",stacked=True,ylabel="# Students",xlabel="Expected Graduation",
@@ -1198,6 +1198,7 @@ def survey_response_dashboard(survey_id):
 		last7_figs[ix] = offline.plot(fig,show_link=False, output_type="div", include_plotlyjs=False)
 	start_time = datetime.datetime.strftime(start_time,"%Y-%m-%d")
 	end_time = datetime.datetime.strftime(end_time,"%Y-%m-%d")
+	print(today_pct_pos)
 	return render_template("dashboard.html",dash_figs = dash_figs, question_figs = question_figs,
 	                       last7_figs=last7_figs,patient_count=patient_count,device_count=0,
 	                       today_count=today_count, today_pct=today_pct, week_count=week_count, 
