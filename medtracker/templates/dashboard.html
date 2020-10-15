@@ -6,7 +6,7 @@
 		    <h2><span style="color: grey;">{{survey.title}} /</span> Dashboard</h2>
     	
     	<div class="d-none d-lg-block">
-		  <form method="GET" action="{{ request.path }}" class="form-inline">
+		  <form method="GET" action="/surveys/{{survey.id}}/responses/dashboard" class="form-inline">
 		  	<table>
 		  		<tr>
 		  			<td>

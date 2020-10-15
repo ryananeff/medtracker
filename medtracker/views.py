@@ -920,14 +920,20 @@ def remove_comment(_id):
     flash('Comment removed.')
     return redirect(url_for('view_patient', id=patient_id))
 
-@app.route("/surveys/<int:survey_id>/responses/dashboard",methods=["GET"])
+@app.route("/surveys/<int:survey_id>/responses/dashboard/")
+def loading(survey_id):
+	start_request = request.values.get("start_date","2020-06-29")
+	end_request = request.values.get("end_date",None)
+	dest_url = "/surveys/"+str(survey_id)+"/responses/dashboard/loaded?"
+	if start_request:
+		dest_url += "start_date="+start_request+"&"
+	if end_request:
+		dest_url += "end_date="+end_request
+	return render_template("loading.html",dest_url=dest_url)
+
+@app.route("/surveys/<int:survey_id>/responses/dashboard/loaded",methods=["GET"])
 @flask_login.login_required
 def survey_response_dashboard(survey_id):
-	flash("""Ryan: I am updating the dashboard over the next few days. Stay tuned for the remainder of the fixes!
-	      I will be adding a breakdown of cases/positivity by location, positivity rate graphs over time, ways to 
-	      check which student records are positive at a given time, more robust housekeeping of devices no longer 
-	      seen, export options, and some sort of minimal student-facing metrics dashboard. I've already quashed
-	      some bugs.""")
 	start_request = request.values.get("start_date","2020-06-29")
 	end_request = request.values.get("end_date",None)
 	dash_figs = []
