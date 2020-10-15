@@ -928,7 +928,7 @@ def survey_response_dashboard(survey_id):
 	      check which student records are positive at a given time, more robust housekeeping of devices no longer 
 	      seen, export options, and some sort of minimal student-facing metrics dashboard. I've already quashed
 	      some bugs.""")
-	start_request = request.values.get("start_date",None)
+	start_request = request.values.get("start_date","2020-06-29")
 	end_request = request.values.get("end_date",None)
 	dash_figs = []
 	question_figs = []
