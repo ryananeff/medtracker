@@ -7,9 +7,16 @@
     	
     	<div class="d-none d-lg-block">
 		  <form method="GET" action="{{ request.path }}" class="form-inline">
-			  <span style="padding-right:5px">Start Date</span><input type="date" id="start_date" name="start_date" class="form-control" value="{{start_date}}">
-			  <span style="padding-left:20px; padding-right:5px;">End Date</span><input type="date" id="end_date" name="end_date" class="form-control" value="{{end_date}}">
+		  	<table>
+		  		<tr>
+		  			<td>
+			  Start Date <input type="date" id="start_date" name="start_date" class="form-control" value="{{start_date}}">
+			</td><td style="padding-left:10px;padding-right:10px">
+			  End Date <input type="date" id="end_date" name="end_date" class="form-control" value="{{end_date}}">
+			</td><td>
 			  <input type="submit" value="Filter" class="form-control" class="btn btn-secondary">
+			</td></tr>
+		</table>
 			</form>
 		</div>
 	    </div>
