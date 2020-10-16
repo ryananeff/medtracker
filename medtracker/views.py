@@ -1369,7 +1369,7 @@ def survey_response_student_dashboard():
 	                autosize=True,
 	                width=width,
 	                height=height,
-	            title={'text': 'Percent Positivity Rate',
+	            title={'text': 'Percent Positive Screenings',
 	                    'y':0.9,
 	                    'x':0.5,
 	                    'xanchor': 'center',
