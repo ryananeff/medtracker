@@ -1074,8 +1074,14 @@ def survey_response_dashboard(survey_id):
 		todaydf = outdf[outdf["date"]==end_time].loc[:,["year","Cleared","Sent Home"]].melt(id_vars="year")
 
 		fig1 = plotlyBarplot(data=todaydf,x="year",y="value",hue="variable",stacked=True,ylabel="# Students",xlabel="Expected Graduation",
-		             title="Screenings by Year",colors=["green","red"],height=300,width=None,show_legend=True)
-
+		             title="Screenings by Year",colors=["green","red"],height=425,width=None,show_legend=True)
+		fig1.update_layout(legend=dict(
+	      orientation="h",
+	      yanchor="bottom",
+	      y=1.02,
+	      xanchor="right",
+	      x=1
+	     ))
 		outdf = outdf_p
 		outdf.date = [i.date() for i in outdf.date]
 		begin_time = start_time
@@ -1084,8 +1090,14 @@ def survey_response_dashboard(survey_id):
 		todaydf = outdf[outdf["date"]==end_time].loc[:,["program","Cleared","Sent Home"]].melt(id_vars="program")
 
 		fig2 = plotlyBarplot(data=todaydf,x="program",y="value",hue="variable",stacked=True,ylabel="# Students",xlabel="Expected Graduation",
-		             title="Screenings by Program",colors=["green","red"],height=400,width=None,show_legend=True)
-
+		             title="Screenings by Program",colors=["green","red"],height=500,width=None,show_legend=True)
+		fig2.update_layout(legend=dict(
+	      orientation="h",
+	      yanchor="bottom",
+	      y=1.02,
+	      xanchor="right",
+	      x=1
+	     ))
 		outdf = outdf_l
 		outdf.date = [i.date() for i in outdf.date]
 		begin_time = start_time
@@ -1094,8 +1106,14 @@ def survey_response_dashboard(survey_id):
 		todaydf = outdf[outdf["date"]==end_time].loc[:,["location","Cleared","Sent Home"]].melt(id_vars="location")
 
 		fig3 = plotlyBarplot(data=todaydf,x="location",y="value",hue="variable",stacked=True,ylabel="# Students",xlabel="Expected Graduation",
-		             title="Screenings by Location",colors=["green","red"],height=400,width=None,show_legend=True)
-
+		             title="Screenings by Location",colors=["green","red"],height=500,width=None,show_legend=True)
+		fig3.update_layout(legend=dict(
+	      orientation="h",
+	      yanchor="bottom",
+	      y=1.02,
+	      xanchor="right",
+	      x=1
+	     ))
 		#outdf["date"] = [datetime.datetime.strftime(a,"%D") for a in outdf["date"]]
 		#fig1 = plotlyBarplot(data=outdf,x="date",y="total_registered",hue="year",stacked=True,width=None,height=400,
 		#                     title="Students Registered",ylabel="# Students",show_legend=True,xlabel="Date")
@@ -1156,11 +1174,26 @@ def survey_response_dashboard(survey_id):
 	                            name="Average (7 days)"))
 	    fig.update_layout( xaxis_title='Date',
 	                       yaxis_title='Positivity Rate %')
+	    fig.update_layout(legend=dict(
+	      orientation="h",
+	      yanchor="bottom",
+	      y=1.02,
+	      xanchor="right",
+	      x=1
+	     ))
 	    return fig
 	special_figs.append(pos_plot(df))
-	special_figs.append(plotlyBarplot(data=df3,x="index",y="value",hue="variable",width=None, height=400, 
+	fig = plotlyBarplot(data=df3,x="index",y="value",hue="variable",width=None, height=400, 
 		                     title="Compliance History",stacked=True,show_legend=True,colors=["green","red"],
-		                     ylabel="# Students",xlabel="Date"))
+		                     ylabel="# Students",xlabel="Date")
+	fig.update_layout(legend=dict(
+	      orientation="h",
+	      yanchor="bottom",
+	      y=1.02,
+	      xanchor="right",
+	      x=1
+	     ))
+	special_figs.append(fig)
 	qres = pd.DataFrame(responses_last7)
 	
 	if len(qres)>0:
