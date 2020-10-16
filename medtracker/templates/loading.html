@@ -1,0 +1,10 @@
+{% extends "layout_sidebar.html" %}
+{% block title %}Loading... | ISMMS Health Check {% endblock %}
+{% block body %}
+<h2>Loading...</h2>
+<p><img src="/assets/loading.gif"></p>
+<p><small><a href="{{dest_url|safe}}">Click here if not redirected</a></small></p>
+<script>
+	$(document).ready(function(){window.location.href = "{{dest_url|safe}}";});
+</script>
+{% endblock %}

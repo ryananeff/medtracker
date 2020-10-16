@@ -1,0 +1,50 @@
+{% extends "layout.html" %}
+{% block title %}Dashboard | ISMMS Health Check{% endblock %}
+{% block headscripts %}<script src="https://cdn.plot.ly/plotly-latest.min.js"></script>{% endblock%}
+{% block body %}
+	    <div class="page-header">
+		    <h2>COVID-19 Dashboard</h2>
+	    </div>
+	    <h3>Screenings Today</h3>
+	    <div class="row">
+	    	<div class="col-md-3">
+	    		<div class="text-center">
+	    			<div class="card-body">
+	    				<h1 class="card-title">{{(today_positive+today_negative)|int}}</h1>
+	    				<h5 class="card-subtitle">Screenings Taken</h5>
+	    			</div>
+	    		</div>
+	    	</div>
+	    	<div class="col-md-3">
+	    		<div class="text-center">
+	    			<div class="card-body">
+	    				<h1 class="card-title">{{today_negative|int}}</h1>
+	    				<h5 class="card-subtitle">Cleared to Attend</h5>
+	    			</div>
+	    		</div>
+	    	</div>
+	    	<div class="col-md-3">
+	    		<div class="text-center">
+	    			<div class="card-body">
+	    				<h1 class="card-title">{{today_positive|int}}</h1>
+	    				<h5 class="card-subtitle">Staying Home</h5>
+	    			</div>
+	    		</div>
+	    	</div>
+	    	
+	    	<div class="col-md-3">
+	    		<div class="text-center">
+	    			<div class="card-body">
+	    				<h1 class="card-title">{{today_pct_pos|round(2)}}%</h1>
+	    				<h5 class="card-subtitle">Percent Positive Screenings</h5>
+	    			</div>
+	    		</div>
+	    	</div>
+	    </div>
+	    <div class="row justify-content-md-center">
+	    	{% for fig in special_figs %}
+		    <div class="col-lg-6" style="min-width:400px">{{fig|safe}}</div>
+		    {% endfor %}
+	    </div>
+		
+{% endblock %}

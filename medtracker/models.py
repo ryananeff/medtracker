@@ -229,7 +229,7 @@ class SurveyResponse(db.Model):
 	exited = db.Column(db.Boolean,default=False)
 	completed = db.Column(db.Boolean, default=False)
 	message = db.Column(db.Text)
-	responses = db.relationship("QuestionResponse",backref="parent",lazy="dynamic", cascade="all,delete-orphan")
+	responses = db.relationship("QuestionResponse",backref="parent", lazy="joined",cascade="all,delete-orphan")
 
 	def __str__(self):
 		return '%s' % self.session_id
@@ -379,9 +379,10 @@ class Patient(db.Model):
 	year = db.Column(db.Integer)
 	user_id = db.Column(db.Integer, db.ForeignKey('user.id'))
 	surveys = db.relationship("SurveyResponse", backref='patient', lazy="dynamic", cascade="all, delete-orphan")
-	responses = db.relationship("QuestionResponse", backref='patient', lazy='dynamic', cascade="all, delete-orphan")
-	progress = db.relationship("Progress", backref='patient', lazy='dynamic', cascade="all, delete-orphan")
+	responses = db.relationship("QuestionResponse", backref='patient', lazy="dynamic", cascade="all, delete-orphan")
+	progress = db.relationship("Progress", backref='patient', lazy="dynamic", cascade="all, delete-orphan")
 	creation_time = db.Column(db.DateTime, default=func.now())
+	deactivate = db.Column(db.Boolean, default=False)
 
 	def to_dict(self):
 		return {col.name: getattr(self, col.name) for col in self.__table__.columns}
@@ -391,7 +392,7 @@ class Device(db.Model):
 	__tablename__= "devices"
 
 	id = db.Column(db.Integer, primary_key=True)
-	device_id = db.Column(EncryptedType(db.String, flask_secret_key))
+	device_id = db.Column(db.String)
 	creation_time = db.Column(db.DateTime, default=func.now())
 
 	def to_dict(self):

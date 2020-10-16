@@ -5,13 +5,13 @@
 		<h2>My records </h2>
 	</div>
 	<div class="header">
-		<p><!--<a href="/patients/edit/self" class="btn btn-sm btn-primary">Edit</a> !--><a href="/patients/self/reset" class="btn btn-sm btn-danger" onclick="return confirm('Are you sure? This will unlink your records from this device, and you will have to register again.')">Reset Device ID</a></p>
+		<p><!--to disable sensitive info !--><a href="/patients/edit/self" class="btn btn-sm btn-primary">Edit</a> <!-- end !--><a href="/patients/self/reset" class="btn btn-sm btn-danger" onclick="return confirm('Are you sure? This will unlink your records from this device, and you will have to register again.')">Reset Device ID</a></p>
 	    <table class="table table-responsive">
 	    	<tbody>
 	    		<tr>
 	    			<td><strong>Device ID:</strong></td><td> {{ fmt_id(patient.mrn) }}</td>
 	    		</tr>
-	    		<!-- disabled temporarily <tr>
+			<!-- to disable sensitive info: remove end comments between this and bottom of table !--> <tr>
 					<td><strong>Program:</strong></td><td>{{patient.program}}</td>
 				</tr>
 				<tr>
@@ -31,7 +31,7 @@
 				</tr>
 	    		<tr>
 					<td><strong>Phone:</strong></td><td>{% if patient.phone %}{{patient.phone}}{% else %}<span style="color:grey">(Not Provided)</span>{% endif %}</td>
-				</tr> !-->
+				</tr> <!-- !-->
 	    		
 	    		</tbody>
 	    	</table>
@@ -39,7 +39,9 @@
 	</div>
 	<div class="panel panel-self panel-default">
 		<div class="panel-body-self">
+			<div class="container">
                 	{% for time, type, response in patients_feed %}
+			<div class="row">
                 		{% if type=="patient" %}
                         <span class="chat-img pull-left">
                             <i class="fa fa-user"></i>
@@ -81,6 +83,7 @@
 			                     		{% endif %}
                             		</div>
 	                        </div>
+			</div>
 	                    {% elif type=="comment" %}
 	                    {% set commenter = response.user %}
 	                    <li class="left clearfix">
@@ -100,7 +103,9 @@
 	                        </div>
 	                    
 	                    {% endif %}
+			</div>
 	                {% endfor %}
+			</div>
                 
-        </div></div></div></div>
+		</div></div></div></div>
 {% endblock %}

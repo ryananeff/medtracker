@@ -186,7 +186,7 @@ class ResetPasswordForm(Form):
 class PatientForm(Form):
 	mrn = DisabledTextField('Patient Device ID')
 	program = RadioField("What program are you in?", choices=PROGRAM_CHOICES)
-	year = SelectField("What is your anticipated graduation date?",choices=[(i,i) for ix,i in enumerate(range(2020,2029))],coerce=int)
+	year = SelectField("What is your anticipated graduation date?",choices=[(i,i) for ix,i in enumerate(range(2021,2030))],coerce=int)
 	location = RadioField("Where are you currently living?", choices=LOCATION_CHOICES)
 	fullname = StringField('Name (optional)')
 	age = StringField('Age (optional)')
@@ -196,7 +196,7 @@ class PatientForm(Form):
 class PatientEditForm(Form):
 	mrn = HiddenField('Patient Device ID')
 	program = RadioField("What program are you in?", choices=PROGRAM_CHOICES)
-	year = SelectField("What is your anticipated graduation date?",choices=[(i,i) for ix,i in enumerate(range(2020,2029))],coerce=int)
+	year = SelectField("What is your anticipated graduation date?",choices=[(i,i) for ix,i in enumerate(range(2021,2030))],coerce=int)
 	location = RadioField("Where are you currently living?", choices=LOCATION_CHOICES)
 	fullname = StringField('Name (optional)')
 	age = StringField('Age (optional)')
