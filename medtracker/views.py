@@ -19,6 +19,9 @@ from collections import defaultdict
 from datetime import timezone
 from sqlalchemy import or_
 
+from pytz import timezone as pytztimezone
+tz = pytztimezone('EST')
+
 image_staticdir = 'assets/uploads/'
 base_dir = os.path.realpath(os.path.dirname(medtracker.__file__)+"/../")
 
@@ -931,10 +934,14 @@ def loading(survey_id):
 		dest_url += "end_date="+end_request
 	return render_template("loading.html",dest_url=dest_url)
 
-from pytz import timezone as pytztimezone
-tz = pytztimezone('EST')
+def make_cache_key(*args, **kwargs):
+    path = request.path
+    args = str(hash(frozenset(request.args.items())))
+    responses = str(models.SurveyResponse.query.count())
+    return (path +args+responses).encode('utf-8')
 
 @app.route("/surveys/<int:survey_id>/responses/dashboard/loaded",methods=["GET"])
+@cache.cached(timeout=None,key_prefix=make_cache_key)
 @flask_login.login_required
 def survey_response_dashboard(survey_id):
 	start_request = request.values.get("start_date","2020-06-29")
@@ -1141,7 +1148,7 @@ def survey_response_dashboard(survey_id):
 		today_negative = list(df["daily_completed_surveys"])[-1]
 		today_pct_pos = list(df["positivity_rate"])[-1]
 		today_pct = list(df["daily_pct"])[-1]
-		week_count = sum(list(df["daily_registered_students"]))
+		week_count = list(df["total_completed_surveys"])[-1]
 		week_pct = sum(list(df["daily_total_surveys"]))/sum(list(df["total_registered_students"]))*100
 
 	else:
@@ -1151,7 +1158,7 @@ def survey_response_dashboard(survey_id):
 		week_count = 0
 		week_pct = 0
 
-	patient_count = db.session.query(models.Patient).count()
+	patient_count = list(df["total_registered_students"])[-1]
 	#device_count = len(devices)
 
 	special_figs = []
@@ -1247,54 +1254,59 @@ def survey_response_dashboard(survey_id):
 	                       today_positive=today_positive,today_negative = today_negative,
 	                       today_pct_pos=today_pct_pos, patients = sig_r,special_figs=special_figs)
 
-@app.route("/surveys/<int:survey_id>/students/dashboard",methods=["GET"])
-@flask_login.login_required
-def survey_response_student_dashboard(survey_id):
-	
-	start_request = request.values.get("start_date",None)
+@app.route("/covid/dashboard",methods=["GET"])
+@cache.cached(timeout=None,key_prefix=make_cache_key)
+def survey_response_student_dashboard():
+	survey_id = 1
+	start_request = request.values.get("start_date","2020-06-29")
 	end_request = request.values.get("end_date",None)
+	dash_figs = []
+	question_figs = []
 
 	try:
-		start_time = (datetime.datetime.strptime(start_request,"%Y-%m-%d")).date() if start_request != None else (datetime.datetime.now()-datetime.timedelta(days=6)).date()
-		end_time = (datetime.datetime.strptime(end_request,"%Y-%m-%d")).date() if end_request != None else (datetime.datetime.now()).date()
+	    start_time = (datetime.datetime.strptime(start_request,"%Y-%m-%d")).date() if start_request != None else (datetime.datetime.now()-datetime.timedelta(days=30)).date()
+	    end_time = (datetime.datetime.strptime(end_request,"%Y-%m-%d")).date() if end_request != None else (datetime.datetime.now(tz)).date()
 	except:
-		start_time = (datetime.datetime.now()-datetime.timedelta(days=6)).date()
-		end_time = (datetime.datetime.now()).date()
+	    start_time = (datetime.datetime.now()-datetime.timedelta(days=30)).date()
+	    end_time = (datetime.datetime.now(tz)).date()
 
 	survey = models.Survey.query.get_or_404(survey_id)
 
-	
-	patients = models.Patient.query.filter(models.Patient.deactivate!=True).all()
-	
-	#devices = models.Device.query.all()
-
-	dash_figs = []
-	question_figs = []
-	sr = survey.responses.filter(models.SurveyResponse.start_time > end_time).all()
-
-	responses = []
-	for sre in sr: responses.extend([r.to_dict() for r in sre.responses])
-	
-	sr = survey.responses.filter(models.SurveyResponse.start_time > start_time).filter(models.SurveyResponse.start_time <= end_time).all()
-	responses_last7 = responses
-	for sre in sr: responses_last7.extend([r.to_dict() for r in sre.responses])
-	
+	pres = db.session.query(models.SurveyResponse).join(models.Patient)\
+	        .filter(models.SurveyResponse.start_time > start_time)\
+	        .filter(models.SurveyResponse.start_time <= (end_time+datetime.timedelta(days=1)))\
+	                .all()
 
 	def pt_to_pd():
-	    res = [r.to_dict() for r in models.Patient.query.filter(models.Patient.deactivate!=True).all()]
+	    res = [dict(r) for r in db.session.execute(models.Patient.query.statement)]
 	    return pd.DataFrame(res)
 
 	sres = []
-	for p in patients:
-	    sr = [s.to_dict() for s in p.surveys.all()]
-	    sres.extend(sr)
+	for r in pres:
+	    row = r.to_dict()
+	    del row["uniq_id"]
+	    del row["user_id"]
+	    row["patient_id"] = r.patient.id
+	    row["location"] = r.patient.location.value
+	    row["year"] = r.patient.year
+	    row["program"] = r.patient.program.value
+	    sres.append(row)
+
+	responses = []
+	sr = survey.responses.filter(models.SurveyResponse.start_time <= (end_time+datetime.timedelta(days=1))).filter(models.SurveyResponse.start_time >= end_time)
+	for sre in sr.all(): responses.extend([r.to_dict() for r in sre.responses])
+	sig_r = []
+	for sre in sr.filter(models.SurveyResponse.exited==True).all(): sig_r.extend([sre.patient])
+	responses_last7 = responses
+	sr = survey.responses.filter(models.SurveyResponse.start_time > start_time).filter(models.SurveyResponse.start_time <= end_time)
+	for sre in sr.all(): responses_last7.extend([r.to_dict() for r in sre.responses])
 
 	if len(sres)>0:
 		sres = pd.DataFrame(sres)
 		sres.end_time = sres.end_time.dt.tz_localize('UTC').dt.tz_convert('US/Eastern')
 		sres.start_time = sres.start_time.dt.tz_localize('UTC').dt.tz_convert('US/Eastern')
 		sres["date"] = sres.start_time.dt.floor('d')
-		sres = sres.groupby(["date","uniq_id"]).last()
+		sres = sres.groupby(["date","patient_id"]).last()
 		
 		sres = sres.reset_index()
 
@@ -1316,30 +1328,142 @@ def survey_response_student_dashboard(survey_id):
 		df = pd.merge(pts_per_day,res_per_day,left_index=True,right_index=True,how="outer")
 		df = pd.merge(df,comp_per_day,left_index=True,right_index=True,how="outer")
 		df = pd.merge(df,exit_per_day,left_index=True,right_index=True,how="outer")
-		df["positivity_rate"] = df["daily_exited_surveys"]/df["daily_total_surveys"]*100
+		df["positivity_rate"] = df["daily_exited_surveys"]/df["daily_total_surveys"].astype(float)*100.
 		#df = pd.merge(df,devs_per_day,left_index=True,right_index=True,how="outer")
 		begin_time = pts.creation_time[0].date()
-		df = df.tz_localize(None).reindex(pd.date_range(begin_time, end_time)).fillna(0).astype(int)
+		df = df.tz_localize(None).reindex(pd.date_range(begin_time, end_time)).fillna(0)
 		df["total_registered_students"] = df["daily_registered_students"].cumsum()
 		df["total_completed_surveys"] = df["daily_completed_surveys"].cumsum()
 		#df["total_devices"] = df["daily_new_devices"].cumsum()
 		df["daily_uncompleted_surveys"] = df["total_registered_students"] - df["daily_total_surveys"]
 		df["daily_pct"] = df["daily_total_surveys"]/df["total_registered_students"]*100
+		pts_df = pts.set_index("creation_time")
 		
-		df = df.tz_localize(None).reindex(pd.date_range(start_time, end_time)).fillna(0).astype(int)
+		years = list(range(2021,2025))
+		programs = set(sres.program)
+		locations = set(sres.location)
+		outdf_yr = []
+		outdf_program = []
+		outdf_location = []
+		total_reg = defaultdict(int)
+		sres = sres.groupby('patient_id').last()
+		for i in pd.date_range(begin_time, end_time).tz_localize('US/Eastern'):
+		    sliced = sres[(sres.end_time<(i+datetime.timedelta(days=1)))&(sres.end_time>i)]
+		    for y in years:
+		        slyr = sliced[sliced.year==y]
+		        #print(len(slyr))
+		        pts_yr = pts_df[pts_df.year==y] #students in that year
+		        daily_reg = len(pts_yr[(pts_yr.index<(i+datetime.timedelta(days=1)))&(pts_yr.index>i)]) #students registered in last day
+		        total_reg[y] += daily_reg
+		        responded = len(slyr)
+		        completed = sum(slyr.completed)
+		        exited = sum(slyr.exited)
+		        #not_completed = len(set(pts_yr.id).difference(slyr.index))
+		        outdf_yr.append([i,y,total_reg[y],responded, completed, exited])
+		    for p in programs:
+		        slyr = sliced[sliced.program==p]
+		        #print(len(slyr))
+		        pts_yr = pts_df[pts_df.program==p] #students in that year
+		        daily_reg = len(pts_yr[(pts_yr.index<(i+datetime.timedelta(days=1)))&(pts_yr.index>i)]) #students registered in last day
+		        total_reg[y] += daily_reg
+		        responded = len(slyr)
+		        completed = sum(slyr.completed)
+		        exited = sum(slyr.exited)
+		        #not_completed = len(set(pts_yr.id).difference(slyr.index))
+		        outdf_program.append([i,p,total_reg[y],responded, completed, exited])
+		    for l in locations:
+		        slyr = sliced[sliced.location==l]
+		        #print(len(slyr))
+		        pts_yr = pts_df[pts_df.location==l] #students in that year
+		        daily_reg = len(pts_yr[(pts_yr.index<(i+datetime.timedelta(days=1)))&(pts_yr.index>i)]) #students registered in last day
+		        total_reg[y] += daily_reg
+		        responded = len(slyr)
+		        completed = sum(slyr.completed)
+		        exited = sum(slyr.exited)
+		        #not_completed = len(set(pts_yr.id).difference(slyr.index))
+		        outdf_location.append([i,l,total_reg[y],responded, completed, exited])
+
+		outdf_yr = pd.DataFrame(outdf_yr,columns=["date","year","total_registered","total_responded","Cleared","Sent Home"])
+		outdf_p = pd.DataFrame(outdf_program,columns=["date","program","total_registered","total_responded","Cleared","Sent Home"])
+		outdf_l = pd.DataFrame(outdf_location,columns=["date","location","total_registered","total_responded","Cleared","Sent Home"])
+		
+		outdf = outdf_yr
+		outdf.date = [i.date() for i in outdf.date]
+		begin_time = start_time
+		outdf = outdf[[i in pd.date_range(start_time, end_time) for i in outdf["date"]]]
+		df = df.tz_localize(None).reindex(pd.date_range(start_time, end_time)).fillna(0)
+		todaydf = outdf[outdf["date"]==end_time].loc[:,["year","Cleared","Sent Home"]].melt(id_vars="year")
+
+		fig1 = plotlyBarplot(data=todaydf,x="year",y="value",hue="variable",stacked=True,ylabel="# Students",xlabel="Expected Graduation",
+		             title="Screenings by Year",colors=["green","red"],height=425,width=None,show_legend=True)
+		fig1.update_layout(legend=dict(
+	      orientation="h",
+	      yanchor="bottom",
+	      y=1.02,
+	      xanchor="right",
+	      x=1
+	     ))
+		outdf = outdf_p
+		outdf.date = [i.date() for i in outdf.date]
+		begin_time = start_time
+		outdf = outdf[[i in pd.date_range(start_time, end_time) for i in outdf["date"]]]
+		df = df.tz_localize(None).reindex(pd.date_range(start_time, end_time)).fillna(0)
+		todaydf = outdf[outdf["date"]==end_time].loc[:,["program","Cleared","Sent Home"]].melt(id_vars="program")
+
+		fig2 = plotlyBarplot(data=todaydf,x="program",y="value",hue="variable",stacked=True,ylabel="# Students",xlabel="Expected Graduation",
+		             title="Screenings by Program",colors=["green","red"],height=500,width=None,show_legend=True)
+		fig2.update_layout(legend=dict(
+	      orientation="h",
+	      yanchor="bottom",
+	      y=1.02,
+	      xanchor="right",
+	      x=1
+	     ))
+		outdf = outdf_l
+		outdf.date = [i.date() for i in outdf.date]
+		begin_time = start_time
+		outdf = outdf[[i in pd.date_range(start_time, end_time) for i in outdf["date"]]]
+		df = df.tz_localize(None).reindex(pd.date_range(start_time, end_time)).fillna(0)
+		todaydf = outdf[outdf["date"]==end_time].loc[:,["location","Cleared","Sent Home"]].melt(id_vars="location")
+
+		fig3 = plotlyBarplot(data=todaydf,x="location",y="value",hue="variable",stacked=True,ylabel="# Students",xlabel="Expected Graduation",
+		             title="Screenings by Location",colors=["green","red"],height=500,width=None,show_legend=True)
+		fig3.update_layout(legend=dict(
+	      orientation="h",
+	      yanchor="bottom",
+	      y=1.02,
+	      xanchor="right",
+	      x=1
+	     ))
+		#outdf["date"] = [datetime.datetime.strftime(a,"%D") for a in outdf["date"]]
+		#fig1 = plotlyBarplot(data=outdf,x="date",y="total_registered",hue="year",stacked=True,width=None,height=400,
+		#                     title="Students Registered",ylabel="# Students",show_legend=True,xlabel="Date")
 		
 		df.reset_index(inplace=True)
 		df = df.sort_values(by="index",ascending=True)
 		df["index"] = [datetime.datetime.strftime(a,"%D") for a in df["index"]]
+		df2 = df.loc[:,["index","daily_completed_surveys","daily_exited_surveys"]]
+		df2.columns = ["index","Cleared","Sent Home"]
+		df3 = df2.melt(id_vars="index")
 		
+		pts["location"] = [str(i) for i in pts["location"]]
+		pts["program"] = [str(i) for i in pts["program"]]
+		reg_per_year = plotlyBarplot(data=pd.DataFrame(pts.groupby(["year","program"]).count()["id"]).reset_index(),y="id",x="year",hue="program",
+		                             width=None, height=400, title="Registered by Year",stacked=True,xlabel="Expected Graduation",ylabel="# Students",show_legend=True,xtype="linear")
+		reg_per_program = plotlyBarplot(data=pd.DataFrame(pts.groupby(["program","year"]).count()["id"]).reset_index(),y="id",x="program",hue="year",
+		                                width=None, height=500, title="Registered by Program",show_legend=True,stacked=True,xlabel="Program",ylabel="# Students")
+		reg_per_location = plotlyBarplot(data=pd.DataFrame(pts.groupby(["location"]).count()["id"]).reset_index(),y="id",x="location",
+             stacked=True, width=None, height=500, title="Registered by Location",show_legend=False,xlabel="Location",ylabel="# Students")
+		
+		dash_figs = [fig1,fig2,fig3]
 
 		today_count = list(df["daily_total_surveys"])[-1]
 		today_positive = list(df["daily_exited_surveys"])[-1]
 		today_negative = list(df["daily_completed_surveys"])[-1]
 		today_pct_pos = list(df["positivity_rate"])[-1]
 		today_pct = list(df["daily_pct"])[-1]
-		week_count = sum(list(df["daily_total_surveys"])[-7:])
-		week_pct = sum(list(df["daily_total_surveys"])[-7:])/sum(list(df["total_registered_students"])[-7:])*100
+		week_count = list(df["total_completed_surveys"])[-1]
+		week_pct = sum(list(df["daily_total_surveys"]))/sum(list(df["total_registered_students"]))*100
 
 	else:
 		dash_figs = []
@@ -1348,47 +1472,53 @@ def survey_response_student_dashboard(survey_id):
 		week_count = 0
 		week_pct = 0
 
-	patient_count = len(patients)
+	patient_count = list(df["total_registered_students"])[-1]
 	#device_count = len(devices)
 
-	qres = pd.DataFrame(responses)
-	
-	if len(qres)>0:
-		qres.time = qres.time.dt.tz_localize('UTC').dt.tz_convert('US/Eastern')
-		qres["date"] = [i.date() for i in qres.time]
-		qres = qres[qres["date"]==end_time]
-		qres = qres.groupby(["date","question_id","uniq_id"]).first()
-		qres = qres.reset_index()
-
-		question_ids = [q.id for q in survey.questions()]
-
-		for q in question_ids:
-			a = qres[qres["question_id"]==q]
-			if len(a.index) > 0:
-				a = a.loc[:,["response","question_id","question_title","question_choices","question_type"]]
-				refmt = []
-				for ix,row in a.iterrows():
-				    row = list(row)
-				    for rr in row[0].split(";"):
-				        refmt.append([rr,row[1],row[2],row[3],row[4]])
-				a = pd.DataFrame(refmt,columns=a.columns)
-				title = list(a.question_title)[0]
-				choices = list(a.question_choices)[0]
-				choices = ast.literal_eval(choices) if choices != "" else {}
-				kind = list(a.question_type)[0]
-				xtype = "category" if kind in ("select","radio") else None
-				pltdict = {v:0 for ix,v in choices.items()}
-				pltdict.update(a.groupby("response").count()["question_id"].to_dict())
-				df = pd.DataFrame(pltdict,index=["value"]).T.reset_index()
-				margins={"b":200,"t":75}
-				fig = plotlyBarplot(data=df,x="index",y="value",xtype=xtype,width=None, height=None,title=title,margins=margins,ylabel="# Responses",colors=["darkblue"])
-				question_figs.append(fig)
-
+	special_figs = []
 	last7_figs = []
+	from scipy import signal
+	def pos_plot(df,width=None,height=400):
+	    layout = go.Layout(
+	                autosize=True,
+	                width=width,
+	                height=height,
+	            title={'text': 'Percent Positivity Rate',
+	                    'y':0.9,
+	                    'x':0.5,
+	                    'xanchor': 'center',
+	                    'yanchor': 'top'}
+	            )
+	    fig = go.Figure(layout=layout)
+	    fig.add_trace(go.Scatter(x=df["index"], y=df["positivity_rate"],line_shape='hv',name="Values"))
+	    fig.add_trace(go.Scatter(x=df["index"], y=signal.savgol_filter(df["positivity_rate"],7,1),line_shape='spline',
+	                            name="Average (7 days)"))
+	    fig.update_layout( xaxis_title='Date',
+	                       yaxis_title='Positivity Rate %')
+	    fig.update_layout(legend=dict(
+	      orientation="h",
+	      yanchor="bottom",
+	      y=1.02,
+	      xanchor="right",
+	      x=1
+	     ))
+	    return fig
+	special_figs.append(pos_plot(df))
+	fig = plotlyBarplot(data=df3,x="index",y="value",hue="variable",width=None, height=400, 
+		                     title="Compliance History",stacked=True,show_legend=True,colors=["green","red"],
+		                     ylabel="# Students",xlabel="Date")
+	fig.update_layout(legend=dict(
+	      orientation="h",
+	      yanchor="bottom",
+	      y=1.02,
+	      xanchor="right",
+	      x=1
+	     ))
+	special_figs.append(fig)
 	qres = pd.DataFrame(responses_last7)
 	
 	if len(qres)>0:
-		qres.time = qres.time.dt.tz_localize('UTC')
+		qres.time = qres.time
 		qres["date"] = [i.date() for i in qres.time]
 		qres = qres.groupby(["date","question_id","uniq_id"]).first()
 		qres = qres.reset_index()
@@ -1421,8 +1551,12 @@ def survey_response_student_dashboard(survey_id):
 		                        xtype=xtype,grouped=True,ordered=False,stacked=True,order2=True,width=None,height=None,show_legend=True,ylabel="# Responses",xlabel="Date",title=title)
 		    last7_figs.append(fig)
 	
+	for ix,fig in enumerate(dash_figs):
+		dash_figs[ix] = offline.plot(fig,show_link=False, output_type="div", include_plotlyjs=False)
 	for ix,fig in enumerate(question_figs):
 		question_figs[ix] = offline.plot(fig,show_link=False, output_type="div", include_plotlyjs=False)
+	for ix,fig in enumerate(special_figs):
+		special_figs[ix] = offline.plot(fig,show_link=False, output_type="div", include_plotlyjs=False)
 	for ix,fig in enumerate(last7_figs):
 		last7_figs[ix] = offline.plot(fig,show_link=False, output_type="div", include_plotlyjs=False)
 	start_time = datetime.datetime.strftime(start_time,"%Y-%m-%d")
@@ -1432,7 +1566,7 @@ def survey_response_student_dashboard(survey_id):
 	                       today_count=today_count, today_pct=today_pct, week_count=week_count, 
 	                       week_pct=week_pct, survey=survey, start_date = start_time, end_date=end_time,
 	                       today_positive=today_positive,today_negative = today_negative,
-	                       today_pct_pos=today_pct_pos)
+	                       today_pct_pos=today_pct_pos, patients = sig_r,special_figs=special_figs)
 
 
 def plotlyBarplot(x=None,y=None,hue=None,data=None,ylabel="",xlabel="",title="",

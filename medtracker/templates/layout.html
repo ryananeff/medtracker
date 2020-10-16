@@ -69,12 +69,14 @@
         <div id="navbar" class="navbar-collapse collapse">
           <ul class="nav navbar-nav">
             {% if current_user.is_authenticated %}
-            <li class="active"><a href="/surveys">Go to Dashboard</a></li>
+            <li class="active"><a href="/surveys">Admin Dashboard</a></li>
+              {% else %}
+                <li class="inactive"><a href="/covid/dashboard">Dashboard</a></li>
               {% endif %}
+              <li class="inactive"><a href="/patients/signup/1">Take Screening</a></li>
               {% if g.patient != None %}
-                <li class="inactive"><a href="/patients/self">Your Records</a></li>
+                <li class="inactive"><a href="/patients/self">My Records</a></li>
               {% endif %}
-              <li class="inactive"><a href="/patients/signup/1">COVID-19 Screening Tool</a></li>
               <li class="inactive"><a href="/about">About</a></li>
               <li class="dropdown">
         	    {% if current_user.is_authenticated==False %}

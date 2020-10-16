@@ -3,47 +3,13 @@
 {% block headscripts %}<script src="https://cdn.plot.ly/plotly-latest.min.js"></script>{% endblock%}
 {% block body %}
 	    <div class="page-header">
-		    <h2><span style="color: grey;">{{survey.title}} /</span> Student Dashboard</h2>
-    
-		  <form method="GET" action="{{ request.path }}" class="form-inline">
-			    
-			  <span style="padding-right:5px">Start Date</span><input type="date" id="start_date" name="start_date" class="form-control" value="{{start_date}}">
-			  <span style="padding-left:20px; padding-right:5px;">End Date</span><input type="date" id="end_date" name="end_date" class="form-control" value="{{end_date}}">
-			  <input type="submit" value="Filter" class="form-control" class="btn btn-secondary">
-			</form>
+		    <h2>COVID-19 Dashboard</h2>
 	    </div>
-	    <div class="row">
-	    	<div class="col-md-4" style="min-width:300px">
-	    		<div class="card card-auto text-center">
-	    			<div class="card-body">
-	    				<h1 class="card-title">{{today_positive}}</h1>
-	    				<h5 class="card-subtitle">Staying Home (last day)</h5>
-	    			</div>
-	    		</div>
-	    	</div>
-	    	<div class="col-md-4" style="min-width:300px">
-	    		<div class="card card-auto text-center">
-	    			<div class="card-body">
-	    				<h1 class="card-title">{{today_negative}}</h1>
-	    				<h5 class="card-subtitle">Cleared to Attend (last day)</h5>
-	    			</div>
-	    		</div>
-	    	</div>
-	    	<div class="col-md-4" style="min-width:300px">
-	    		<div class="card card-auto text-center">
-	    			<div class="card-body">
-	    				<h1 class="card-title">{{(today_pct_pos)|round(3)}}%</h1>
-	    				<h5 class="card-subtitle">Percent Positive Screenings (last day)</h5>
-	    			</div>
-	    		</div>
-	    	</div>
-	    </div>
-	    <h3>Survey Responses (last day)</h3>
 	    <div class="row justify-content-md-center">
-	    	{% for fig in question_figs %}
+	    	{% for fig in special_figs %}
 		    <div class="col-lg-6" style="min-width:400px">{{fig|safe}}</div>
 		    {% endfor %}
-		    {% if question_figs | length==0 %}
+		    {% if last7_figs | length==0 %}
 		    <div class="well">
 				<div class="starter-template">
 				No responses yet.
@@ -52,7 +18,67 @@
 			</div>
 			{% endif %}
 	    </div>
-	    <h3>Survey Responses (over time period)</h3>
+	    <h3>Last day</h3>
+	    <div class="row">
+	    	<div class="col-md-3">
+	    		<div class="text-center">
+	    			<div class="card-body">
+	    				<h1 class="card-title">{{(today_positive+today_negative)|int}}</h1>
+	    				<h5 class="card-subtitle">Screenings Taken</h5>
+	    			</div>
+	    		</div>
+	    	</div>
+	    	<div class="col-md-3">
+	    		<div class="text-center">
+	    			<div class="card-body">
+	    				<h1 class="card-title">{{today_negative|int}}</h1>
+	    				<h5 class="card-subtitle">Cleared to Attend</h5>
+	    			</div>
+	    		</div>
+	    	</div>
+	    	<div class="col-md-3">
+	    		<div class="text-center">
+	    			<div class="card-body">
+	    				<h1 class="card-title">{{today_positive|int}}</h1>
+	    				<h5 class="card-subtitle">Staying Home</h5>
+	    			</div>
+	    		</div>
+	    	</div>
+	    	
+	    	<div class="col-md-3">
+	    		<div class="text-center">
+	    			<div class="card-body">
+	    				<h1 class="card-title">{{today_pct_pos|round(2)}}%</h1>
+	    				<h5 class="card-subtitle">Percent Positive Screenings</h5>
+	    			</div>
+	    		</div>
+	    	</div>
+	    </div>
+	    <div class="row justify-content-md-center">
+	    	{% for fig in dash_figs %}
+		    <div class="col-lg-4">{{fig|safe}}</div>
+		    {% endfor %}
+	    </div>
+	    
+	    <h3>Entire time period</h3>
+	    <div class="row">
+	    	<div class="col-md-3">
+	    		<div class=" text-center">
+	    			<div class="card-body">
+	    				<h1 class="card-title">{{patient_count|int}}</h1>
+	    				<h5 class="card-subtitle">New Student Registrations</h5>
+	    			</div>
+	    		</div>
+	    	</div>
+	    	<div class="col-md-3">
+	    		<div class=" text-center">
+	    			<div class="card-body">
+	    				<h1 class="card-title">{{week_count|int}}</h1>
+	    				<h5 class="card-subtitle">Total Screenings</h5>
+	    			</div>
+	    		</div>
+	    	</div>
+	    </div>
 	    <div class="row justify-content-md-center">
 	    	{% for fig in last7_figs %}
 		    <div class="col-lg-6" style="min-width:400px">{{fig|safe}}</div>

@@ -1,4 +1,5 @@
 from flask import *
+from flask.ext.cache import Cache
 from requests.auth import HTTPBasicAuth
 import random, string, pytz, sys, random, urllib.parse, datetime, os
 from werkzeug.utils import secure_filename
@@ -21,6 +22,7 @@ ts = URLSafeTimedSerializer(flask_secret_key)
 
 #Flask init
 app = Flask(__name__, static_folder='')
+cache = Cache(app,config={'CACHE_TYPE': 'filesystem','CACHE_DIR':'cache/'})
 app.config["APPLICATION_ROOT"] = "/"
 app.config['SQLALCHEMY_DATABASE_URI'] = sqlalchemy_db
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
@@ -57,4 +59,4 @@ from medtracker.triggers import *
 @app.teardown_appcontext
 def shutdown_session(exception=None):
     db_session.remove()
- 
+
