@@ -1255,7 +1255,7 @@ def survey_response_dashboard(survey_id):
 	                       today_pct_pos=today_pct_pos, patients = sig_r,special_figs=special_figs)
 
 @app.route("/covid/dashboard",methods=["GET"])
-#@cache.cached(timeout=None,key_prefix=make_cache_key)
+@cache.cached(timeout=None,key_prefix=make_cache_key)
 def survey_response_student_dashboard():
 	survey_id = 1
 	start_request = request.values.get("start_date","2020-06-29")
@@ -1329,6 +1329,7 @@ def survey_response_student_dashboard():
 		df["daily_uncompleted_surveys"] = df["total_registered_students"] - df["daily_total_surveys"]
 		df["daily_pct"] = df["daily_total_surveys"]/df["total_registered_students"]*100
 		pts_df = pts.set_index("creation_time")
+		df = df.tz_localize(None).reindex(pd.date_range(start_time, end_time)).fillna(0)
 		
 		df.reset_index(inplace=True)
 		df = df.sort_values(by="index",ascending=True)
