@@ -22,7 +22,9 @@ ts = URLSafeTimedSerializer(flask_secret_key)
 
 #Flask init
 app = Flask(__name__, static_folder='')
-cache = Cache(app,config={'CACHE_TYPE': 'filesystem','CACHE_DIR':'cache/'})
+cache = Cache(app,config={'CACHE_TYPE': 'filesystem',
+    'CACHE_DIR':'cache/',
+    'CACHE_DEFAULT_TIMEOUT':60*60})
 app.config["APPLICATION_ROOT"] = "/"
 app.config['SQLALCHEMY_DATABASE_URI'] = sqlalchemy_db
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
