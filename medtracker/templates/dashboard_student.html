@@ -5,20 +5,7 @@
 	    <div class="page-header">
 		    <h2>COVID-19 Dashboard</h2>
 	    </div>
-	    <div class="row justify-content-md-center">
-	    	{% for fig in special_figs %}
-		    <div class="col-lg-6" style="min-width:400px">{{fig|safe}}</div>
-		    {% endfor %}
-		    {% if last7_figs | length==0 %}
-		    <div class="well">
-				<div class="starter-template">
-				No responses yet.
-				<h1>:(</h1>
-				</div>
-			</div>
-			{% endif %}
-	    </div>
-	    <h3>Last day</h3>
+	    <h3>Screenings Today</h3>
 	    <div class="row">
 	    	<div class="col-md-3">
 	    		<div class="text-center">
@@ -55,42 +42,9 @@
 	    	</div>
 	    </div>
 	    <div class="row justify-content-md-center">
-	    	{% for fig in dash_figs %}
-		    <div class="col-lg-4">{{fig|safe}}</div>
-		    {% endfor %}
-	    </div>
-	    
-	    <h3>Entire time period</h3>
-	    <div class="row">
-	    	<div class="col-md-3">
-	    		<div class=" text-center">
-	    			<div class="card-body">
-	    				<h1 class="card-title">{{patient_count|int}}</h1>
-	    				<h5 class="card-subtitle">New Student Registrations</h5>
-	    			</div>
-	    		</div>
-	    	</div>
-	    	<div class="col-md-3">
-	    		<div class=" text-center">
-	    			<div class="card-body">
-	    				<h1 class="card-title">{{week_count|int}}</h1>
-	    				<h5 class="card-subtitle">Total Screenings</h5>
-	    			</div>
-	    		</div>
-	    	</div>
-	    </div>
-	    <div class="row justify-content-md-center">
-	    	{% for fig in last7_figs %}
+	    	{% for fig in special_figs %}
 		    <div class="col-lg-6" style="min-width:400px">{{fig|safe}}</div>
 		    {% endfor %}
-		    {% if last7_figs | length==0 %}
-		    <div class="well">
-				<div class="starter-template">
-				No responses yet.
-				<h1>:(</h1>
-				</div>
-			</div>
-			{% endif %}
 	    </div>
 		
 {% endblock %}
