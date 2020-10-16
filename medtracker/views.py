@@ -1069,16 +1069,16 @@ def survey_response_dashboard(survey_id):
 		        #not_completed = len(set(pts_yr.id).difference(slyr.index))
 		        outdf_location.append([i,l,total_reg[y],responded, completed, exited])
 
-		outdf_yr = pd.DataFrame(outdf_yr,columns=["date","year","total_registered","total_responded","Cleared","Sent Home"])
-		outdf_p = pd.DataFrame(outdf_program,columns=["date","program","total_registered","total_responded","Cleared","Sent Home"])
-		outdf_l = pd.DataFrame(outdf_location,columns=["date","location","total_registered","total_responded","Cleared","Sent Home"])
+		outdf_yr = pd.DataFrame(outdf_yr,columns=["date","year","total_registered","total_responded","Well","Sick"])
+		outdf_p = pd.DataFrame(outdf_program,columns=["date","program","total_registered","total_responded","Well","Sick"])
+		outdf_l = pd.DataFrame(outdf_location,columns=["date","location","total_registered","total_responded","Well","Sick"])
 		
 		outdf = outdf_yr
 		outdf.date = [i.date() for i in outdf.date]
 		begin_time = start_time
 		outdf = outdf[[i in pd.date_range(start_time, end_time) for i in outdf["date"]]]
 		df = df.tz_localize(None).reindex(pd.date_range(start_time, end_time)).fillna(0)
-		todaydf = outdf[outdf["date"]==end_time].loc[:,["year","Cleared","Sent Home"]].melt(id_vars="year")
+		todaydf = outdf[outdf["date"]==end_time].loc[:,["year","Well","Sick"]].melt(id_vars="year")
 
 		fig1 = plotlyBarplot(data=todaydf,x="year",y="value",hue="variable",stacked=True,ylabel="# Students",xlabel="Expected Graduation",
 		             title="Screenings by Year",colors=["green","red"],height=425,width=None,show_legend=True)
@@ -1094,7 +1094,7 @@ def survey_response_dashboard(survey_id):
 		begin_time = start_time
 		outdf = outdf[[i in pd.date_range(start_time, end_time) for i in outdf["date"]]]
 		df = df.tz_localize(None).reindex(pd.date_range(start_time, end_time)).fillna(0)
-		todaydf = outdf[outdf["date"]==end_time].loc[:,["program","Cleared","Sent Home"]].melt(id_vars="program")
+		todaydf = outdf[outdf["date"]==end_time].loc[:,["program","Well","Sick"]].melt(id_vars="program")
 
 		fig2 = plotlyBarplot(data=todaydf,x="program",y="value",hue="variable",stacked=True,ylabel="# Students",xlabel="Expected Graduation",
 		             title="Screenings by Program",colors=["green","red"],height=500,width=None,show_legend=True)
@@ -1110,7 +1110,7 @@ def survey_response_dashboard(survey_id):
 		begin_time = start_time
 		outdf = outdf[[i in pd.date_range(start_time, end_time) for i in outdf["date"]]]
 		df = df.tz_localize(None).reindex(pd.date_range(start_time, end_time)).fillna(0)
-		todaydf = outdf[outdf["date"]==end_time].loc[:,["location","Cleared","Sent Home"]].melt(id_vars="location")
+		todaydf = outdf[outdf["date"]==end_time].loc[:,["location","Well","Sick"]].melt(id_vars="location")
 
 		fig3 = plotlyBarplot(data=todaydf,x="location",y="value",hue="variable",stacked=True,ylabel="# Students",xlabel="Expected Graduation",
 		             title="Screenings by Location",colors=["green","red"],height=500,width=None,show_legend=True)
@@ -1121,7 +1121,7 @@ def survey_response_dashboard(survey_id):
 	      xanchor="right",
 	      x=1
 	     ))
-		#outdf["date"] = [datetime.datetime.strftime(a,"%D") for a in outdf["date"]]
+	    #outdf["date"] = [datetime.datetime.strftime(a,"%D") for a in outdf["date"]]
 		#fig1 = plotlyBarplot(data=outdf,x="date",y="total_registered",hue="year",stacked=True,width=None,height=400,
 		#                     title="Students Registered",ylabel="# Students",show_legend=True,xlabel="Date")
 		
@@ -1383,16 +1383,16 @@ def survey_response_student_dashboard():
 		        #not_completed = len(set(pts_yr.id).difference(slyr.index))
 		        outdf_location.append([i,l,total_reg[y],responded, completed, exited])
 
-		outdf_yr = pd.DataFrame(outdf_yr,columns=["date","year","total_registered","total_responded","Cleared","Sent Home"])
-		outdf_p = pd.DataFrame(outdf_program,columns=["date","program","total_registered","total_responded","Cleared","Sent Home"])
-		outdf_l = pd.DataFrame(outdf_location,columns=["date","location","total_registered","total_responded","Cleared","Sent Home"])
+		outdf_yr = pd.DataFrame(outdf_yr,columns=["date","year","total_registered","total_responded","Well","Sick"])
+		outdf_p = pd.DataFrame(outdf_program,columns=["date","program","total_registered","total_responded","Well","Sick"])
+		outdf_l = pd.DataFrame(outdf_location,columns=["date","location","total_registered","total_responded","Well","Sick"])
 		
 		outdf = outdf_yr
 		outdf.date = [i.date() for i in outdf.date]
 		begin_time = start_time
 		outdf = outdf[[i in pd.date_range(start_time, end_time) for i in outdf["date"]]]
 		df = df.tz_localize(None).reindex(pd.date_range(start_time, end_time)).fillna(0)
-		todaydf = outdf[outdf["date"]==end_time].loc[:,["year","Cleared","Sent Home"]].melt(id_vars="year")
+		todaydf = outdf[outdf["date"]==end_time].loc[:,["year","Well","Sick"]].melt(id_vars="year")
 
 		fig1 = plotlyBarplot(data=todaydf,x="year",y="value",hue="variable",stacked=True,ylabel="# Students",xlabel="Expected Graduation",
 		             title="Screenings by Year",colors=["green","red"],height=425,width=None,show_legend=True)
@@ -1408,7 +1408,7 @@ def survey_response_student_dashboard():
 		begin_time = start_time
 		outdf = outdf[[i in pd.date_range(start_time, end_time) for i in outdf["date"]]]
 		df = df.tz_localize(None).reindex(pd.date_range(start_time, end_time)).fillna(0)
-		todaydf = outdf[outdf["date"]==end_time].loc[:,["program","Cleared","Sent Home"]].melt(id_vars="program")
+		todaydf = outdf[outdf["date"]==end_time].loc[:,["program","Well","Sick"]].melt(id_vars="program")
 
 		fig2 = plotlyBarplot(data=todaydf,x="program",y="value",hue="variable",stacked=True,ylabel="# Students",xlabel="Expected Graduation",
 		             title="Screenings by Program",colors=["green","red"],height=500,width=None,show_legend=True)
@@ -1424,7 +1424,7 @@ def survey_response_student_dashboard():
 		begin_time = start_time
 		outdf = outdf[[i in pd.date_range(start_time, end_time) for i in outdf["date"]]]
 		df = df.tz_localize(None).reindex(pd.date_range(start_time, end_time)).fillna(0)
-		todaydf = outdf[outdf["date"]==end_time].loc[:,["location","Cleared","Sent Home"]].melt(id_vars="location")
+		todaydf = outdf[outdf["date"]==end_time].loc[:,["location","Well","Sick"]].melt(id_vars="location")
 
 		fig3 = plotlyBarplot(data=todaydf,x="location",y="value",hue="variable",stacked=True,ylabel="# Students",xlabel="Expected Graduation",
 		             title="Screenings by Location",colors=["green","red"],height=500,width=None,show_legend=True)
