@@ -931,8 +931,8 @@ def loading(survey_id):
 		dest_url += "end_date="+end_request
 	return render_template("loading.html",dest_url=dest_url)
 
-from pytz import timezone
-tz = timezone('EST')
+from pytz import timezone as pytztimezone
+tz = pytztimezone('EST')
 
 @app.route("/surveys/<int:survey_id>/responses/dashboard/loaded",methods=["GET"])
 @flask_login.login_required
