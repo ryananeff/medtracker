@@ -938,7 +938,10 @@ def make_cache_key(*args, **kwargs):
     path = request.path
     args = str(hash(frozenset(request.args.items())))
     responses = str(models.SurveyResponse.query.count())
-    return (path +args+responses).encode('utf-8')
+    if current_user.is_authenticated:
+    	return (path+args+responses+"user"+str(current_user.id)).encode('utf-8')
+    else:
+    	return (path +args+responses).encode('utf-8')
 
 @app.route("/surveys/<int:survey_id>/responses/dashboard/loaded",methods=["GET"])
 @cache.cached(timeout=None,key_prefix=make_cache_key)
