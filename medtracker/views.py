@@ -931,6 +931,9 @@ def loading(survey_id):
 		dest_url += "end_date="+end_request
 	return render_template("loading.html",dest_url=dest_url)
 
+from pytz import timezone
+tz = timezone('EST')
+
 @app.route("/surveys/<int:survey_id>/responses/dashboard/loaded",methods=["GET"])
 @flask_login.login_required
 def survey_response_dashboard(survey_id):
@@ -941,10 +944,10 @@ def survey_response_dashboard(survey_id):
 
 	try:
 	    start_time = (datetime.datetime.strptime(start_request,"%Y-%m-%d")).date() if start_request != None else (datetime.datetime.now()-datetime.timedelta(days=30)).date()
-	    end_time = (datetime.datetime.strptime(end_request,"%Y-%m-%d")).date() if end_request != None else (datetime.datetime.now()).date()
+	    end_time = (datetime.datetime.strptime(end_request,"%Y-%m-%d")).date() if end_request != None else (datetime.datetime.now(tz)).date()
 	except:
 	    start_time = (datetime.datetime.now()-datetime.timedelta(days=30)).date()
-	    end_time = (datetime.datetime.now()).date()
+	    end_time = (datetime.datetime.now(tz)).date()
 
 	survey = models.Survey.query.get_or_404(survey_id)
 
