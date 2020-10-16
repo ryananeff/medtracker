@@ -1081,7 +1081,7 @@ def survey_response_dashboard(survey_id):
 		todaydf = outdf[outdf["date"]==end_time].loc[:,["year","Well","Sick"]].melt(id_vars="year")
 
 		fig1 = plotlyBarplot(data=todaydf,x="year",y="value",hue="variable",stacked=True,ylabel="# Students",xlabel="Expected Graduation",
-		             title="Screenings by Year",colors=["green","red"],height=425,width=None,show_legend=True)
+		             title="Screenings by Year",colors=["red","green"],height=425,width=None,show_legend=True)
 		fig1.update_layout(legend=dict(
 	      orientation="h",
 	      yanchor="bottom",
@@ -1097,7 +1097,7 @@ def survey_response_dashboard(survey_id):
 		todaydf = outdf[outdf["date"]==end_time].loc[:,["program","Well","Sick"]].melt(id_vars="program")
 
 		fig2 = plotlyBarplot(data=todaydf,x="program",y="value",hue="variable",stacked=True,ylabel="# Students",xlabel="Expected Graduation",
-		             title="Screenings by Program",colors=["green","red"],height=500,width=None,show_legend=True)
+		             title="Screenings by Program",colors=["red","green"],height=500,width=None,show_legend=True)
 		fig2.update_layout(legend=dict(
 	      orientation="h",
 	      yanchor="bottom",
@@ -1113,7 +1113,7 @@ def survey_response_dashboard(survey_id):
 		todaydf = outdf[outdf["date"]==end_time].loc[:,["location","Well","Sick"]].melt(id_vars="location")
 
 		fig3 = plotlyBarplot(data=todaydf,x="location",y="value",hue="variable",stacked=True,ylabel="# Students",xlabel="Expected Graduation",
-		             title="Screenings by Location",colors=["green","red"],height=500,width=None,show_legend=True)
+		             title="Screenings by Location",colors=["red","green"],height=500,width=None,show_legend=True)
 		fig3.update_layout(legend=dict(
 	      orientation="h",
 	      yanchor="bottom",
@@ -1395,7 +1395,7 @@ def survey_response_student_dashboard():
 		todaydf = outdf[outdf["date"]==end_time].loc[:,["year","Well","Sick"]].melt(id_vars="year")
 
 		fig1 = plotlyBarplot(data=todaydf,x="year",y="value",hue="variable",stacked=True,ylabel="# Students",xlabel="Expected Graduation",
-		             title="Screenings by Year",colors=["green","red"],height=425,width=None,show_legend=True)
+		             title="Screenings by Year",colors=["red","green"],height=425,width=None,show_legend=True)
 		fig1.update_layout(legend=dict(
 	      orientation="h",
 	      yanchor="bottom",
@@ -1411,7 +1411,7 @@ def survey_response_student_dashboard():
 		todaydf = outdf[outdf["date"]==end_time].loc[:,["program","Well","Sick"]].melt(id_vars="program")
 
 		fig2 = plotlyBarplot(data=todaydf,x="program",y="value",hue="variable",stacked=True,ylabel="# Students",xlabel="Expected Graduation",
-		             title="Screenings by Program",colors=["green","red"],height=500,width=None,show_legend=True)
+		             title="Screenings by Program",colors=["red","green"],height=500,width=None,show_legend=True)
 		fig2.update_layout(legend=dict(
 	      orientation="h",
 	      yanchor="bottom",
@@ -1427,7 +1427,7 @@ def survey_response_student_dashboard():
 		todaydf = outdf[outdf["date"]==end_time].loc[:,["location","Well","Sick"]].melt(id_vars="location")
 
 		fig3 = plotlyBarplot(data=todaydf,x="location",y="value",hue="variable",stacked=True,ylabel="# Students",xlabel="Expected Graduation",
-		             title="Screenings by Location",colors=["green","red"],height=500,width=None,show_legend=True)
+		             title="Screenings by Location",colors=["red","green"],height=500,width=None,show_legend=True)
 		fig3.update_layout(legend=dict(
 	      orientation="h",
 	      yanchor="bottom",
