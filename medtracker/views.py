@@ -1153,57 +1153,67 @@ def survey_response_dashboard(survey_id):
 		today_pct = list(df["daily_pct"])[-1]
 		week_count = list(df["total_completed_surveys"])[-1]
 		week_pct = sum(list(df["daily_total_surveys"]))/sum(list(df["total_registered_students"]))*100
+		patient_count = list(df["total_registered_students"])[-1]
+
+		special_figs = []
+		last7_figs = []
+		from scipy import signal
+		def pos_plot(df,width=None,height=400):
+		    layout = go.Layout(
+		                autosize=True,
+		                width=width,
+		                height=height,
+		            title={'text': 'Percent Positivity Rate',
+		                    'y':0.9,
+		                    'x':0.5,
+		                    'xanchor': 'center',
+		                    'yanchor': 'top'}
+		            )
+		    fig = go.Figure(layout=layout)
+		    fig.add_trace(go.Scatter(x=df["index"], y=df["positivity_rate"],line_shape='hv',name="Values"))
+		    try:
+		        fig.add_trace(go.Scatter(x=df["index"], y=signal.savgol_filter(df["positivity_rate"],7,1),line_shape='spline',
+		                                name="Average (7 days)"))
+		    except ValueError as err:
+		        pass
+		    fig.update_layout( xaxis_title='Date',
+		                       yaxis_title='Positivity Rate %')
+		    fig.update_layout(legend=dict(
+		      orientation="h",
+		      yanchor="bottom",
+		      y=1.02,
+		      xanchor="right",
+		      x=1
+		     ))
+		    return fig
+		special_figs.append(pos_plot(df))
+		fig = plotlyBarplot(data=df3,x="index",y="value",hue="variable",width=None, height=400, 
+			                     title="Compliance History",stacked=True,show_legend=True,colors=["green","red"],
+			                     ylabel="# Students",xlabel="Date")
+		fig.update_layout(legend=dict(
+		      orientation="h",
+		      yanchor="bottom",
+		      y=1.02,
+		      xanchor="right",
+		      x=1
+		     ))
+		special_figs.append(fig)
 
 	else:
 		dash_figs = []
+		special_figs = []
+		last7_figs = []
 		today_count = 0
 		today_pct = 0
 		week_count = 0
 		week_pct = 0
+		patient_count = 0
+		today_positive = 0
+		today_negative = 0
+		today_pct_pos = 0
 
-	patient_count = list(df["total_registered_students"])[-1]
 	#device_count = len(devices)
-
-	special_figs = []
-	last7_figs = []
-	from scipy import signal
-	def pos_plot(df,width=None,height=400):
-	    layout = go.Layout(
-	                autosize=True,
-	                width=width,
-	                height=height,
-	            title={'text': 'Percent Positivity Rate',
-	                    'y':0.9,
-	                    'x':0.5,
-	                    'xanchor': 'center',
-	                    'yanchor': 'top'}
-	            )
-	    fig = go.Figure(layout=layout)
-	    fig.add_trace(go.Scatter(x=df["index"], y=df["positivity_rate"],line_shape='hv',name="Values"))
-	    fig.add_trace(go.Scatter(x=df["index"], y=signal.savgol_filter(df["positivity_rate"],7,1),line_shape='spline',
-	                            name="Average (7 days)"))
-	    fig.update_layout( xaxis_title='Date',
-	                       yaxis_title='Positivity Rate %')
-	    fig.update_layout(legend=dict(
-	      orientation="h",
-	      yanchor="bottom",
-	      y=1.02,
-	      xanchor="right",
-	      x=1
-	     ))
-	    return fig
-	special_figs.append(pos_plot(df))
-	fig = plotlyBarplot(data=df3,x="index",y="value",hue="variable",width=None, height=400, 
-		                     title="Compliance History",stacked=True,show_legend=True,colors=["green","red"],
-		                     ylabel="# Students",xlabel="Date")
-	fig.update_layout(legend=dict(
-	      orientation="h",
-	      yanchor="bottom",
-	      y=1.02,
-	      xanchor="right",
-	      x=1
-	     ))
-	special_figs.append(fig)
+	
 	qres = pd.DataFrame(responses_last7)
 	
 	if len(qres)>0:
@@ -1354,59 +1364,69 @@ def survey_response_student_dashboard():
 		week_count = list(df["total_completed_surveys"])[-1]
 		week_pct = sum(list(df["daily_total_surveys"]))/sum(list(df["total_registered_students"]))*100
 
+		patient_count = list(df["total_registered_students"])[-1]
+		#device_count = len(devices)
+
+		special_figs = []
+		last7_figs = []
+		from scipy import signal
+		def pos_plot(df,width=None,height=400):
+		    layout = go.Layout(
+		                autosize=True,
+		                width=width,
+		                height=height,
+		            title={'text': 'Percent Positive Screenings',
+		                    'y':0.9,
+		                    'x':0.5,
+		                    'xanchor': 'center',
+		                    'yanchor': 'top'}
+		            )
+		    fig = go.Figure(layout=layout)
+		    fig.add_trace(go.Scatter(x=df["index"], y=df["positivity_rate"],line_shape='hv',name="Values"))
+		    try:
+		        fig.add_trace(go.Scatter(x=df["index"], y=signal.savgol_filter(df["positivity_rate"],7,1),line_shape='spline',
+		                                name="Average (7 days)"))
+		    except ValueError as err:
+		        pass
+		    fig.update_layout( xaxis_title='Date',
+		                       yaxis_title='Positivity Rate %')
+		    fig.update_layout(legend=dict(
+		      orientation="h",
+		      yanchor="bottom",
+		      y=1.02,
+		      xanchor="right",
+		      x=1
+		     ))
+		    return fig
+		special_figs.append(pos_plot(df))
+		fig = plotlyBarplot(data=df3,x="index",y="value",hue="variable",width=None, height=400, 
+			                     title="Compliance History",stacked=True,show_legend=True,colors=["green","red"],
+			                     ylabel="# Students",xlabel="Date")
+		fig.update_layout(legend=dict(
+		      orientation="h",
+		      yanchor="bottom",
+		      y=1.02,
+		      xanchor="right",
+		      x=1
+		     ))
+		special_figs.append(fig)
+		
+		for ix,fig in enumerate(special_figs):
+			special_figs[ix] = offline.plot(fig,show_link=False, output_type="div", include_plotlyjs=False)
+
+
 	else:
 		dash_figs = []
+		special_figs = []
+		last7_figs = []
 		today_count = 0
 		today_pct = 0
 		week_count = 0
 		week_pct = 0
-
-	patient_count = list(df["total_registered_students"])[-1]
-	#device_count = len(devices)
-
-	special_figs = []
-	last7_figs = []
-	from scipy import signal
-	def pos_plot(df,width=None,height=400):
-	    layout = go.Layout(
-	                autosize=True,
-	                width=width,
-	                height=height,
-	            title={'text': 'Percent Positive Screenings',
-	                    'y':0.9,
-	                    'x':0.5,
-	                    'xanchor': 'center',
-	                    'yanchor': 'top'}
-	            )
-	    fig = go.Figure(layout=layout)
-	    fig.add_trace(go.Scatter(x=df["index"], y=df["positivity_rate"],line_shape='hv',name="Values"))
-	    fig.add_trace(go.Scatter(x=df["index"], y=signal.savgol_filter(df["positivity_rate"],7,1),line_shape='spline',
-	                            name="Average (7 days)"))
-	    fig.update_layout( xaxis_title='Date',
-	                       yaxis_title='Positivity Rate %')
-	    fig.update_layout(legend=dict(
-	      orientation="h",
-	      yanchor="bottom",
-	      y=1.02,
-	      xanchor="right",
-	      x=1
-	     ))
-	    return fig
-	special_figs.append(pos_plot(df))
-	fig = plotlyBarplot(data=df3,x="index",y="value",hue="variable",width=None, height=400, 
-		                     title="Compliance History",stacked=True,show_legend=True,colors=["green","red"],
-		                     ylabel="# Students",xlabel="Date")
-	fig.update_layout(legend=dict(
-	      orientation="h",
-	      yanchor="bottom",
-	      y=1.02,
-	      xanchor="right",
-	      x=1
-	     ))
-	special_figs.append(fig)
-	
-	for ix,fig in enumerate(special_figs):
-		special_figs[ix] = offline.plot(fig,show_link=False, output_type="div", include_plotlyjs=False)
+		patient_count = 0
+		today_positive = 0
+		today_negative = 0
+		today_pct_pos = 0
 
 	start_time = datetime.datetime.strftime(start_time,"%Y-%m-%d")
 	end_time = datetime.datetime.strftime(end_time,"%Y-%m-%d")
