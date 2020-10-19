@@ -17,6 +17,7 @@ import plotly.graph_objects as go
 import ast
 from collections import defaultdict
 from datetime import timezone
+import time
 from sqlalchemy import or_
 
 from pytz import timezone as pytztimezone
@@ -959,11 +960,16 @@ def survey_response_dashboard(survey_id):
 	    start_time = (datetime.datetime.now()-datetime.timedelta(days=30)).date()
 	    end_time = (datetime.datetime.now(tz)).date()
 
+	time_end = end_time.timetuple()
+	time_start = start_time.timetuple()
+	time_end = datetime.datetime.fromtimestamp(time.mktime(time_end)).replace(tzinfo=pytztimezone('EST')).astimezone(pytztimezone("UTC"))
+	time_start = datetime.datetime.fromtimestamp(time.mktime(time_start)).replace(tzinfo=pytztimezone('EST')).astimezone(pytztimezone("UTC"))
+
 	survey = models.Survey.query.get_or_404(survey_id)
 
 	pres = db.session.query(models.SurveyResponse).join(models.Patient)\
-	        .filter(models.SurveyResponse.start_time > start_time)\
-	        .filter(models.SurveyResponse.start_time <= (end_time+datetime.timedelta(days=1)))\
+	        .filter(models.SurveyResponse.start_time > time_start)\
+	        .filter(models.SurveyResponse.start_time <= (time_end+datetime.timedelta(days=1)))\
 	                .all()
 
 	def pt_to_pd():
@@ -982,12 +988,12 @@ def survey_response_dashboard(survey_id):
 	    sres.append(row)
 
 	responses = []
-	sr = survey.responses.filter(models.SurveyResponse.start_time <= (end_time+datetime.timedelta(days=1))).filter(models.SurveyResponse.start_time >= end_time)
+	sr = survey.responses.filter(models.SurveyResponse.start_time <= (time_end+datetime.timedelta(days=1))).filter(models.SurveyResponse.start_time >= time_end)
 	for sre in sr.all(): responses.extend([r.to_dict() for r in sre.responses])
 	sig_r = []
 	for sre in sr.filter(models.SurveyResponse.exited==True).all(): sig_r.extend([sre.patient])
 	responses_last7 = responses
-	sr = survey.responses.filter(models.SurveyResponse.start_time > start_time).filter(models.SurveyResponse.start_time <= end_time)
+	sr = survey.responses.filter(models.SurveyResponse.start_time > time_start).filter(models.SurveyResponse.start_time <= time_end)
 	for sre in sr.all(): responses_last7.extend([r.to_dict() for r in sre.responses])
 
 	if len(sres)>0:
@@ -995,7 +1001,7 @@ def survey_response_dashboard(survey_id):
 		sres.end_time = sres.end_time.dt.tz_localize('UTC').dt.tz_convert('US/Eastern')
 		sres.start_time = sres.start_time.dt.tz_localize('UTC').dt.tz_convert('US/Eastern')
 		sres["date"] = sres.start_time.dt.floor('d')
-		sres = sres.groupby(["date","patient_id"]).last()
+		sres = sres.groupby(["date","patient_id","completed","exited"]).last()
 		
 		sres = sres.reset_index()
 
@@ -1283,11 +1289,16 @@ def survey_response_student_dashboard():
 	    start_time = (datetime.datetime.now()-datetime.timedelta(days=30)).date()
 	    end_time = (datetime.datetime.now(tz)).date()
 
+	time_end = end_time.timetuple()
+	time_start = start_time.timetuple()
+	time_end = datetime.datetime.fromtimestamp(time.mktime(time_end)).replace(tzinfo=pytztimezone('EST')).astimezone(pytztimezone("UTC"))
+	time_start = datetime.datetime.fromtimestamp(time.mktime(time_start)).replace(tzinfo=pytztimezone('EST')).astimezone(pytztimezone("UTC"))
+
 	survey = models.Survey.query.get_or_404(survey_id)
 
 	pres = db.session.query(models.SurveyResponse).join(models.Patient)\
-	        .filter(models.SurveyResponse.start_time > start_time)\
-	        .filter(models.SurveyResponse.start_time <= (end_time+datetime.timedelta(days=1)))\
+	        .filter(models.SurveyResponse.start_time > time_start)\
+	        .filter(models.SurveyResponse.start_time <= (time_end+datetime.timedelta(days=1)))\
 	                .all()
 
 	def pt_to_pd():
@@ -1310,7 +1321,7 @@ def survey_response_student_dashboard():
 		sres.end_time = sres.end_time.dt.tz_localize('UTC').dt.tz_convert('US/Eastern')
 		sres.start_time = sres.start_time.dt.tz_localize('UTC').dt.tz_convert('US/Eastern')
 		sres["date"] = sres.start_time.dt.floor('d')
-		sres = sres.groupby(["date","patient_id"]).last()
+		sres = sres.groupby(["date","patient_id","completed","exited"]).last()
 		
 		sres = sres.reset_index()
 
