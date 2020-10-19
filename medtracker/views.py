@@ -1178,8 +1178,8 @@ def survey_response_dashboard(survey_id):
 		    fig = go.Figure(layout=layout)
 		    fig.add_trace(go.Scatter(x=df["index"], y=df["positivity_rate"],line_shape='hv',name="Values"))
 		    try:
-		        fig.add_trace(go.Scatter(x=df["index"], y=signal.savgol_filter(df["positivity_rate"],7,1),line_shape='spline',
-		                                name="Average (7 days)"))
+		    	fig.add_trace(go.Scatter(x=df["index"], y=df["positivity_rate"].rolling(window=7,min_periods=1).mean(),line_shape='spline',
+		                            name="Average (7 days)"))
 		    except ValueError as err:
 		        pass
 		    fig.update_layout( xaxis_title='Date',
@@ -1274,7 +1274,7 @@ def survey_response_dashboard(survey_id):
 	                       today_pct_pos=today_pct_pos, patients = sig_r,special_figs=special_figs)
 
 @app.route("/covid/dashboard",methods=["GET"])
-@cache.cached(timeout=None,key_prefix=make_cache_key)
+#@cache.cached(timeout=None,key_prefix=make_cache_key)
 def survey_response_student_dashboard():
 	survey_id = 1
 	start_request = request.values.get("start_date","2020-06-29")
@@ -1395,8 +1395,8 @@ def survey_response_student_dashboard():
 		    fig = go.Figure(layout=layout)
 		    fig.add_trace(go.Scatter(x=df["index"], y=df["positivity_rate"],line_shape='hv',name="Values"))
 		    try:
-		        fig.add_trace(go.Scatter(x=df["index"], y=signal.savgol_filter(df["positivity_rate"],7,1),line_shape='spline',
-		                                name="Average (7 days)"))
+		    	fig.add_trace(go.Scatter(x=df["index"], y=df["positivity_rate"].rolling(window=7,min_periods=1).mean(),line_shape='spline',
+		                            name="Average (7 days)"))
 		    except ValueError as err:
 		        pass
 		    fig.update_layout( xaxis_title='Date',
