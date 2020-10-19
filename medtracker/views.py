@@ -1153,7 +1153,7 @@ def survey_response_dashboard(survey_id):
 		today_pct = list(df["daily_pct"])[-1]
 		week_count = list(df["total_completed_surveys"])[-1]
 		week_pct = sum(list(df["daily_total_surveys"]))/sum(list(df["total_registered_students"]))*100
-		patient_count = list(df["total_registered_students"])[-1]
+		patient_count = sum(list(df["daily_registered_students"]))
 
 		special_figs = []
 		last7_figs = []
@@ -1364,7 +1364,7 @@ def survey_response_student_dashboard():
 		week_count = list(df["total_completed_surveys"])[-1]
 		week_pct = sum(list(df["daily_total_surveys"]))/sum(list(df["total_registered_students"]))*100
 
-		patient_count = list(df["total_registered_students"])[-1]
+		patient_count = sum(list(df["daily_registered_students"]))
 		#device_count = len(devices)
 
 		special_figs = []
