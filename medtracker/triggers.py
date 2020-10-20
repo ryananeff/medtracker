@@ -23,6 +23,69 @@ def redirect_url():
            request.referrer or \
            url_for('index')
 
+def replace_message(message, response):
+	split_message = re.split('(<.+?>)',message)
+	respondent = Patient.query.get(response.uniq_id) # current respondent
+	question = response.question
+	survey = question.survey
+	session_id = response.session_id
+	for ix,i in enumerate(split_message):
+		tag = re.findall('<(.+?)>',i) # look for tags we need to replace
+		if tag != []:
+			tag_fields = tag[0].split("|")
+			tag = tag_fields[1].strip() # so we can include descriptions
+			conditions = tag_fields[2].strip() if len(tag_fields)>=3 else False
+			encode = True if len(tag_fields)==4 else False
+			split_tag = tag.split(".")
+			if len(split_tag) == 2: # db type is the resource type (question, trigger, callback, etc.)
+				db_type, db_id = split_tag
+			if db_type.lower() == 'question':
+				result = QuestionResponse.query.filter_by(question_id=int(db_id), 
+				                                          uniq_id=response.uniq_id, 
+				                                          session_id=session_id).first()
+				if result != None:
+					split_message[ix] = result._response
+				else:
+					split_message[ix] = "" # when there's nothing there
+			if db_type.lower() == "patient":
+				try:
+					split_message[ix] = str(respondent.to_dict()[db_id])
+				except:
+					split_message[ix] = ""
+			if conditions:
+				condition_compare = conditions.split(":")[0]
+				condition_value = conditions.split(":")[1] if len(conditions.split(":"))>1 else None
+				comparators = ["==","!=","contains","does not contain","lt","le","gt","ge","split"]
+				comparator = [c for c in comparators if c in conditions]
+				comparator = comparator[0] if len(comparator)>0 else None
+				if condition_value!=None:
+					if comparator=="==":
+						split_message[ix] = int(split_message[ix]==condition_value)
+					if comparator=="!=":
+						split_message[ix] = int(split_message[ix]!=condition_value)
+					if comparator=="contains":
+						split_message[ix] = int(condition_value in split_message[ix])
+					if comparator=="does not contain":
+						split_message[ix] = int(condition_value not in split_message[ix])
+					if comparator=="lt":
+						split_message[ix] = int(split_message[ix] < condition_value)
+					if comparator=="le":
+						split_message[ix] = int(split_message[ix] <= condition_value)
+					if comparator=="gt":
+						split_message[ix] = int(split_message[ix] > condition_value)
+					if comparator=="ge":
+						split_message[ix] = int(split_message[ix] >= condition_value)
+					if comparator=="split":
+						delim = condition_value
+						fieldnum = int(conditions.split(":")[2]) if len(conditions.split(":"))>2 else 0
+						split_message[ix] = split_message[ix].split(delim)[fieldnum] if len(split_message[ix].split(delim))>fieldnum else ""
+					split_message[ix] = str(split_message[ix])
+			if encode:
+				split_message[ix] = str(urllib.parse.quote(bytes(split_message[ix])))
+	message = "".join(split_message)
+	return message
+
+
 def run_trigger(question, response, from_type = None, session_id = None, current_user = None):
 	'''return: next_question, next_survey, exit, complete, message'''
 	next_q = question.next_q
@@ -104,12 +167,12 @@ def run_trigger(question, response, from_type = None, session_id = None, current
 			if trigger_master_state: #if true
 				trigger_type = trigger.yes_type
 				next_question = trigger.dest_yes
-				message = trigger.payload_yes
+				message = replace_message(trigger.payload_yes,response)
 				alerted=trigger.alert_yes
 			else: #if false
 				trigger_type = trigger.no_type
 				next_question = trigger.dest_no
-				message = trigger.payload_no
+				message = replace_message(trigger.payload_no,response)
 				alerted=trigger.alert_no
 			if trigger_type=="complete":
 				'''return: next_question, next_survey, exit, complete, message'''
@@ -136,7 +199,7 @@ def run_trigger(question, response, from_type = None, session_id = None, current
 def phone_trigger(message, recipients, callback=None):
 	'''send a trigger message at a certain time'''
 	for r in recipients.split(";"):
-		call = client.calls.create(url="https://suretify.co/triggers/phone?m=" + urllib.quote(message),
+		call = client.calls.create(url="https://ismmshealthcheck.com/triggers/phone?m=" + urllib.quote(message),
 		to = r,
 		from_ = twilio_number,
 		)
@@ -268,7 +331,7 @@ def increment_iterator(task):
 
 def email_trigger(message, recipients, callback=None):
 	for r in recipients.split(";"):
-		subject = "Request for information from Suretify"
+		subject = "Request for information from ISMMS Student Health Check"
 		with app.app_context():
 			html = render_template(
 	            'trigger_email.html',
@@ -286,10 +349,18 @@ def url_trigger(message, recipients, callback):
 def autocomplete_choices():
 	surveys = current_user.surveys
 	possible = []
+
 	for survey in surveys:
-		possible.append({"name": "survey." + str(survey.id), "content":survey.title})
 		for ix, question in enumerate(survey._questions):
 			possible.append({"name":"question." + str(question.id), "content":question.body})
+	possible.extend([{"name":"patient.fullname", "content":"Respondent Name"},
+				{"name":"patient.age", "content":"Respondent Age"},
+				{"name":"patient.phone","content":"Respondent Phone"},
+				{"name":"patient.email","content":"Respondent E-mail"},
+				{"name":"patient.location","content":"Respondent Location"},
+				{"name":"patient.program","content":"Respondent Program"},
+				{"name":"patient.year","content":"Respondent Year in Program"},
+				{"name":"patient.mrn","content":"Respondent Device ID"}])
 	return json.dumps(possible)
 
 @app.route("/prod/<prod_type>/<int:patient_id>", methods=["GET", "POST"])
@@ -313,13 +384,13 @@ def prod_patient(prod_type, patient_id):
 			except:
 				return "Error sending SMS prod.", 500
 		elif prod_type == "voice":
-			call = client.calls.create(url="https://suretify.co/triggers/voice?say_hello=1",
+			call = client.calls.create(url="https://ismmshealthcheck.com/triggers/voice?say_hello=1",
 			to = recipients,
 			from_ = twilio_number,
 			)
 		elif prod_type == "email":
 			questions = [i.id for i in Survey.query.get_or_404(last_task.task).questions]
-			url = "https://suretify.co/surveys/serve/%s?question=%s&u=%s" % last_task.task, questions[last_task.iterator], last_task.parent_id
+			url = "https://ismmshealthcheck.com/surveys/serve/%s?question=%s&u=%s" % last_task.task, questions[last_task.iterator], last_task.parent_id
 			message = "Please continue the following survey at this link: %s" % url
 			email_trigger(message, recipients, None)
 		elif prod_type == "clear":
@@ -355,7 +426,7 @@ def send_survey(method_type,patient_id, survey_id):
 	elif method_type == 'email':
 		#TODO - need to generate the URL to send out
 		try:
-			url = "https://suretify.co" + url_for('start_survey', survey_id = survey.id) + "?u=%s" % patient.id
+			url = "https://ismmshealthcheck.com" + url_for('start_survey', survey_id = survey.id) + "?u=%s" % patient.id
 			message = "Please complete the following survey at this link: %s" % url
 			task = Progress(
 				user = patient.email, 
