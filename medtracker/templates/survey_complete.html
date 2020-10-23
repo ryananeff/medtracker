@@ -3,7 +3,7 @@
 {% block body %}
 		<div id="redcap_fmt" style="display:none">
 	    <div class="page-header">
-		    <h3>Thank you for completing the Mount Sinai Student Health System student self-monitoring assessment</h3>
+		    <h3>Thank you for completing the Mount Sinai Health System student self-monitoring assessment</h3>
 	    </div>
 	    <div class="jumbotron survey-question" style="background-color: rgb(243,243,243);">
 	    <div class="container">
@@ -37,7 +37,7 @@
 		    </div>
 	    </div><!-- /.container -->
 	</div>
-	<button class="btn btn-sm btn-success" onclick="toggleRedcap()">Use original style</button>
+	<button class="btn btn-md btn-success" onclick="toggleRedcap()">Use original style</button>
 </div>
 	<div id="shc_fmt">
 		<div class="page-header">
@@ -48,14 +48,14 @@
 	    	<div class="col-lg-2"></div>
 	    	<div class="col-lg-8">
 	    	{%if record.message %}<h2 style="color:green;background-color:inherit;">{{record.message}}</h2>{% endif%}
+	    	<button class="btn btn-md btn-success" onclick="toggleRedcap()"><strong>Use RedCap style</strong></button>
 	    	<p><small>Your answers have been recorded successfully. Please screenshot or print out this page for your records. You can also bookmark this page on this device to refer to it later.</small></p>
 	    	<p>Device ID: <strong>{{ fmt_id(patient.mrn) }}</strong></p>
 	    	<p>Completion Date: <strong>{{ momentjs(record.end_time).format('MMMM Do YYYY, h:mm a') }}</strong></p>
 	    	{% if qrcode_out %}
 	    	<p>QR Code:</p><p><img src="{{qrcode_out|safe}}" style="max-width:100%"></p>
 	    	{% endif %}
-	    	<p><a type="button" class="btn btn-sm btn-primary" href="{{url_for('view_patient_self',survey_id=survey.id)}}">See your records</a>
-	    		<button class="btn btn-sm btn-success" onclick="toggleRedcap()"><strong>Use RedCap style</strong></button>
+	    	<p><button class="btn btn-md btn-success" onclick="toggleRedcap()"><strong>Use RedCap style</strong></button>
 	    	</p>
 		    </div>
 	    </div><!-- /.container -->
