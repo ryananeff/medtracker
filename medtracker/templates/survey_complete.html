@@ -1,43 +1,42 @@
 {% extends "layout.html" %}
 {% block title %}Completed: {{survey.title}} | ISMMS Health Check{% endblock %}
 {% block body %}
-		<div id="redcap_fmt" style="display:none">
+		<div id="redcap_fmt" style="display:none;margin-left:-15px;margin-right:-15px;">
 	    <div class="page-header">
 		    <h3>Thank you for completing the Mount Sinai Health System student self-monitoring assessment</h3>
 	    </div>
 	    <div class="jumbotron survey-question" style="background-color: rgb(243,243,243);padding-left:0px;padding-right:0px;">
-	    <div class="container">
-	    	<div class="col-lg-2"></div>
-	    	<div class="col-lg-8">
           <style>
-            h2{
+          	@font-face{
+          		font-family:redcap-font;
+          		src: url(/assets/fonts/OpenSans.woff);
+          	}
+            .redcap{
               color: white;
               background-color: #339966;
               margin-top:1px;
               margin-bottom:0px;
-              font-family: "Open Sans", Helvetica, Arial, sans-serif;
-              font-size:24px;
+              font-family: redcap-font, Helvetica, Arial, sans-serif;
+              font-size:32px;
             }</style>
-			<h2>**********************************</h2>
-			    	<h2>COVID-19 ATTESTATION</h2>
-			    	<h2>Cleared for: <br>
+			<span class="redcap">*********************</span><br>
+			    	<span class="redcap">COVID-19 ATTESTATION</span><br>
+			    	<span class="redcap">Cleared for: <br>
 			    		{{ momentjs(record.end_time).format('MM/DD/YYYY h:mma') }}
-			    	</h2>
-					<h2>Student:<br> 
+			    	</span><br>
+					<span class="redcap">Student:<br> 
 						{{patient.fullname}}
-					</h2>
-		    		<h2>Mount Sinai Student Health ID:<br>
+					</span><br>
+		    		<span class="redcap">Mount Sinai Student Health ID:<br>
 		    			{{ fmt_id(patient.mrn) }}
-		    		</h2>
-    		<h2>**********************************</h2>
+		    		</span><br>
+    		<span class="redcap">*********************</span><br>
 	    	{% if qrcode_out %}
-	    	<h2>QR Code:<br>
+	    	<span class="redcap">QR Code:<br>
 	    		<img src="{{qrcode_out|safe}}" style="max-width:100%">
-	    	</h2>
+	    	</span>
 	    	{% endif %}
-		    </div>
 	    </div><!-- /.container -->
-	</div>
 	<button class="btn btn-md btn-success" onclick="toggleRedcap()">Use original style</button>
 </div>
 	<div id="shc_fmt">
