@@ -5,7 +5,7 @@
 	    <div class="page-header">
 		    <h3>Thank you for completing the Mount Sinai Health System student self-monitoring assessment</h3>
 	    </div>
-	    <div class="jumbotron survey-question" style="background-color: rgb(243,243,243);">
+	    <div class="jumbotron survey-question" style="background-color: rgb(243,243,243);padding-left:0px;padding-right:0px;">
 	    <div class="container">
 	    	<div class="col-lg-2"></div>
 	    	<div class="col-lg-8">
@@ -16,6 +16,7 @@
               margin-top:1px;
               margin-bottom:0px;
               font-family: "Open Sans", Helvetica, Arial, sans-serif;
+              font-size:24px;
             }</style>
 			<h2>**********************************</h2>
 			    	<h2>COVID-19 ATTESTATION</h2>
@@ -23,7 +24,7 @@
 			    		{{ momentjs(record.end_time).format('MM/DD/YYYY h:mma') }}
 			    	</h2>
 					<h2>Student:<br> 
-						{{patient.fullname}} 
+						{{patient.fullname}}
 					</h2>
 		    		<h2>Mount Sinai Student Health ID:<br>
 		    			{{ fmt_id(patient.mrn) }}
