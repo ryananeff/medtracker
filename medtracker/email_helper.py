@@ -7,7 +7,7 @@ from email.mime.text import MIMEText
 
 def send_email(address, subject, html):
 	'''send an email'''
-	from_email = "info@suretify.co"
+	from_email = config.mail_server_sender
 	msg = Message(sender=from_email)
 	msg.sender  = from_email
 	msg.recipients = [address]

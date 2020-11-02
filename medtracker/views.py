@@ -216,9 +216,9 @@ def reset_password_with_token(token):
 def send_reset_email(user, app=app):
 	'''send an email to reset the user's password'''
 	# look for configuration variables in params.conf file...
-	msg = Message(sender="ryan.neff@icahn.mssm.edu")
+	msg = Message(sender=config.mail_server_sender)
 	msg.subject = "ISMMS Student Health Check Password Reset Request"		
-	msg.sender  = "ryan.neff@icahn.mssm.edu"
+	msg.sender  = config.mail_server_sender
 	msg.recipients = [user.email]
 	user.reset_token = randomword(24)
 	with app.app_context():
@@ -228,8 +228,6 @@ def send_reset_email(user, app=app):
 	db.session.add(user)
 	db.session.commit()
 	return None
-
-#### index pages
 
 @app.route("/", methods=['GET'])
 @app.route("/index.html", methods=['GET'])
