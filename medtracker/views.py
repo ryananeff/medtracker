@@ -252,9 +252,6 @@ def serve_survey_index():
 		except:
 			s.description_html = '<p>' + s.description + '</p>'
 		surveys.append(s)
-	for s in surveys:
-		print(s)
-		print(s.description_html)
 	return render_template("surveys.html",
 	                        surveys = surveys)
 
@@ -381,7 +378,7 @@ def serve_survey(survey_id):
 		survey_response = SurveyResponse.query.get_or_404(survey_response_id)
 	formobj = QuestionView().get(question)
 	if (request.method == 'POST') & (len(request.form.getlist("response"))!=0):
-		print("saving...")
+		#print("saving...")
 		next_question, next_survey, exit, complete, message = save_response(request.form, question_id, session_id = sess, survey_response_id = survey_response.id)
 		if next_question != None:
 			return redirect(url_for("serve_survey",survey_id=survey.id,u=uniq_id,s=sess,sr=survey_response_id,question=next_question))
@@ -401,11 +398,11 @@ def serve_survey(survey_id):
 			return redirect(url_for("complete_survey", session_id=survey_response.session_id))
 		return redirect(url_for('serve_survey', survey_id=survey_id, question=next_question, u=uniq_id, s=sess, sr = survey_response.id))
 	else:
-		print(request.form.getlist("response"))
-		print(len(request.form.getlist("response")))
-		print(request.method)
+		#print(request.form.getlist("response"))
+		#print(len(request.form.getlist("response")))
+		#print(request.method)
 		if (request.method == 'POST') & (len(request.form.getlist("response"))==0):
-			print("failed!!")
+			#print("failed!!")
 			flash("Please select a response")
 		try:
 			question.description_html = delta_html.render(json.loads(question.description)["ops"])
@@ -489,7 +486,7 @@ def complete_survey(session_id):
 		return abort(401,"Your device appears to be unregistered. Only registered devices can view completion records.")
 
 def save_response(formdata, question_id, session_id=None, current_user = None, survey_response_id = None):
-	print(formdata.getlist("response"))
+	#print(formdata.getlist("response"))
 	question = Question.query.get_or_404(question_id)
 	survey_response = SurveyResponse.query.get_or_404(survey_response_id)
 	_response = QuestionResponse(
@@ -943,8 +940,8 @@ def make_cache_key(*args, **kwargs):
     	return (path +args+responses).encode('utf-8')
 
 @app.route("/surveys/<int:survey_id>/responses/dashboard/loaded",methods=["GET"])
-@cache.cached(timeout=None,key_prefix=make_cache_key)
 @flask_login.login_required
+@cache.cached(timeout=None,key_prefix=make_cache_key)
 def survey_response_dashboard(survey_id):
 	start_request = request.values.get("start_date","2020-06-29")
 	end_request = request.values.get("end_date",None)

@@ -1,5 +1,5 @@
 from flask import *
-from flask.ext.cache import Cache
+from flask_caching import Cache
 from requests.auth import HTTPBasicAuth
 import random, string, pytz, sys, random, urllib.parse, datetime, os
 from werkzeug.utils import secure_filename
