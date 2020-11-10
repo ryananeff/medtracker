@@ -41,7 +41,7 @@ jobs:
     
     - name: Install dependencies
       run: |
-        python -m pip install pipenv
+        python3 -m pip install pipenv
         pipenv install
 
     # Initializes the CodeQL tools for scanning.
