@@ -1,0 +1,12 @@
+{{record.survey.title}} Result
+--------------
+
+Please stay home on {{ record.end_time.strftime('%B %-d, %Y') }}.
+
+Follow your program requirements for reporting your absence. Schedule a tele-health 
+visit with your provider or Student Health should symptoms persist or if you have 
+further questions.
+
+
+-------------
+ISMMS Student Health Check

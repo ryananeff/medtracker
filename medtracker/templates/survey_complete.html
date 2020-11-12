@@ -1,11 +1,26 @@
 {% extends "layout.html" %}
 {% block title %}Completed: {{survey.title}} | ISMMS Health Check{% endblock %}
 {% block body %}
-		<div id="redcap_fmt" style="display:none;margin-left:-15px;margin-right:-15px;">
-	    <div class="page-header">
-		    <h3>Thank you for completing the Mount Sinai Health System student self-monitoring assessment</h3>
+	<div id="shc_fmt">
+		<div class="page-header">
+		    <h3>Thank you for taking the {{survey.title}}.</h3>
 	    </div>
-	    <div class="jumbotron survey-question" style="background-color: rgb(243,243,243);padding-left:0px;padding-right:0px;">
+	    <div class="jumbotron survey-question" style="background-color: #e0f3e8;">
+	    <div class="container">
+	    	<div class="col-lg-2"></div>
+	    	<div class="col-lg-8">
+	    	{%if record.message %}<h2 style="color:green;background-color:inherit;">{{record.message}}</h2>{% endif%}
+	    	<p><small>Your answers have been recorded successfully. Your attestation is shown below.</small></p>
+	    	<p><small>Device ID: <strong>{{ fmt_id(patient.mrn) }}</strong><small></p>
+	    	<p><small>Completion Date: <strong>{{ momentjs(record.end_time).format('MMMM Do YYYY, h:mm a') }}</strong><small></p>
+	    	{% if qrcode_out %}
+	    	<p>QR Code:</p><p><img src="{{qrcode_out|safe}}" style="max-width:100%"></p>
+	    	{% endif %}
+	    	<p><a type="button" class="btn btn-sm btn-primary" href="{{url_for('view_patient_self',survey_id=survey.id)}}">See your records</a></p>
+		    </div>
+	    </div><!-- /.container -->
+	</div>
+	<div class="jumbotron survey-question" style="background-color: rgb(243,243,243);padding-left:0px;padding-right:0px;margin-left:-15px;margin-right:-15px">
           <style>
           	@font-face{
           		font-family:redcap-font;
@@ -19,46 +34,21 @@
               font-family: redcap-font, Helvetica, Arial, sans-serif;
               font-size:32px;
             }</style>
-			<span class="redcap">*********************</span><br>
-			    	<span class="redcap">COVID-19 ATTESTATION</span><br>
-			    	<span class="redcap">Cleared for: <br>
-			    		{{ momentjs(record.end_time).format('MM/DD/YYYY h:mma') }}
-			    	</span><br>
-					<span class="redcap">Student:<br> 
-						{{patient.fullname}}
-					</span><br>
-		    		<span class="redcap">Mount Sinai Student Health ID:<br>
-		    			{{ fmt_id(patient.mrn) }}
-		    		</span><br>
-    		<span class="redcap">*********************</span><br>
-	    	{% if qrcode_out %}
-	    	<span class="redcap">QR Code:<br>
-	    		<img src="{{qrcode_out|safe}}" style="max-width:100%">
-	    	</span>
-	    	{% endif %}
+            <div style="max-width:500px; margin:0 auto">
+				<span class="redcap">*********************</span><br>
+				    	<span class="redcap">COVID-19 ATTESTATION</span><br>
+				    	<span class="redcap">Cleared for: <br>
+				    		{{ momentjs(record.end_time).format('MM/DD/YYYY h:mma') }}
+				    	</span><br>
+						<span class="redcap">Student:<br> 
+							{{patient.fullname}}
+						</span><br>
+						<span class="redcap">Life Number:<br> 
+							{{patient.lifenumber}}
+						</span><br>
+	    		<span class="redcap">*********************</span><br>
+    		</div>
 	    </div><!-- /.container -->
-	<button class="btn btn-md btn-success" onclick="toggleRedcap()">Use original style</button>
-</div>
-	<div id="shc_fmt">
-		<div class="page-header">
-		    <h3>Thank you for taking the {{survey.title}}.</h3>
-	    </div>
-	    <div class="jumbotron survey-question" style="background-color: #e0f3e8;">
-	    <div class="container">
-	    	<div class="col-lg-2"></div>
-	    	<div class="col-lg-8">
-	    	{%if record.message %}<h2 style="color:green;background-color:inherit;">{{record.message}}</h2>{% endif%}
-	    	<p><small>Your answers have been recorded successfully. Please screenshot or print out this page for your records. You can also bookmark this page on this device to refer to it later.</small></p>
-	    	<p><button class="btn btn-md btn-success" onclick="toggleRedcap()"><strong>Use RedCap style</strong></button></p>
-	    	<p>Device ID: <strong>{{ fmt_id(patient.mrn) }}</strong></p>
-	    	<p>Completion Date: <strong>{{ momentjs(record.end_time).format('MMMM Do YYYY, h:mm a') }}</strong></p>
-	    	{% if qrcode_out %}
-	    	<p>QR Code:</p><p><img src="{{qrcode_out|safe}}" style="max-width:100%"></p>
-	    	{% endif %}
-	    	<p><a type="button" class="btn btn-sm btn-primary" href="{{url_for('view_patient_self',survey_id=survey.id)}}">See your records</a></p>
-		    </div>
-	    </div><!-- /.container -->
-	</div>
 </div>
 	<script type="text/javascript">
 	function toggleRedcap() {

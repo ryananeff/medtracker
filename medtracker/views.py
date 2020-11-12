@@ -229,12 +229,46 @@ def send_reset_email(user, app=app):
 	db.session.commit()
 	return None
 
+def check_patient_identified(patient):
+	# Check that the person has filled out all the required fields
+	# Required: full name, email, life number
+	not_failed = True
+	if (len(patient.fullname) > 50)|(len(patient.fullname) < 3):
+		not_failed=False
+	email_regex = re.compile("(\S+(@icahn.mssm.edu|@mssm.edu|@mountsinai.org)$)")
+	if email_regex.match(str(patient.email))==None:
+		not_failed=False
+	lifenum_regex = re.compile("^(\d{7})$")
+	if lifenum_regex.match(str(patient.lifenumber))==None:
+		not_failed=False
+	return not_failed
+
+def send_survey_response_email(patient, record, app=app):
+	'''send an email to reset the user's password'''
+	# look for configuration variables in params.conf file...
+	msg = Message(sender=config.mail_server_sender)
+	msg.subject = record.survey.title + " taken on " + record.end_time.strftime('%B %-d, %Y')		
+	msg.sender  = config.mail_server_sender
+	msg.recipients = [patient.email]
+	record.end_time = record.end_time.replace(tzinfo=pytz.utc).astimezone(pytz.timezone('America/New_York'))
+	with app.app_context():
+		if record.completed:
+			msg.html = render_template('email_survey_complete.html', patient=patient,record=record)
+			msg.body = render_template('email_survey_complete.txt', patient=patient,record=record)
+		elif record.exited:
+			msg.html = render_template('email_survey_exit.html', patient=patient,record=record) #change me!
+			msg.body = render_template('email_survey_exit.txt', patient=patient,record=record) #change me!
+	mail.send(msg)
+	return None
+
 @app.route("/", methods=['GET'])
 @app.route("/index.html", methods=['GET'])
 def index():
 	g.patient = Patient.query.filter_by(mrn=g.patient_ident).first()
 	if g.patient == None:
 		flash("Your device appears to be unregistered. Please <a href='/patients/signup/1'>register</a> your device.")
+	if check_patient_identified(g.patient)==False:
+		flash("Due to changes at Student Health, please <a href='/patients/edit/self'>update</a> your records before continuing.")
 	return render_template("index.html")
 
 @app.route("/about", methods=["GET"])
@@ -334,6 +368,9 @@ def start_survey(survey_id):
 	'''TODO: need to select the patient which will be taking the survey. This will make this starting block a form.'''
 	if g.patient == None:
 		return redirect(url_for('patient_signup',survey_id=survey_id))
+	if check_patient_identified(g.patient) ==False:
+		flash("Please update your records before completing new screenings.")
+		return redirect(url_for('edit_patient_self',next=request.root_path))
 	session_id = randomword(32)
 	u = request.values.get('u', g.patient.id)
 	survey = Survey.query.get_or_404(survey_id)
@@ -389,12 +426,14 @@ def serve_survey(survey_id):
 			survey_response.message = message
 			db_session.add(survey_response)
 			db_session.commit()
+			send_survey_response_email(g.patient,survey_response)
 			return redirect(url_for("exit_survey", session_id=survey_response.session_id))
 		if complete: ##complete survey!
 			survey_response.complete()
 			survey_response.message = message
 			db_session.add(survey_response)
 			db_session.commit()
+			send_survey_response_email(g.patient,survey_response)
 			return redirect(url_for("complete_survey", session_id=survey_response.session_id))
 		return redirect(url_for('serve_survey', survey_id=survey_id, question=next_question, u=uniq_id, s=sess, sr = survey_response.id))
 	else:
@@ -667,7 +706,10 @@ def edit_patient_self():
 		flash('Successfully updated my records.')
 		db_session.add(patient)
 		db_session.commit()
-		return redirect(url_for('view_patient_self'))
+		if 'next' in request.args:
+			return redirect(request.values.get('next'))
+		else:
+			return redirect(url_for('view_patient_self'))
 	return render_template("form_self_edit.html", action="Update", data_type="my records", form=formobj)
 	
         #abort(403, "Editing your own information is temporarily disabled, please check back later.")

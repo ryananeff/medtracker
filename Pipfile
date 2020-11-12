@@ -63,7 +63,8 @@ WTForms-SQLAlchemy = "*"
 WTForms-Alchemy = "*"
 pyOpenSSL = ">=19.1.0"
 importlib-metadata = "==2.0.0"
-
+flask-migrate = "*"
+email-validator = "*"
 
 [requires]
 python_version = "3.6"

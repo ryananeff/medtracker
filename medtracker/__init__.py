@@ -8,6 +8,8 @@ from delta import html as delta_html #https://github.com/forgeworks/quill-delta-
 from flask_login import login_user, logout_user, current_user
 from medtracker.config import *
 from flask_qrcode import QRcode
+from flask_migrate import Migrate
+from flask_sqlalchemy import SQLAlchemy
 
 import twilio.twiml
 from twilio.rest import TwilioRestClient
@@ -34,6 +36,12 @@ app.config['SECRET_KEY'] = flask_secret_key
 app.config['WTF_CSRF_ENABLED']=True
 app.debug = False
 
+#init db
+db = SQLAlchemy(app)
+db_session = db.session
+
+migrate = Migrate(app,db,render_as_batch=True)
+
 app.config.update(
 	#EMAIL SETTINGS
 	MAIL_SERVER=mail_server_address,
@@ -54,7 +62,6 @@ mail = Mail(app)
 client = TwilioRestClient(twilio_AccountSID, twilio_AuthToken)
 auth_combo=(twilio_AccountSID, twilio_AuthToken)
 
-from medtracker.database import db_session 	# to make sqlalchemy DB calls
 from medtracker.views import *				# web pages
 from medtracker.triggers import *
 

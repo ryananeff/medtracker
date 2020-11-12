@@ -41,7 +41,7 @@
       {% if field.errors or field.help_text %}
       <span class="help-inline">
       {% if field.errors %}
-        {{ field.errors|join(' ') }}
+        <span style="color:red">{{ field.errors|join(' ') }}</span>
       {% else %}
         {{ field.help_text }}
       {% endif %}

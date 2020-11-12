@@ -1,0 +1,18 @@
+{{record.survey.title}} Result
+--------------
+
+You may attend class or work on {{ record.end_time.strftime('%B %-d, %Y') }}.
+
+*********************
+COVID-19 ATTESTATION</span><br>
+Cleared for: 
+{{ record.end_time.strftime('%x %I:%M%p') }}
+Student: 
+{{patient.fullname}}
+Life Number:
+{{patient.lifenumber}}
+*********************
+
+
+-------------
+ISMMS Student Health Check

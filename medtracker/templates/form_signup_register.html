@@ -1,6 +1,6 @@
 {% extends 'layout.html' %}
 {% from '_render_field.html' import render_field %}
-{% block title %}Sign up a new device{% endblock %}
+{% block title %}Please register your device | ISMMS Health Check{% endblock %}
 {% block body %}
 
     <div class="container">
@@ -8,12 +8,9 @@
 			<div class="col-lg-3">
 				</div>
 			<div class="col-md-6">
-				{% if form.errors %}
-				<p>Errors: {{form.errors}}</p>
-				{% endif %}
 				{% block form %}
 				<section>
-				<h1>Sign up a new device</h1>
+				<h1>Please register your device</h1>
 				<p>In order to complete this survey, you first need to register your device to save and view your responses.
 				This process will only happen once and take a few seconds. Clearing your browser cookies will delete your registration.</p>
 				<p>Please use the same device and browser for future visits to skip this step and track your responses.</p>
@@ -25,7 +22,7 @@
 						{% if field.errors or field.help_text %}
 						      <span class="help-inline">
 						      {% if field.errors %}
-						        {{ field.errors|join(' ') }}
+						        <span style="color:red">{{ field.errors|join(' ') }}</span>
 						      {% else %}
 						        {{ field.help_text }}
 						      {% endif %}
@@ -33,16 +30,17 @@
 						    {% endif %}
 					{% endfor %}
 				<h3>Required questions</h3>
-				<ol>
+				{{form.fullname.label}}{{render_field(form.fullname)}}
+				{{form.email.label}}{{render_field(form.email)}}
+				{{form.lifenumber.label}}{{render_field(form.lifenumber)}}
+				<ul>
 				<li>{{form.program.label}}{{render_field(form.program)}}</li>
 				<li>{{form.year.label}}{{render_field(form.year)}}</li>
 				<li>{{form.location.label}}{{render_field(form.location)}}</li>
-				</ol>
+				</ul>
 				<h3>Optional questions</h3>
 				<p>These questions are completely optional and will only be used to contact you should your symptoms change. They will be kept private and confidential. Only Mount Sinai Student Health has access to this information. It will not be shared with other Mount Sinai faculty or staff.</p>
-				{{render_field(form.email)}}
 				{{render_field(form.phone)}}
-				{{render_field(form.fullname)}}
 				{{render_field(form.age)}}
 				<input type="submit" value="Save and submit" class="btn btn-primary"> 
 				</form>
