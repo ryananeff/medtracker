@@ -248,19 +248,22 @@ def check_patient_identified(patient):
 def send_survey_response_email(patient, record, app=app):
 	'''send an email to reset the user's password'''
 	# look for configuration variables in params.conf file...
-	msg = Message(sender=config.mail_server_sender)
-	msg.subject = record.survey.title + " taken on " + record.end_time.strftime('%B %-d, %Y')
-	msg.sender  = config.mail_server_sender
-	msg.recipients = [patient.email]
-	record.end_time = record.end_time.replace(tzinfo=pytz.utc).astimezone(pytz.timezone('America/New_York'))
-	with app.app_context():
-		if record.completed:
-			msg.html = render_template('email_survey_complete.html', patient=patient,record=record)
-			msg.body = render_template('email_survey_complete.txt', patient=patient,record=record)
-		elif record.exited:
-			msg.html = render_template('email_survey_exit.html', patient=patient,record=record) #change me!
-			msg.body = render_template('email_survey_exit.txt', patient=patient,record=record) #change me!
-	mail.send(msg)
+	try:
+		msg = Message(sender=config.mail_server_sender)
+		msg.subject = record.survey.title + " taken on " + record.end_time.strftime('%B %-d, %Y')
+		msg.sender  = config.mail_server_sender
+		msg.recipients = [patient.email]
+		record.end_time = record.end_time.replace(tzinfo=pytz.utc).astimezone(pytz.timezone('America/New_York'))
+		with app.app_context():
+			if record.completed:
+				msg.html = render_template('email_survey_complete.html', patient=patient,record=record)
+				msg.body = render_template('email_survey_complete.txt', patient=patient,record=record)
+			elif record.exited:
+				msg.html = render_template('email_survey_exit.html', patient=patient,record=record) #change me!
+				msg.body = render_template('email_survey_exit.txt', patient=patient,record=record) #change me!
+		mail.send(msg)
+	except:
+		return None
 	return None
 
 @app.route("/", methods=['GET'])
