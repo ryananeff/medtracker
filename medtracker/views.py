@@ -233,9 +233,9 @@ def check_patient_identified(patient):
 	# Check that the person has filled out all the required fields
 	# Required: full name, email, life number
 	not_failed = True
-        if (patient.fullname==None)|(patient.lifenumber==None)|(patient.email==None):
-            return False
-        if (len(patient.fullname) > 50)|(len(patient.fullname) < 3):
+	if (patient.fullname==None)|(patient.lifenumber==None)|(patient.email==None):
+		return False
+	if (len(patient.fullname) > 50)|(len(patient.fullname) < 3):
 		not_failed=False
 	email_regex = re.compile("(\S+(@icahn.mssm.edu|@mssm.edu|@mountsinai.org)$)")
 	if email_regex.match(str(patient.email))==None:
