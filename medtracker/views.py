@@ -232,6 +232,8 @@ def send_reset_email(user, app=app):
 def check_patient_identified(patient):
 	# Check that the person has filled out all the required fields
 	# Required: full name, email, life number
+	if patient==None:
+		return False
 	not_failed = True
 	if (patient.fullname==None)|(patient.lifenumber==None)|(patient.email==None):
 		return False
@@ -272,7 +274,7 @@ def index():
 	g.patient = Patient.query.filter_by(mrn=g.patient_ident).first()
 	if g.patient == None:
 		flash("Your device appears to be unregistered. Please <a href='/patients/signup/1'>register</a> your device.")
-	if check_patient_identified(g.patient)==False:
+	elif check_patient_identified(g.patient)==False:
 		flash("Due to changes at Student Health, please <a href='/patients/edit/self'>update</a> your records before continuing.")
 	return render_template("index.html")
 
