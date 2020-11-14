@@ -89,7 +89,7 @@
 		<tbody>
 		{% for patient in patients %}
 		  <tr>
-			<td> <a href="/patients/{{patient.id}}">{{fmt_id(patient.mrn)}}</a></td>
+			<td> <a href="/patients/{{patient.id}}">{{patient.fullname}} ({{fmt_id(patient.mrn)}})</a></td>
 			<td> {{patient.year}}</td>
 			<td> {{patient.program}}</td>
 			<td> {{patient.location}}</td>

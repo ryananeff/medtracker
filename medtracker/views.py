@@ -1053,8 +1053,12 @@ def survey_response_dashboard(survey_id):
 		row["survey_id"] = survey.id
 		responses.append(row)
 
-	sig_r = []
-	for r,q in sr.filter(models.SurveyResponse.exited==True).all(): sig_r.extend([r.patient])
+	sig_r = db.session.query(models.Patient)\
+		.join(models.SurveyResponse)\
+		.filter(models.SurveyResponse.survey_id==survey.id)\
+		.filter(models.SurveyResponse.start_time <= (time_end+datetime.timedelta(days=1)))\
+		.filter(models.SurveyResponse.start_time >= time_end)\
+		.filter(models.SurveyResponse.exited==True).all()
 	
 	responses_last7 = responses
 
