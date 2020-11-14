@@ -300,7 +300,9 @@ def serve_survey_index():
 @flask_login.login_required
 def serve_responses_index():
 	'''GUI: serve the response index page'''
-	responses = QuestionResponse.query.filter(QuestionResponse.time > datetime.datetime.utcnow()-datetime.timedelta(days=3))
+	today = datetime.datetime.now().astimezone(pytz.timezone('US/Eastern')).replace(hour=0,minute=0,second=0,microsecond=0).astimezone(timezone.utc).replace(tzinfo=None)
+	responses = QuestionResponse.query.filter(QuestionResponse.time>today).all()
+
 	return render_template("responses.html",
 							responses = responses)
 
@@ -379,6 +381,8 @@ def start_survey(survey_id):
 		flash("Please update your records before completing new screenings.")
 		return redirect(url_for('edit_patient_self',next=request.path))
 	session_id = randomword(32)
+	while SurveyResponse.query.filter(SurveyResponse.session_id==session_id).count() > 0:
+		session_id = randomword(32)
 	u = request.values.get('u', g.patient.id)
 	survey = Survey.query.get_or_404(survey_id)
 	patients = None
@@ -395,8 +399,8 @@ def serve_survey(survey_id):
 	if g.patient == None:
 		return redirect(url_for('patient_signup',survey_id=survey_id))
 	today = datetime.datetime.now().date()
-	previous_responses = SurveyResponse.query.filter(SurveyResponse.uniq_id==g.patient.id,
-	                                                    SurveyResponse.end_time.isnot(None),SurveyResponse.start_time>today).first()
+	previous_responses = SurveyResponse.query.filter(SurveyResponse.uniq_id==g.patient.id).\
+		filter(SurveyResponse.end_time.isnot(None),SurveyResponse.start_time>today).first()
 	if (current_user.is_authenticated==False) & (previous_responses!=None):
 		return render_template("survey_quit.html",survey=survey, patient=g.patient,message="You can only take the survey once per day.")
 
@@ -404,6 +408,9 @@ def serve_survey(survey_id):
 	question_id = request.values.get("question", None)
 	uniq_id = request.values.get("u", None)
 	sess = request.values.get("s", None)
+
+	while SurveyResponse.query.filter(SurveyResponse.session_id==sess).count() > 1:
+		sess = randomword(32)
 
 	if survey.head == None:
 		return render_template("view_survey.html", survey = survey)
@@ -434,14 +441,14 @@ def serve_survey(survey_id):
 			db_session.add(survey_response)
 			db_session.commit()
 			send_survey_response_email(g.patient,survey_response)
-			return redirect(url_for("exit_survey", session_id=survey_response.session_id))
+			return redirect(url_for("exit_survey", sr_id=survey_response.id, session_id=survey_response.session_id))
 		if complete: ##complete survey!
 			survey_response.complete()
 			survey_response.message = message
 			db_session.add(survey_response)
 			db_session.commit()
 			send_survey_response_email(g.patient,survey_response)
-			return redirect(url_for("complete_survey", session_id=survey_response.session_id))
+			return redirect(url_for("complete_survey", sr_id=survey_response.id, session_id=survey_response.session_id))
 		return redirect(url_for('serve_survey', survey_id=survey_id, question=next_question, u=uniq_id, s=sess, sr = survey_response.id))
 	else:
 		#print(request.form.getlist("response"))
@@ -471,9 +478,9 @@ def reset_device():
 		flash("Device ID reset. You will need to register with ISMMS Health Check again to complete surveys.")
 	return response
 
-@app.route("/exit/<session_id>")
-def exit_survey(session_id):
-	record = SurveyResponse.query.filter_by(session_id=session_id,exited=1).first()
+@app.route("/exit/<int:sr_id>/<session_id>")
+def exit_survey(sr_id,session_id):
+	record = SurveyResponse.query.filter_by(id=sr_id,session_id=session_id,exited=1).first()
 	if record==None:
 		return abort(404,"Exit record not found.")
 	survey = record.survey
@@ -498,9 +505,9 @@ def exit_survey(session_id):
 	else:
 		return abort(401,"Your device appears to be unregistered. Only registered devices can view exit records.")
 
-@app.route("/cr/<session_id>")
-def complete_survey(session_id):
-	record = SurveyResponse.query.filter_by(session_id=session_id,completed=1).first()
+@app.route("/cr/<int:sr_id>/<session_id>")
+def complete_survey(sr_id, session_id):
+	record = SurveyResponse.query.filter_by(id=sr_id,session_id=session_id,completed=1).first()
 	if record==None:
 		return abort(404,"Completion record not found.")
 	survey = record.survey
@@ -725,15 +732,15 @@ def edit_patient_self():
 @app.route("/patients/")
 @flask_login.login_required
 def view_patients():
-	patients = Patient.query.all()
+	today = datetime.datetime.now().astimezone(pytz.timezone('US/Eastern')).replace(hour=0,minute=0,second=0,microsecond=0).astimezone(timezone.utc).replace(tzinfo=None)
+	patients = Patient.query.join(SurveyResponse).filter(SurveyResponse.end_time.isnot(None),SurveyResponse.start_time>today).all()
 	for p in patients:
 		ls = p.surveys.order_by(SurveyResponse.end_time.desc()).first()
 		p.last_seen = ls.start_time if ls else None
-	today = datetime.datetime.now().astimezone(pytz.timezone('US/Eastern')).replace(hour=0,minute=0,second=0,microsecond=0).astimezone(timezone.utc).replace(tzinfo=None)
 	status = dict()
 	for p in patients:
 		ptstat = 0
-		taken = p.surveys.filter(SurveyResponse.end_time.isnot(None),SurveyResponse.start_time>today).order_by(SurveyResponse.id.desc()).first()
+		taken = p.surveys.order_by(SurveyResponse.id.desc()).first()
 		if taken!=None:
 			if taken.completed:
 				ptstat = 1
@@ -935,8 +942,7 @@ def view_patient_self():
 		return abort(401,"Please register your device first, then come back to this page.")
 	p = g.patient
 	patients_feed = []
-	p.surveys = p.surveys.all()
-	for s in p.surveys:
+	for s in p.surveys.all():
 		patients_feed.append((s.start_time.strftime("%Y-%m-%d %H:%M:%S"),"patient", s))
 	patients_feed = sorted(patients_feed, key=lambda x:x[0],reverse=True)
 	status = sum([1-i.complete for i in p.progress])
@@ -1011,7 +1017,7 @@ def survey_response_dashboard(survey_id):
 
 	survey = models.Survey.query.get_or_404(survey_id)
 
-	pres = db.session.query(models.SurveyResponse).join(models.Patient)\
+	pres = db.session.query(models.SurveyResponse, models.Patient).join(models.Patient)\
 	        .filter(models.SurveyResponse.start_time > time_start)\
 	        .filter(models.SurveyResponse.start_time <= (time_end+datetime.timedelta(days=1)))\
 	                .all()
@@ -1021,24 +1027,51 @@ def survey_response_dashboard(survey_id):
 	    return pd.DataFrame(res)
 
 	sres = []
-	for r in pres:
+	for r,p in pres:
 	    row = r.to_dict()
 	    del row["uniq_id"]
 	    del row["user_id"]
-	    row["patient_id"] = r.patient.id
-	    row["location"] = r.patient.location.value
-	    row["year"] = r.patient.year
-	    row["program"] = r.patient.program.value
+	    row["patient_id"] = p.id
+	    row["location"] = p.location.value
+	    row["year"] = p.year
+	    row["program"] = p.program.value
 	    sres.append(row)
 
 	responses = []
-	sr = survey.responses.filter(models.SurveyResponse.start_time <= (time_end+datetime.timedelta(days=1))).filter(models.SurveyResponse.start_time >= time_end)
-	for sre in sr.all(): responses.extend([r.to_dict() for r in sre.responses])
+	sr = db.session.query(models.QuestionResponse,models.Question)\
+		.join(models.Question,models.SurveyResponse)\
+		.filter(models.SurveyResponse.survey_id==survey.id)\
+		.filter(models.SurveyResponse.start_time <= (time_end+datetime.timedelta(days=1)))\
+		.filter(models.SurveyResponse.start_time >= time_end)
+	
+	for r,q in sr.all():
+		row = r.to_dict()
+		row["question_title"] = q.body
+		row["question_choices"] = q.choices
+		row["question_type"] = q.kind.code
+		row["survey_title"] = survey.title
+		row["survey_id"] = survey.id
+		responses.append(row)
+
 	sig_r = []
 	for sre in sr.filter(models.SurveyResponse.exited==True).all(): sig_r.extend([sre.patient])
+	
 	responses_last7 = responses
-	sr = survey.responses.filter(models.SurveyResponse.start_time > time_start).filter(models.SurveyResponse.start_time <= time_end)
-	for sre in sr.all(): responses_last7.extend([r.to_dict() for r in sre.responses])
+
+	sr = db.session.query(models.QuestionResponse,models.Question)\
+		.join(models.Question,models.SurveyResponse)\
+		.filter(models.SurveyResponse.survey_id==survey.id)\
+		.filter(models.SurveyResponse.start_time > time_start)\
+		.filter(models.SurveyResponse.start_time <= time_end)
+	
+	for r,q in sr.all():
+		row = r.to_dict()
+		row["question_title"] = q.body
+		row["question_choices"] = q.choices
+		row["question_type"] = q.kind.code
+		row["survey_title"] = survey.title
+		row["survey_id"] = survey.id
+		responses_last7.append(row)
 
 	if len(sres)>0:
 		sres = pd.DataFrame(sres)
@@ -1340,7 +1373,7 @@ def survey_response_student_dashboard():
 
 	survey = models.Survey.query.get_or_404(survey_id)
 
-	pres = db.session.query(models.SurveyResponse).join(models.Patient)\
+	pres = db.session.query(models.SurveyResponse, models.Patient).join(models.Patient)\
 	        .filter(models.SurveyResponse.start_time > time_start)\
 	        .filter(models.SurveyResponse.start_time <= (time_end+datetime.timedelta(days=1)))\
 	                .all()
@@ -1350,14 +1383,14 @@ def survey_response_student_dashboard():
 	    return pd.DataFrame(res)
 
 	sres = []
-	for r in pres:
+	for r,p in pres:
 	    row = r.to_dict()
 	    del row["uniq_id"]
 	    del row["user_id"]
-	    row["patient_id"] = r.patient.id
-	    row["location"] = r.patient.location.value
-	    row["year"] = r.patient.year
-	    row["program"] = r.patient.program.value
+	    row["patient_id"] = p.id
+	    row["location"] = p.location.value
+	    row["year"] = p.year
+	    row["program"] = p.program.value
 	    sres.append(row)
 
 	if len(sres)>0:

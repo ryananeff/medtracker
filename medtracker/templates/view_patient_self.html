@@ -83,9 +83,9 @@
 			                            	#}
 			                            <div class="card-body">
 			                            {% if response.completed %}
-			                        		<a href="{{url_for('complete_survey',session_id=response.session_id)}}" class="card-link">Clearance record</a>
+			                        		<a href="{{url_for('complete_survey',sr_id=response.id,session_id=response.session_id)}}" class="card-link">Clearance record</a>
 			                        	{% elif response.exited %}
-			                        		<a href="{{url_for('exit_survey',session_id=response.session_id)}}" class="card-link">Stay at home record</a>
+			                        		<a href="{{url_for('exit_survey',sr_id=response.id, session_id=response.session_id)}}" class="card-link">Stay at home record</a>
 			                     		{% endif %}
                             		</div>
 	                        </div>

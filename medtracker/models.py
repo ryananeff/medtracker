@@ -209,11 +209,6 @@ class QuestionResponse(db.Model):
 	def to_dict(self):
 		outdict = {col.name: getattr(self, col.name) for col in self.__table__.columns}
 		outdict["response"] = self._response
-		outdict["question_title"] = self._question.body
-		outdict["question_choices"] = self._question.choices
-		outdict["question_type"] = self._question.kind.code
-		outdict["survey_title"] = self._question.survey.title
-		outdict["survey_id"] = self._question.survey.id
 		return outdict
 
 class SurveyResponse(db.Model):
@@ -228,7 +223,7 @@ class SurveyResponse(db.Model):
 	exited = db.Column(db.Boolean,default=False)
 	completed = db.Column(db.Boolean, default=False)
 	message = db.Column(db.Text)
-	responses = db.relationship("QuestionResponse",backref="parent", lazy="joined",cascade="all,delete-orphan")
+	responses = db.relationship("QuestionResponse",backref="parent", lazy="dynamic", cascade="all,delete-orphan")
 
 	def __str__(self):
 		return '%s' % self.session_id
@@ -367,7 +362,7 @@ class Patient(db.Model):
 	__tablename__= "patients"
 
 	id = db.Column(db.Integer, primary_key=True)
-	mrn = db.Column(EncryptedType(db.String, flask_secret_key))
+	mrn = db.Column(EncryptedType(db.String, flask_secret_key), unique=True)
 	fullname = db.Column(EncryptedType(db.String, flask_secret_key))
 	email = db.Column(EncryptedType(db.String, flask_secret_key))
 	lifenumber = db.Column(EncryptedType(db.String, flask_secret_key))
@@ -396,7 +391,7 @@ class Device(db.Model):
 	__tablename__= "devices"
 
 	id = db.Column(db.Integer, primary_key=True)
-	device_id = db.Column(db.String)
+	device_id = db.Column(db.String, unique=True)
 	creation_time = db.Column(db.DateTime, default=func.now())
 
 	def to_dict(self):

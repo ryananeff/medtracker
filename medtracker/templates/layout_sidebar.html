@@ -107,20 +107,26 @@
                             <a href="#"><i class="fa fa-users"></i> Students <span class="fa arrow"></span></a>
                                 <ul class="nav nav-second-level">
                                     <li>
-                                        <a href="/patients/"><i class="fa fa-align-justify fa-fw"></i> View All</a>
+                                        <a href="/patients/"><i class="fa fa-align-justify fa-fw"></i> Responded Today</a>
+                                    </li>
+                                    <li>
+                                        <a href="#"><i class="fa fa-search fa-fw"></i> Search (coming soon)</a>
                                     </li>
                                 </ul>
                         </li>
                         <li><a href="#"><i class="fa fa-bar-chart-o"></i> Responses <span class="fa arrow"></span></a>
                             <ul class="nav nav-second-level">
-                                    <li>
-                                        <a href="/responses"><i class="fa fa-align-justify fa-fw"></i> View All</a>
-                                    </li>
-                                    {% for survey in current_user.surveys %}
+                                {% for survey in current_user.surveys %}
                                         <li>
                                             <a href="/surveys/{{survey.id}}/responses/dashboard"><i class="fa fa-dashboard fa-fw"></i> {{survey.title}}</a>
                                         </li>              
                                     {% endfor %}
+                                    <li>
+                                        <a href="/responses"><i class="fa fa-align-justify fa-fw"></i> Today</a>
+                                    <li>
+                                        <a href="#"><i class="fa fa-search fa-fw"></i> Search (coming soon)</a>
+                                    </li>
+                                    
                                 </ul>
                         </li>
                         <li><a href="#"><i class="fa fa-gears"></i> Settings<span class="fa arrow"></span></a>

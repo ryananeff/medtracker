@@ -20,6 +20,9 @@ import flask_login as flask_login
 from ftplib import FTP_TLS
 from flask import flash
 from itsdangerous import URLSafeTimedSerializer
+
+#from flask_debugtoolbar import DebugToolbarExtension
+
 ts = URLSafeTimedSerializer(flask_secret_key)
 
 #Flask init
@@ -34,7 +37,13 @@ app.config['REMEMBER_COOKIE_SECURE'] = True
 app.config['SESSION_COOKIE_SECURE'] = False
 app.config['SECRET_KEY'] = flask_secret_key
 app.config['WTF_CSRF_ENABLED']=True
-app.debug = False
+#app.config["DEBUG_TB_PROFILER_ENABLED"] = True
+#app.config["DEBUG_TB_INTERCEPT_REDIRECTS"] = False
+#app.debug = True
+#toolbar = DebugToolbarExtension(app)
+
+app.debug=False
+
 
 #init db
 db = SQLAlchemy(app)

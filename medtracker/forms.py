@@ -218,3 +218,16 @@ class PatientEditForm(Form):
 
 	phone = StringField('Phone number (optional)')
 	age = StringField('Age (optional)')
+
+class PatientSearchForm(Form):
+
+	mrn = TextField('Student Device ID')
+	fullname = StringField('Full Name')
+	email = StringField('Email Address')
+	lifenumber = StringField('Life Number', description="e.g. 2211234")
+	phone = StringField('Phone number')
+	age = StringField('Age')
+	program = StringField("Program")
+	year = StringField("Graduation Year")
+	location = StringField("Location")
+	
