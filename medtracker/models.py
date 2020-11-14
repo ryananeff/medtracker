@@ -209,6 +209,7 @@ class QuestionResponse(db.Model):
 	def to_dict(self):
 		outdict = {col.name: getattr(self, col.name) for col in self.__table__.columns}
 		outdict["response"] = self._response
+		
 		return outdict
 
 class SurveyResponse(db.Model):
@@ -223,7 +224,7 @@ class SurveyResponse(db.Model):
 	exited = db.Column(db.Boolean,default=False)
 	completed = db.Column(db.Boolean, default=False)
 	message = db.Column(db.Text)
-	responses = db.relationship("QuestionResponse",backref="parent", lazy="dynamic", cascade="all,delete-orphan")
+	responses = db.relationship("QuestionResponse",backref="parent", lazy="joined", cascade="all,delete-orphan")
 
 	def __str__(self):
 		return '%s' % self.session_id
