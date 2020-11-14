@@ -1054,7 +1054,7 @@ def survey_response_dashboard(survey_id):
 		responses.append(row)
 
 	sig_r = []
-	for sre in sr.filter(models.SurveyResponse.exited==True).all(): sig_r.extend([sre.patient])
+	for r,q in sr.filter(models.SurveyResponse.exited==True).all(): sig_r.extend([r.patient])
 	
 	responses_last7 = responses
 
