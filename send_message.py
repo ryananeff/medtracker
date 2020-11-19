@@ -4,7 +4,7 @@ import datetime, pytz, time
 from medtracker import *
 already_sent = []
 app.config["SERVER_NAME"]="ismmshealthcheck.com"
-message="""ISMMS Student Health Check- Having trouble showing you took the screening? Click 'Use RedCap style' after taking your screening to show your COVID-19 attestation page at Mount Sinai."""
+message="""ISMMS Student Health Check- There was an issue this morning preventing users from completing surveys due to a bad redirect after updating student records for the first time. The issue is resolved now."""
 with app.app_context():
     pts = models.Patient.query.filter(models.Patient.phone.isnot("")).all()
     #today = datetime.datetime.now().astimezone(pytz.timezone('US/Eastern')).replace(hour=0,minute=0,second=0,microsecond=0).astimezone(timezone.utc).replace(tzinfo=None)
