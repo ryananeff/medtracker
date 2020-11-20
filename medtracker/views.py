@@ -1362,101 +1362,44 @@ def survey_response_student_dashboard():
 	end_request = request.values.get("end_date",None)
 	dash_figs = []
 	question_figs = []
+	if(True):
+		try:
+		    start_time = (datetime.datetime.strptime(start_request,"%Y-%m-%d")).date() if start_request != None else (datetime.datetime.now()-datetime.timedelta(days=30)).date()
+		    end_time = (datetime.datetime.strptime(end_request,"%Y-%m-%d")).date() if end_request != None else (datetime.datetime.now(tz)).date()
+		except:
+		    start_time = (datetime.datetime.now()-datetime.timedelta(days=30)).date()
+		    end_time = (datetime.datetime.now(tz)).date()
 
-	try:
-	    start_time = (datetime.datetime.strptime(start_request,"%Y-%m-%d")).date() if start_request != None else (datetime.datetime.now()-datetime.timedelta(days=30)).date()
-	    end_time = (datetime.datetime.strptime(end_request,"%Y-%m-%d")).date() if end_request != None else (datetime.datetime.now(tz)).date()
-	except:
-	    start_time = (datetime.datetime.now()-datetime.timedelta(days=30)).date()
-	    end_time = (datetime.datetime.now(tz)).date()
+		time_end = end_time.timetuple()
+		time_start = start_time.timetuple()
+		time_end = datetime.datetime.fromtimestamp(time.mktime(time_end)).replace(tzinfo=pytztimezone('EST')).astimezone(pytztimezone("UTC"))
+		time_start = datetime.datetime.fromtimestamp(time.mktime(time_start)).replace(tzinfo=pytztimezone('EST')).astimezone(pytztimezone("UTC"))
 
-	time_end = end_time.timetuple()
-	time_start = start_time.timetuple()
-	time_end = datetime.datetime.fromtimestamp(time.mktime(time_end)).replace(tzinfo=pytztimezone('EST')).astimezone(pytztimezone("UTC"))
-	time_start = datetime.datetime.fromtimestamp(time.mktime(time_start)).replace(tzinfo=pytztimezone('EST')).astimezone(pytztimezone("UTC"))
+		survey = models.Survey.query.get_or_404(survey_id)
 
-	survey = models.Survey.query.get_or_404(survey_id)
-
-	pres = db.session.query(models.SurveyResponse, models.Patient).join(models.Patient)\
-	        .filter(models.SurveyResponse.start_time > time_start)\
-	        .filter(models.SurveyResponse.start_time <= (time_end+datetime.timedelta(days=1)))\
-	                .all()
-
-	def pt_to_pd():
-	    res = [dict(r) for r in db.session.execute(models.Patient.query.statement)]
-	    return pd.DataFrame(res)
-
-	sres = []
-	for r,p in pres:
-	    row = r.to_dict()
-	    del row["uniq_id"]
-	    del row["user_id"]
-	    row["patient_id"] = p.id
-	    row["location"] = p.location.value
-	    row["year"] = p.year
-	    row["program"] = p.program.value
-	    sres.append(row)
-
-	if len(sres)>0:
-		sres = pd.DataFrame(sres)
-		sres.end_time = sres.end_time.dt.tz_localize('UTC').dt.tz_convert('US/Eastern')
-		sres.start_time = sres.start_time.dt.tz_localize('UTC').dt.tz_convert('US/Eastern')
-		sres["date"] = sres.start_time.dt.floor('d')
-		sres = sres.groupby(["date","patient_id","completed","exited"]).last()
-
-		sres = sres.reset_index()
-
-		#devs = model_to_pd(models.Device)
-		#devs.creation_time = devs.creation_time.dt.tz_localize('UTC').dt.tz_convert('US/Eastern')
-		#devs_per_day = pd.DataFrame(devs.groupby([devs.creation_time.dt.floor("d")])["creation_time"].count())
-		#devs_per_day.columns = ["daily_new_devices"]
-		pts = pt_to_pd()
-
-		pts.creation_time = pts.creation_time.dt.tz_localize('UTC').dt.tz_convert('US/Eastern')
-		pts_per_day = pd.DataFrame(pts.groupby([pts.creation_time.dt.floor("d")])["creation_time"].count())
-		pts_per_day.columns = ["daily_registered_students"]
-		res_per_day = pd.DataFrame(sres.groupby([sres.end_time.dt.floor('d')])["end_time"].count())
-		res_per_day.columns = ["daily_total_surveys"]
-		comp_per_day = pd.DataFrame(sres[sres.completed==True].groupby([sres.end_time.dt.floor('d')])["end_time"].count())
-		comp_per_day.columns = ["daily_completed_surveys"]
-		exit_per_day = pd.DataFrame(sres[sres.exited==True].groupby([sres.end_time.dt.floor('d')])["end_time"].count())
-		exit_per_day.columns = ["daily_exited_surveys"]
-		df = pd.merge(pts_per_day,res_per_day,left_index=True,right_index=True,how="outer")
-		df = pd.merge(df,comp_per_day,left_index=True,right_index=True,how="outer")
-		df = pd.merge(df,exit_per_day,left_index=True,right_index=True,how="outer")
-		df["positivity_rate"] = df["daily_exited_surveys"]/df["daily_total_surveys"].astype(float)*100.
-		#df = pd.merge(df,devs_per_day,left_index=True,right_index=True,how="outer")
-		begin_time = pts.creation_time[0].date()
-		df = df.tz_localize(None).reindex(pd.date_range(begin_time, end_time)).fillna(0)
-		df["total_registered_students"] = df["daily_registered_students"].cumsum()
-		df["total_completed_surveys"] = df["daily_completed_surveys"].cumsum()
-		#df["total_devices"] = df["daily_new_devices"].cumsum()
-		df["daily_uncompleted_surveys"] = df["total_registered_students"] - df["daily_total_surveys"]
-		df["daily_pct"] = df["daily_total_surveys"]/df["total_registered_students"]*100
-		pts_df = pts.set_index("creation_time")
-		df = df.tz_localize(None).reindex(pd.date_range(start_time, end_time)).fillna(0)
-
-		df.reset_index(inplace=True)
-		df = df.sort_values(by="index",ascending=True)
-		df["index"] = [datetime.datetime.strftime(a,"%D") for a in df["index"]]
+		from sqlalchemy import func, cast, Date
+		cols = [func.substr(models.SurveyResponse.end_time,0,11),
+		        func.count(func.distinct(models.SurveyResponse.uniq_id)).label("per_date"),
+		       models.SurveyResponse.completed,
+		       models.SurveyResponse.exited]
+		q = db.session.query(*cols).join(models.Patient)\
+		        .filter(models.SurveyResponse.end_time > time_start)\
+		        .filter(models.SurveyResponse.end_time <= (time_end+datetime.timedelta(days=1)))\
+		        .filter(models.SurveyResponse.end_time != None)\
+		        .group_by(func.substr(models.SurveyResponse.end_time,0,11),
+		                  models.SurveyResponse.completed,models.SurveyResponse.exited,)
+		df_q = pd.read_sql(q.statement,con=db.engine)
+		df_q_2 = df_q.pivot_table(index="substr_1",columns=["completed","exited"]).fillna(0)
+		df_q_2.columns = ["daily_exited_surveys","daily_completed_surveys"]
+		df_q_2["daily_total_surveys"] = df_q_2["daily_exited_surveys"]+df_q_2["daily_completed_surveys"]
+		df_q_2["positivity_rate"] = df_q_2["daily_exited_surveys"]/df_q_2["daily_total_surveys"]*100
+		df_q_2["fmt_date"] = df_q_2.index
+		df_q_2.index = [datetime.datetime.strptime(a,"%Y-%m-%d").strftime("%D") for a in df_q_2.index]
+		df = df_q_2.reset_index()
 		df2 = df.loc[:,["index","daily_completed_surveys","daily_exited_surveys"]]
 		df2.columns = ["index","Cleared","Sent Home"]
 		df3 = df2.melt(id_vars="index")
 
-		pts["location"] = [str(i) for i in pts["location"]]
-		pts["program"] = [str(i) for i in pts["program"]]
-
-		dash_figs = []
-
-		today_count = list(df["daily_total_surveys"])[-1]
-		today_positive = list(df["daily_exited_surveys"])[-1]
-		today_negative = list(df["daily_completed_surveys"])[-1]
-		today_pct_pos = list(df["positivity_rate"])[-1]
-		today_pct = list(df["daily_pct"])[-1]
-		week_count = list(df["total_completed_surveys"])[-1]
-		week_pct = sum(list(df["daily_total_surveys"]))/sum(list(df["total_registered_students"]))*100
-
-		patient_count = sum(list(df["daily_registered_students"]))
 		#device_count = len(devices)
 
 		special_figs = []
@@ -1506,6 +1449,15 @@ def survey_response_student_dashboard():
 		for ix,fig in enumerate(special_figs):
 			special_figs[ix] = offline.plot(fig,show_link=False, output_type="div", include_plotlyjs=False)
 
+		patient_count = models.Patient.query.count()
+		df = df.loc[df.index[0]:df[df["fmt_date"]==end_request].index[0]]
+		today_count = int(list(df["daily_total_surveys"])[-1])
+		today_pct = list(df["positivity_rate"])[-1]
+		week_count = int(sum(list(df["daily_total_surveys"])[-7:]))
+		week_pct = sum(list(df["positivity_rate"])[-7:])/7
+		today_positive = int(list(df["daily_exited_surveys"])[-1])
+		today_negative = int(list(df["daily_completed_surveys"])[-1])
+		today_pct_pos = today_pct
 
 	else:
 		dash_figs = []
