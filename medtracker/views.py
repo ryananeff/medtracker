@@ -1450,7 +1450,7 @@ def survey_response_student_dashboard():
 			special_figs[ix] = offline.plot(fig,show_link=False, output_type="div", include_plotlyjs=False)
 
 		patient_count = models.Patient.query.count()
-		if end_request in df["fmt_date"]:
+		if end_request in list(df["fmt_date"]):
 			df = df.loc[df.index[0]:df[df["fmt_date"]==end_request].index[0]]
 			today_count = int(list(df["daily_total_surveys"])[-1])
 			today_pct = list(df["positivity_rate"])[-1]
