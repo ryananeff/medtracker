@@ -997,7 +997,7 @@ def make_cache_key(*args, **kwargs):
 
 @app.route("/surveys/<int:survey_id>/responses/dashboard/loaded",methods=["GET"])
 @flask_login.login_required
-@cache.cached(timeout=None,key_prefix=make_cache_key)
+#@cache.cached(timeout=None,key_prefix=make_cache_key)
 def survey_response_dashboard(survey_id):
 	start_request = request.values.get("start_date","2020-06-29")
 	end_request = request.values.get("end_date",(datetime.datetime.now(tz)).date().strftime("%Y-%m-%d"))
@@ -1033,19 +1033,23 @@ def survey_response_dashboard(survey_id):
 	       models.SurveyResponse.completed,
 	       models.SurveyResponse.exited]
 	q = db.session.query(*cols).join(models.Patient)\
+		    .filter(models.SurveyResponse.start_time > time_start)\
+	        .filter(models.SurveyResponse.start_time <= (time_end+datetime.timedelta(days=1)))\
 	        .filter(models.SurveyResponse.end_time > time_start)\
 	        .filter(models.SurveyResponse.end_time <= (time_end+datetime.timedelta(days=1)))\
 	        .filter(models.SurveyResponse.end_time != None)\
 	        .group_by(func.substr(models.SurveyResponse.end_time,0,11),
 	                  models.SurveyResponse.completed,models.SurveyResponse.exited,)
 	df_q = pd.read_sql(q.statement,con=db.engine)
-	df_q_2 = df_q.pivot_table(index="substr_1",columns=["completed","exited"]).fillna(0)
+	df_q_2 = df_q.pivot_table(index="substr_1",columns=["completed","exited"],values="per_date",aggfunc='sum').fillna(0)
 	df_q_2.columns = ["daily_exited_surveys","daily_completed_surveys"]
 	df_q_2["daily_total_surveys"] = df_q_2["daily_exited_surveys"]+df_q_2["daily_completed_surveys"]
 	df_q_2["positivity_rate"] = df_q_2["daily_exited_surveys"]/df_q_2["daily_total_surveys"]*100
 	df_q_2["fmt_date"] = df_q_2.index
 	df_q_2.index = [datetime.datetime.strptime(a,"%Y-%m-%d").strftime("%D") for a in df_q_2.index]
 	df = df_q_2.reset_index()
+	if end_request in list(df["fmt_date"]):
+		df = df.loc[df.index[0]:df[df["fmt_date"]==end_request].index[0]]
 	df2 = df.loc[:,["index","daily_completed_surveys","daily_exited_surveys"]]
 	df2.columns = ["index","Cleared","Sent Home"]
 	df3 = df2.melt(id_vars="index")
@@ -1062,13 +1066,15 @@ def survey_response_dashboard(survey_id):
 	        models.SurveyResponse.completed,
 	        models.SurveyResponse.exited]
 	    q = db.session.query(*cols).join(models.Patient)\
-	            .filter(models.SurveyResponse.end_time > time_start)\
-	            .filter(models.SurveyResponse.end_time <= (time_end+datetime.timedelta(days=1)))\
-	            .filter(models.SurveyResponse.end_time != None)\
-	            .group_by(models.Patient.year, func.substr(models.SurveyResponse.end_time,0,11),
-	                      models.SurveyResponse.completed,models.SurveyResponse.exited,)
+			.filter(models.SurveyResponse.start_time > time_start)\
+			.filter(models.SurveyResponse.start_time <= (time_end+datetime.timedelta(days=1)))\
+			.filter(models.SurveyResponse.end_time > time_start)\
+			.filter(models.SurveyResponse.end_time <= (time_end+datetime.timedelta(days=1)))\
+			.filter(models.SurveyResponse.end_time != None)\
+			.group_by(models.Patient.year, func.substr(models.SurveyResponse.end_time,0,11),
+			          models.SurveyResponse.completed,models.SurveyResponse.exited,)
 	    df_q = pd.read_sql(q.statement,con=db.engine)
-	    df_q_2 = df_q.pivot_table(index=["substr_1","year"],columns=["completed","exited"]).fillna(0)
+	    df_q_2 = df_q.pivot_table(index=["substr_1","year"],columns=["completed","exited"],values="per_date",aggfunc='sum').fillna(0)
 	    df_q_2.columns = ["exited","completed"]
 	    df_q_2["responded"] = df_q_2["exited"] + df_q_2["completed"]
 	    outdf_year = df_q_2.reset_index().loc[:,["substr_1","year","responded","completed","exited"]]
@@ -1080,11 +1086,13 @@ def survey_response_dashboard(survey_id):
 	        models.SurveyResponse.completed,
 	        models.SurveyResponse.exited]
 	    q = db.session.query(*cols).join(models.Patient)\
-	            .filter(models.SurveyResponse.end_time > time_start)\
-	            .filter(models.SurveyResponse.end_time <= (time_end+datetime.timedelta(days=1)))\
-	            .filter(models.SurveyResponse.end_time != None)\
-	            .group_by(models.Patient.year, func.substr(models.SurveyResponse.end_time,0,11),
-	                      models.SurveyResponse.completed,models.SurveyResponse.exited,)
+			.filter(models.SurveyResponse.start_time > time_start)\
+			.filter(models.SurveyResponse.start_time <= (time_end+datetime.timedelta(days=1)))\
+			.filter(models.SurveyResponse.end_time > time_start)\
+			.filter(models.SurveyResponse.end_time <= (time_end+datetime.timedelta(days=1)))\
+			.filter(models.SurveyResponse.end_time != None)\
+			.group_by(models.Patient.year, func.substr(models.SurveyResponse.end_time,0,11),
+			          models.SurveyResponse.completed,models.SurveyResponse.exited,)
 	    df_q = pd.read_sql(q.statement,con=db.engine)
 	    df_q_2 = df_q.pivot_table(index=["substr_1","year"],columns=["completed","exited"]).fillna(0)
 	    df_q_2.columns = ["exited","completed"]
@@ -1093,38 +1101,42 @@ def survey_response_dashboard(survey_id):
 	    outdf_yr.columns = ["date","year","total_responded","Well","Sick"]
 	    
 	    cols = [func.substr(models.SurveyResponse.end_time,0,11),
-	        func.count(func.distinct(models.SurveyResponse.uniq_id)).label("per_date"),
+	        func.count(models.SurveyResponse.uniq_id).label("per_date"),
 	        models.Patient.program,
 	        models.SurveyResponse.completed,
 	        models.SurveyResponse.exited]
 	    q = db.session.query(*cols).join(models.Patient)\
-	            .filter(models.SurveyResponse.end_time > time_start)\
-	            .filter(models.SurveyResponse.end_time <= (time_end+datetime.timedelta(days=1)))\
-	            .filter(models.SurveyResponse.end_time != None)\
-	            .group_by(models.Patient.program, func.substr(models.SurveyResponse.end_time,0,11),
-	                      models.SurveyResponse.completed,models.SurveyResponse.exited,)
+			.filter(models.SurveyResponse.start_time > time_start)\
+			.filter(models.SurveyResponse.start_time <= (time_end+datetime.timedelta(days=1)))\
+			.filter(models.SurveyResponse.end_time > time_start)\
+			.filter(models.SurveyResponse.end_time <= (time_end+datetime.timedelta(days=1)))\
+			.filter(models.SurveyResponse.end_time != None)\
+			.group_by(models.Patient.program, func.substr(models.SurveyResponse.end_time,0,11),
+			          models.SurveyResponse.completed,models.SurveyResponse.exited,)
 	    df_q = pd.read_sql(q.statement,con=db.engine)
 	    df_q["program"] = list([str(a) for a in df_q["program"]])
-	    df_q_2 = df_q.pivot_table(index=["substr_1","program"],columns=["completed","exited"]).fillna(0)
+	    df_q_2 = df_q.pivot_table(index=["substr_1","program"],columns=["completed","exited"],values="per_date",aggfunc='sum').fillna(0)
 	    df_q_2.columns = ["exited","completed"]
 	    df_q_2["responded"] = df_q_2["exited"] + df_q_2["completed"]
 	    outdf_p = df_q_2.reset_index().loc[:,["substr_1","program","responded","completed","exited"]]
 	    outdf_p.columns = ["date","program","total_responded","Well","Sick"]
 	    
 	    cols = [func.substr(models.SurveyResponse.end_time,0,11),
-	        func.count(func.distinct(models.SurveyResponse.uniq_id)).label("per_date"),
+	        func.count(models.SurveyResponse.uniq_id).label("per_date"),
 	        models.Patient.location,
 	        models.SurveyResponse.completed,
 	        models.SurveyResponse.exited]
 	    q = db.session.query(*cols).join(models.Patient)\
-	            .filter(models.SurveyResponse.end_time > time_start)\
-	            .filter(models.SurveyResponse.end_time <= (time_end+datetime.timedelta(days=1)))\
-	            .filter(models.SurveyResponse.end_time != None)\
-	            .group_by(models.Patient.program, func.substr(models.SurveyResponse.end_time,0,11),
-	                      models.SurveyResponse.completed,models.SurveyResponse.exited,)
+		        .filter(models.SurveyResponse.start_time > time_start)\
+		        .filter(models.SurveyResponse.start_time <= (time_end+datetime.timedelta(days=1)))\
+		        .filter(models.SurveyResponse.end_time > time_start)\
+		        .filter(models.SurveyResponse.end_time <= (time_end+datetime.timedelta(days=1)))\
+		        .filter(models.SurveyResponse.end_time != None)\
+		        .group_by(models.Patient.program, func.substr(models.SurveyResponse.end_time,0,11),
+		                  models.SurveyResponse.completed,models.SurveyResponse.exited,)
 	    df_q = pd.read_sql(q.statement,con=db.engine)
 	    df_q["location"] = list([str(a) for a in df_q["location"]])
-	    df_q_2 = df_q.pivot_table(index=["substr_1","location"],columns=["completed","exited"]).fillna(0)
+	    df_q_2 = df_q.pivot_table(index=["substr_1","location"],columns=["completed","exited"],values="per_date",aggfunc='sum').fillna(0)
 	    df_q_2.columns = ["exited","completed"]
 	    df_q_2["responded"] = df_q_2["exited"] + df_q_2["completed"]
 	    outdf_l = df_q_2.reset_index().loc[:,["substr_1","location","responded","completed","exited"]]
@@ -1262,6 +1274,8 @@ def survey_response_dashboard(survey_id):
 	sr = db.session.query(*cols)\
 	    .join(models.Question,models.SurveyResponse)\
 	    .filter(models.SurveyResponse.survey_id==survey.id)\
+	    .filter(models.SurveyResponse.start_time > time_start)\
+	    .filter(models.SurveyResponse.start_time <= time_end)\
 	    .filter(models.SurveyResponse.end_time > time_start)\
 	    .filter(models.SurveyResponse.end_time <= time_end)
 
@@ -1354,7 +1368,7 @@ def survey_response_student_dashboard():
 		        .group_by(func.substr(models.SurveyResponse.end_time,0,11),
 		                  models.SurveyResponse.completed,models.SurveyResponse.exited,)
 		df_q = pd.read_sql(q.statement,con=db.engine)
-		df_q_2 = df_q.pivot_table(index="substr_1",columns=["completed","exited"]).fillna(0)
+		df_q_2 = df_q.pivot_table(index="substr_1",columns=["completed","exited"],values="per_date",aggfunc='sum').fillna(0)
 		df_q_2.columns = ["daily_exited_surveys","daily_completed_surveys"]
 		df_q_2["daily_total_surveys"] = df_q_2["daily_exited_surveys"]+df_q_2["daily_completed_surveys"]
 		df_q_2["positivity_rate"] = df_q_2["daily_exited_surveys"]/df_q_2["daily_total_surveys"]*100
