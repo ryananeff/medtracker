@@ -997,7 +997,7 @@ def make_cache_key(*args, **kwargs):
 
 @app.route("/surveys/<int:survey_id>/responses/dashboard/loaded",methods=["GET"])
 @flask_login.login_required
-#@cache.cached(timeout=None,key_prefix=make_cache_key)
+@cache.cached(timeout=None,key_prefix=make_cache_key)
 def survey_response_dashboard(survey_id):
 	start_request = request.values.get("start_date","2020-06-29")
 	end_request = request.values.get("end_date",(datetime.datetime.now(tz)).date().strftime("%Y-%m-%d"))
