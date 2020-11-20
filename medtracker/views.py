@@ -1359,7 +1359,7 @@ def survey_response_dashboard(survey_id):
 def survey_response_student_dashboard():
 	survey_id = 1
 	start_request = request.values.get("start_date","2020-06-29")
-	end_request = request.values.get("end_date",None)
+	end_request = request.values.get("end_date",(datetime.datetime.now(tz)).date().strftime("%Y-%m-%d"))
 	dash_figs = []
 	question_figs = []
 	if(True):
@@ -1450,14 +1450,24 @@ def survey_response_student_dashboard():
 			special_figs[ix] = offline.plot(fig,show_link=False, output_type="div", include_plotlyjs=False)
 
 		patient_count = models.Patient.query.count()
-		df = df.loc[df.index[0]:df[df["fmt_date"]==end_request].index[0]]
-		today_count = int(list(df["daily_total_surveys"])[-1])
-		today_pct = list(df["positivity_rate"])[-1]
-		week_count = int(sum(list(df["daily_total_surveys"])[-7:]))
-		week_pct = sum(list(df["positivity_rate"])[-7:])/7
-		today_positive = int(list(df["daily_exited_surveys"])[-1])
-		today_negative = int(list(df["daily_completed_surveys"])[-1])
-		today_pct_pos = today_pct
+		if end_request in df["fmt_date"]:
+			df = df.loc[df.index[0]:df[df["fmt_date"]==end_request].index[0]]
+			today_count = int(list(df["daily_total_surveys"])[-1])
+			today_pct = list(df["positivity_rate"])[-1]
+			week_count = int(sum(list(df["daily_total_surveys"])[-7:]))
+			week_pct = sum(list(df["positivity_rate"])[-7:])/7
+			today_positive = int(list(df["daily_exited_surveys"])[-1])
+			today_negative = int(list(df["daily_completed_surveys"])[-1])
+			today_pct_pos = today_pct
+		else:
+			today_count = 0
+			today_pct = 0
+			week_count = 0
+			week_pct = 0
+			patient_count = 0
+			today_positive = 0
+			today_negative = 0
+			today_pct_pos = 0
 
 	else:
 		dash_figs = []
