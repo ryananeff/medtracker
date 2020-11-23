@@ -1335,7 +1335,7 @@ def survey_response_dashboard(survey_id):
 	                       today_pct_pos=today_pct_pos, patients = sig_r,special_figs=special_figs)
 
 @app.route("/covid/dashboard",methods=["GET"])
-@cache.cached(timeout=None,key_prefix=make_cache_key)
+#@cache.cached(timeout=None,key_prefix=make_cache_key)
 def survey_response_student_dashboard():
 	survey_id = 1
 	start_request = request.values.get("start_date","2020-06-29")
@@ -1409,13 +1409,14 @@ def survey_response_student_dashboard():
 		      yanchor="bottom",
 		      y=1.02,
 		      xanchor="right",
-		      x=1
+		      x=1,
 		     ))
+		    fig.update_layout(margin=dict(r=0,l=0))
 		    return fig
 		special_figs.append(pos_plot(df))
 		fig = plotlyBarplot(data=df3,x="index",y="value",hue="variable",width=None, height=400,
 			                     title="Compliance History",stacked=True,show_legend=True,colors=["green","red"],
-			                     ylabel="# Students",xlabel="Date")
+			                     ylabel="# Students",xlabel="Date",margins=dict(r=0,l=0))
 		fig.update_layout(legend=dict(
 		      orientation="h",
 		      yanchor="bottom",
@@ -1569,7 +1570,8 @@ def plotlyBarplot(x=None,y=None,hue=None,data=None,ylabel="",xlabel="",title="",
         fig.update_layout(xaxis={"categoryorder":"array","categoryarray":catorder})
     fig.update_layout(legend=dict(x=1.01, y=0))
     fig.update_layout(showlegend=show_legend)
-
+    fig.update_layout(bargap = 0)
+    fig.update_traces(marker_line_width=0)
     return fig
 
 @app.route("/users/")
