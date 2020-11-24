@@ -188,7 +188,6 @@
                align="center" class="" style=""
             >
           <![endif]-->
-                                <div style="font-family:helvetica;font-size:20px;line-height:1;text-align:center;color:#000000;">Taken: {{ record.end_time.strftime('%B %-d, %Y') }}</div>
                                 <!--[if mso | IE]>
             </td>
           
@@ -214,19 +213,24 @@
           <![endif]-->
                                 <div style="font-family:helvetica;font-size:20px;line-height:1;text-align:left;color:#000000;">Follow your program requirements for reporting your absence. Schedule a tele-health visit with your provider or Student Health should symptoms persist or if you have further questions.</div>
                                 <!--[if mso | IE]>
+
             </td>
           
             <td
                class="" style="vertical-align:top;width:200px;"
             >
           <![endif]-->
+                                <div style="font-family:helvetica;font-size:20px;line-height:1;text-align:center;color:#000000;">Name: {{patient.fullname}}</div>
+                                <div style="font-family:helvetica;font-size:20px;line-height:1;text-align:center;color:#000000;">Life Number: {{patient.lifenumber}}</div>
+                                <div style="font-family:helvetica;font-size:20px;line-height:1;text-align:center;color:#000000;">Taken: {{ record.end_time.strftime('%B %-d, %Y') }}</div>
+                                
                                 <div class="mj-column-px-200 mj-outlook-group-fix" style="font-size:0px;text-align:left;direction:ltr;display:inline-block;vertical-align:top;width:100%;">
                                   <table border="0" cellpadding="0" cellspacing="0" role="presentation" style="vertical-align:top;" width="100%">
                                     <tr>
                                       <td align="center" vertical-align="middle" style="font-size:0px;padding:10px 25px;word-break:break-word;">
                                         <table border="0" cellpadding="0" cellspacing="0" role="presentation" style="border-collapse:separate;line-height:100%;">
                                           <tr>
-                                            <td align="center" bgcolor="darkblue" role="presentation" style="border:none;border-radius:3px;cursor:auto;mso-padding-alt:10px 25px;background:darkblue;" valign="middle"> <a href="test.com" style="display:inline-block;background:darkblue;color:#ffffff;font-family:Ubuntu, Helvetica, Arial, sans-serif;font-size:13px;font-weight:normal;line-height:120%;margin:0;text-decoration:none;text-transform:none;padding:10px 25px;mso-padding-alt:0px;border-radius:3px;"
+                                            <td align="center" bgcolor="darkblue" role="presentation" style="border:none;border-radius:3px;cursor:auto;mso-padding-alt:10px 25px;background:darkblue;" valign="middle"> <a href="https://ismmshealthcheck.com/patients/self" style="display:inline-block;background:darkblue;color:#ffffff;font-family:Ubuntu, Helvetica, Arial, sans-serif;font-size:13px;font-weight:normal;line-height:120%;margin:0;text-decoration:none;text-transform:none;padding:10px 25px;mso-padding-alt:0px;border-radius:3px;"
                                                 target="_blank">
               See my records
             </a> </td>

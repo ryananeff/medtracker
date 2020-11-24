@@ -263,6 +263,7 @@ def send_survey_response_email(patient, record, app=app):
 				msg.html = render_template('email_survey_complete.html', patient=patient,record=record)
 				msg.body = render_template('email_survey_complete.txt', patient=patient,record=record)
 			elif record.exited:
+				msg.cc = ["StudentCovidResponse@mssm.edu"]
 				msg.html = render_template('email_survey_exit.html', patient=patient,record=record) #change me!
 				msg.body = render_template('email_survey_exit.txt', patient=patient,record=record) #change me!
 		mail.send(msg)
