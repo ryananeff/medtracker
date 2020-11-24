@@ -1336,7 +1336,7 @@ def survey_response_dashboard(survey_id):
 	                       today_pct_pos=today_pct_pos, patients = sig_r,special_figs=special_figs)
 
 @app.route("/covid/dashboard",methods=["GET"])
-#@cache.cached(timeout=None,key_prefix=make_cache_key)
+@cache.cached(timeout=None,key_prefix=make_cache_key)
 def survey_response_student_dashboard():
 	survey_id = 1
 	start_request = request.values.get("start_date","2020-06-29")
@@ -1429,8 +1429,8 @@ def survey_response_student_dashboard():
 
 		##special COVID tracking stats - NYC area
 		special_figs_2 = []
-		special_figs_2.append(plotly.io.read_json(open("medtracker/data/daily_cases.json","r")))
-		special_figs_2.append(plotly.io.read_json(open("medtracker/data/r0_estimate.json","r")))		
+		special_figs_2.append(plotly.io.read_json(open("/home/ubuntu/medtracker/medtracker/data/daily_cases.json","r")))
+		special_figs_2.append(plotly.io.read_json(open("/home/ubuntu/medtracker/medtracker/data/r0_estimate.json","r")))		
 
 		for ix,fig in enumerate(special_figs):
 			special_figs[ix] = offline.plot(fig,show_link=False, output_type="div", include_plotlyjs=False)
