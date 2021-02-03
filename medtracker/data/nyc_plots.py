@@ -100,7 +100,7 @@ fig2.add_scatter(x=df2.index, y=df2['Richmond County'], mode='lines', name='Stat
 fig2.add_scatter(x=df2.index, y=df2['Total'], mode='lines+markers', name='NYC')
 prepFigure(fig2, title='NYC Case Fatality Rate - From USA Facts')
 fig2.update_layout(yaxis_title="Percent", yaxis_tickformat=".2%")
-fig2.write_json("cfr.json")
+fig2.write_json("/home/ubuntu/medtracker/medtracker/data/cfr.json")
 
 #daily new cases
 df2 = DailyCases_df
@@ -114,11 +114,11 @@ fig2.add_scatter(x=df2.index,y=df2['Total'], mode='lines+markers', name='NYC')
 fig2.add_scatter(x=df2.index, y=df2['EMA'], mode='lines', line=dict(color='royalblue', width=4, dash='dot'), name='7 day EMA')
 prepFigure(fig2, title="NYC Daily New Cases (Source: USA Facts)")
 latest = df2.iloc[-1,:]
-fig2.add_annotation(text="NYC Cases on "+latest.name.strftime("%m/%d")+":\n"+str(int(latest.Total)),
+fig2.add_annotation(text="On "+latest.name.strftime("%m/%d")+":\n"+str(int(latest.Total)),
                    font=dict(family="Helvetica, Arial",size=28),
                   xref="paper", yref="paper",
                   x=1, y=1, showarrow=False)
-fig2.write_json("daily_cases.json")
+fig2.write_json("/home/ubuntu/medtracker/medtracker/data/daily_cases.json")
 
 #daily new deaths
 df2 = DailyDeaths_df
@@ -132,14 +132,14 @@ fig2.add_scatter(x=df2.index,y=df2['Richmond County'], mode='lines', name='State
 fig2.add_scatter(x=df2.index,y=df2['Total'], mode='lines+markers', name='NYC')
 fig2.add_scatter(x=df2.index, y=df2['EMA'], mode='lines', line=dict(color='royalblue', width=4, dash='dot'), name='7 day EMA')
 prepFigure(fig2, title="NYC Daily Deaths (Source: USA Facts)")
-fig2.write_json("daily_deaths.json")
+fig2.write_json("/home/ubuntu/medtracker/medtracker/data/daily_deaths.json")
 
 #hospitalizations
 df2 = nyc_case_hosp_death_df
 fig2 = go.Figure()
 fig2.add_scatter(x=df2.index,y=df2['HOSPITALIZED_COUNT'], mode='lines', name='Hospitalizations', )
 prepFigure(fig2,title="NYC New Hospitalizations (Source: NYC DOHMH)")
-fig2.write_json("hospitalizations.json")
+fig2.write_json("/home/ubuntu/medtracker/medtracker/data/hospitalizations.json")
 
 #r0 estimation
 df2 = rt_df[rt_df["region"]=="NY"].sort_values("date").set_index("date")
@@ -160,8 +160,8 @@ fig2.add_shape( #dashed line
 prepFigure(fig2,title="R0 estimate (Source: rt.live)")
 fig2.update_layout(showlegend=False)
 ro_latest = str(round(list(df2["R0_mean"])[-1],2))
-fig2.add_annotation(text="Most Recent R0:\n"+ro_latest,
-                   font=dict(family="Helvetica, Arial",size=28),
+fig2.add_annotation(text="Current R0:\n"+ro_latest,
+                   font=dict(family="Helvetica, Arial",size=24),
                   xref="paper", yref="paper",
                   x=1, y=1, showarrow=False)
-fig2.write_json("r0_estimate.json")
+fig2.write_json("/home/ubuntu/medtracker/medtracker/data/r0_estimate.json")

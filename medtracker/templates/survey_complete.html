@@ -10,13 +10,19 @@
 	    	<div class="col-lg-2"></div>
 	    	<div class="col-lg-8">
 	    	{%if record.message %}<h2 style="color:green;background-color:inherit;">{{record.message}}</h2>{% endif%}
-	    	<p><small>Your answers have been recorded successfully. Your attestation is shown below.</small></p>
-	    	<p><small>Device ID: <strong>{{ fmt_id(patient.mrn) }}</strong><small></p>
+	    	<p><small>Your answers have been recorded successfully. Your attestation is shown at the bottom of this page.</small></p>
+		<p><small>Device ID: <strong>{{ fmt_id(patient.mrn) }}</strong><small></p>
 	    	<p><small>Completion Date: <strong>{{ momentjs(record.end_time).format('MMMM Do YYYY, h:mm a') }}</strong><small></p>
 	    	{% if qrcode_out %}
 	    	<p>QR Code:</p><p><img src="{{qrcode_out|safe}}" style="max-width:100%"></p>
 	    	{% endif %}
-	    	<p><a type="button" class="btn btn-sm btn-primary" href="{{url_for('view_patient_self',survey_id=survey.id)}}">See your records</a></p>
+		<p><a type="button" class="btn btn-sm btn-primary" href="{{url_for('view_patient_self',survey_id=survey.id)}}">See your records</a>
+                </p>
+		<p><small>You may also wish to make an appointment for <a href="https://ehsappointments.as.me/AsymptomaticCOVIDPCRTest">asymptomatic testing</a> at Mount Sinai, which is now available for all students. There are two locations
+                        available: 1190 Fifth Avenue and 2 West 86th Street. Click on the button below to schedule an appointment:</small>
+		</p><p>
+                   <a type="button" class="btn btn-md btn-info" style="color:black" href="https://ehsappointments.as.me/AsymptomaticCOVIDPCRTest">Asymptomatic testing</a>
+                </p>
 		    </div>
 	    </div><!-- /.container -->
 	</div>
