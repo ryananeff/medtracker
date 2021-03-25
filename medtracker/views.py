@@ -1048,7 +1048,7 @@ def survey_response_dashboard(survey_id):
 	df_q_2["daily_total_surveys"] = df_q_2["daily_exited_surveys"]+df_q_2["daily_completed_surveys"]
 	df_q_2["positivity_rate"] = df_q_2["daily_exited_surveys"]/df_q_2["daily_total_surveys"]*100
 	df_q_2["fmt_date"] = df_q_2.index
-	df_q_2.index = [datetime.datetime.strptime(a,"%Y-%m-%d").strftime("%D") for a in df_q_2.index]
+	df_q_2.index = [a for a in df_q_2.index]
 	df = df_q_2.reset_index()
 	if end_request in list(df["fmt_date"]):
 		df = df.loc[df.index[0]:df[df["fmt_date"]==end_request].index[0]]
@@ -1277,9 +1277,9 @@ def survey_response_dashboard(survey_id):
 	    .join(models.Question,models.SurveyResponse)\
 	    .filter(models.SurveyResponse.survey_id==survey.id)\
 	    .filter(models.SurveyResponse.start_time > time_start)\
-	    .filter(models.SurveyResponse.start_time <= time_end)\
+	    .filter(models.SurveyResponse.start_time <= (time_end+datetime.timedelta(days=1)))\
 	    .filter(models.SurveyResponse.end_time > time_start)\
-	    .filter(models.SurveyResponse.end_time <= time_end)
+	    .filter(models.SurveyResponse.end_time <= (time_end+datetime.timedelta(days=1)))
 
 	df_q = pd.read_sql(sr.statement,con=db.engine)
 	df_q.columns = ["date","response_id","uniq_id","response","question_id","question_title","question_choices","question_type"]
@@ -1288,7 +1288,7 @@ def survey_response_dashboard(survey_id):
 	if len(qres)>0:
 	    qres = qres.groupby(["date","question_id","uniq_id"]).first()
 	    qres = qres.reset_index()
-	    e = [str(a.date()) for a in list(pd.date_range(start_time,end_time))]
+	    e = [str(a.date()) for a in list(pd.date_range(start_time,(datetime.datetime.strptime(end_request,"%Y-%m-%d")+datetime.timedelta(days=1)).date()))]
 
 	    for n,g in qres.groupby("question_id"):
 	        title = list(g.question_title)[0]
@@ -1299,7 +1299,7 @@ def survey_response_dashboard(survey_id):
 	        pltdf = g.loc[:,["date","response"]]
 	        pltdf["count"] = 1
 	        pltdf.sort_values("date",inplace=True)
-	        pltdf["date"] = pltdf["date"].astype(str)
+	        #pltdf["date"] = pltdf["date"].astype(str)
 	        refmt = []
 	        for ix,row in pltdf.iterrows():
 	            row = list(row)
@@ -1375,7 +1375,7 @@ def survey_response_student_dashboard():
 		df_q_2["daily_total_surveys"] = df_q_2["daily_exited_surveys"]+df_q_2["daily_completed_surveys"]
 		df_q_2["positivity_rate"] = df_q_2["daily_exited_surveys"]/df_q_2["daily_total_surveys"]*100
 		df_q_2["fmt_date"] = df_q_2.index
-		df_q_2.index = [datetime.datetime.strptime(a,"%Y-%m-%d").strftime("%D") for a in df_q_2.index]
+		df_q_2.index = [a for a in df_q_2.index]
 		df = df_q_2.reset_index()
 		df2 = df.loc[:,["index","daily_completed_surveys","daily_exited_surveys"]]
 		df2.columns = ["index","Cleared","Sent Home"]
@@ -1431,7 +1431,7 @@ def survey_response_student_dashboard():
 		##special COVID tracking stats - NYC area
 		special_figs_2 = []
 		special_figs_2.append(plotly.io.read_json(open("/home/ubuntu/medtracker/medtracker/data/daily_cases.json","r")))
-		special_figs_2.append(plotly.io.read_json(open("/home/ubuntu/medtracker/medtracker/data/r0_estimate.json","r")))		
+		special_figs_2.append(plotly.io.read_json(open("/home/ubuntu/medtracker/medtracker/data/hospitalizations.json","r")))		
 
 		for ix,fig in enumerate(special_figs):
 			special_figs[ix] = offline.plot(fig,show_link=False, output_type="div", include_plotlyjs=False)
@@ -1537,7 +1537,7 @@ def plotlyBarplot(x=None,y=None,hue=None,data=None,ylabel="",xlabel="",title="",
                 counts = round(counts/totalcounts.loc[counts.index,]*100,1)
             x = [str(i) for i in counts.index]
             y = counts.values
-            name = str(hue)[0:8] + ".." if len(str(hue))>10 else str(hue)
+            name = str(hue)[0:18] + ".." if len(str(hue))>20 else str(hue)
             trace = go.Bar(x=x,y=y,
                            text=y,
                            textposition='auto',

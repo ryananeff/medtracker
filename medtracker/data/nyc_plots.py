@@ -28,11 +28,13 @@ url = "https://usafactsstatic.blob.core.windows.net/public/data/covid-19/covid_c
 confirmed_df=pd.read_csv(url)
 
 nyc_counties_df = confirmed_df.loc[(confirmed_df['State'] == 'NY') & (confirmed_df['countyFIPS'].isin([36005, 36061, 36081, 36085, 36047]))]
+nyc_counties_df["County Name"] = [a.strip() for a in nyc_counties_df["County Name"]]
 nyc_counties_df=nyc_counties_df.set_index('County Name')
-nyc_counties_df=nyc_counties_df.drop(columns=['countyFIPS', 'State', 'stateFIPS'])
+nyc_counties_df=nyc_counties_df.drop(columns=['countyFIPS', 'State', 'StateFIPS'])
 nyc_counties_df = nyc_counties_df.transpose()
 nyc_counties_df = nyc_counties_df.rename_axis('Date')
 nyc_counties_df.index =pd.to_datetime(nyc_counties_df.index)
+#print(nyc_counties_df)
 nyc_counties_df['Total'] = nyc_counties_df['Bronx County'] + nyc_counties_df['Kings County'] + nyc_counties_df['New York County'] + nyc_counties_df['Queens County'] + nyc_counties_df['Richmond County']
 
 
@@ -41,9 +43,9 @@ url = "https://usafactsstatic.blob.core.windows.net/public/data/covid-19/covid_d
 deaths_df = pd.read_csv(url)
 
 nyc_counties_deaths_df = deaths_df.loc[(deaths_df['State'] == 'NY') & (deaths_df['countyFIPS'].isin([36005, 36061, 36081, 36085, 36047]))]
-
+nyc_counties_deaths_df["County Name"] = [a.strip() for a in nyc_counties_deaths_df["County Name"]]
 nyc_counties_deaths_df=nyc_counties_deaths_df.set_index('County Name')
-nyc_counties_deaths_df=nyc_counties_deaths_df.drop(columns=['countyFIPS', 'State', 'stateFIPS'])
+nyc_counties_deaths_df=nyc_counties_deaths_df.drop(columns=['countyFIPS', 'State', 'StateFIPS'])
 
 nyc_counties_deaths_df = nyc_counties_deaths_df.transpose()
 nyc_counties_deaths_df = nyc_counties_deaths_df.rename_axis('Date')
