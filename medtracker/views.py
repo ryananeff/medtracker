@@ -100,11 +100,10 @@ def detect_user_session():
 	else:
 		g.patient_ident = g.device.device_id
 		g.patient = Patient.query.filter_by(mrn=g.patient_ident).first()
-                
-                @after_this_request
-                def refresh_pt_id(response):
-                    response.set_cookie('patient_ident', g.patient_ident, max_age=datetime.timedelta(weeks=52))
-                    return response
+		@after_this_request
+		def refresh_pt_id(response):
+			response.set_cookie('patient_ident', g.patient_ident, max_age=datetime.timedelta(weeks=52))
+			return response
 
 	if current_user.is_authenticated:
 		current_user.surveys = Survey.query
