@@ -2,7 +2,7 @@ from wtforms import *
 from flask_wtf import FlaskForm as Form
 from wtforms.ext.sqlalchemy.fields import *
 from wtforms.fields.html5 import DateField, IntegerRangeField, EmailField
-from wtforms.validators import DataRequired, Length, EqualTo, InputRequired
+from wtforms.validators import DataRequired, Length, EqualTo, InputRequired, Email, Regexp
 from wtforms.widgets.core import HTMLString, html_params, escape, HiddenInput
 from medtracker.models import *
 from flask.views import MethodView
@@ -10,6 +10,7 @@ from medtracker.models import *
 import re, json
 from wtforms_alchemy import ModelForm, ModelFieldList
 from wtforms.fields import FormField
+import re
 
 class HiddenInteger(IntegerField):
     widget = HiddenInput()
@@ -147,7 +148,8 @@ class UsernamePasswordForm(Form):
 
 class NewUserForm(Form):
 	name = StringField('Full Name', validators=[DataRequired()])
-	email = StringField('Email', validators=[DataRequired()])
+	email = StringField('Email', validators=[InputRequired(), Email(message="Please provide a valid email address."), 
+	                    Regexp("(\S+(@icahn.mssm.edu|@mssm.edu|@mountsinai.org)$)",message="Please enter a Mount Sinai email address",flags=re.IGNORECASE)])
 	password = PasswordField('Password', validators=[DataRequired(),
 	                         Length(min=8, max=40),
 	                         EqualTo('confirm', message='Passwords must match')])
@@ -184,21 +186,48 @@ class ResetPasswordForm(Form):
             raise ValidationError('Unknown email address.')
 
 class PatientForm(Form):
-	mrn = DisabledTextField('Patient Device ID')
+	mrn = DisabledTextField('Student Device ID')
+	fullname = StringField('Full Name', description="Please enter your name", validators=[InputRequired(), Length(min=3, max=50, message="Full name must be between 3 and 50 characters.")])
+	email = StringField('School Email Address', description="Please enter a Mount Sinai email address",
+	                    validators=[InputRequired(), Email(message="Please provide a valid email address."), 
+	                    Regexp("(\S+(@icahn.mssm.edu|@mssm.edu|@mountsinai.org)$)",message="Please enter a Mount Sinai email address",flags=re.IGNORECASE)])
+	lifenumber = StringField('Life Number', description="e.g. 2211234", 
+	                         validators=[InputRequired(), Length(min=7,max=7,message="Life number must be correct length."), 
+	                         Regexp('^\d+$', message="Life number must only contain digits.")])
+	phone = StringField('Phone number (optional)')
+	age = StringField('Age (optional)')
+
 	program = RadioField("What program are you in?", choices=PROGRAM_CHOICES)
 	year = SelectField("What is your anticipated graduation date?",choices=[(i,i) for ix,i in enumerate(range(2021,2030))],coerce=int)
 	location = RadioField("Where are you currently living?", choices=LOCATION_CHOICES)
-	fullname = StringField('Name (optional)')
-	age = StringField('Age (optional)')
-	email = StringField('Email address (optional)')
-	phone = StringField('Phone number (optional)')
+	
 
 class PatientEditForm(Form):
-	mrn = HiddenField('Patient Device ID')
+	mrn = DisabledTextField('Student Device ID')
+	fullname = StringField('Full Name', description="Please enter your name", validators=[InputRequired(), Length(min=3, max=50, message="Full name must be between 3 and 50 characters.")])
+	email = StringField('School Email Address', description="Please enter a Mount Sinai email address",
+	                    validators=[InputRequired(), Email(message="Please provide a valid email address."), 
+	                    Regexp("(\S+(@icahn.mssm.edu|@mssm.edu|@mountsinai.org)$)",message="Please enter a Mount Sinai email address",flags=re.IGNORECASE)])
+	lifenumber = StringField('Life Number', description="e.g. 2211234", 
+	                         validators=[InputRequired(), Length(min=7,max=7,message="Life number must be correct length."), 
+	                         Regexp('^\d+$', message="Life number must only contain digits.")])
+
 	program = RadioField("What program are you in?", choices=PROGRAM_CHOICES)
 	year = SelectField("What is your anticipated graduation date?",choices=[(i,i) for ix,i in enumerate(range(2021,2030))],coerce=int)
 	location = RadioField("Where are you currently living?", choices=LOCATION_CHOICES)
-	fullname = StringField('Name (optional)')
-	age = StringField('Age (optional)')
-	email = StringField('Email address (optional)')
+
 	phone = StringField('Phone number (optional)')
+	age = StringField('Age (optional)')
+
+class PatientSearchForm(Form):
+
+	mrn = TextField('Student Device ID')
+	fullname = StringField('Full Name')
+	email = StringField('Email Address')
+	lifenumber = StringField('Life Number', description="e.g. 2211234")
+	phone = StringField('Phone number')
+	age = StringField('Age')
+	program = StringField("Program")
+	year = StringField("Graduation Year")
+	location = StringField("Location")
+	

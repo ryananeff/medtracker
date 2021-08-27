@@ -11,32 +11,38 @@
 	    		<tr>
 	    			<td><strong>Device ID:</strong></td><td> {{ fmt_id(patient.mrn) }}</td>
 	    		</tr>
-			<!-- to disable sensitive info: remove end comments between this and bottom of table !--> <tr>
+	    		<tr>
+					<td><strong>Name:</strong></td><td>{% if patient.fullname %}{{patient.fullname}}{% else %}<span style="color:grey">(Not Provided)</span>{% endif %}</td>
+				</tr>
+				<tr>
+					<td><strong>E-mail:</strong></td><td>{% if patient.email %}{{patient.email}}{% else %}<span style="color:grey">(Not Provided)</span>{% endif %}</td>
+				</tr>
+				<tr>
+					<td><strong>Life Number:</strong></td><td>{% if patient.lifenumber %}{{patient.lifenumber}}{% else %}<span style="color:grey">(Not Provided)</span>{% endif %}</td>
+				</tr>
+	    		
+			<!-- to disable sensitive info: remove end comments between this and bottom of table !--> 
+			    <tr>
 					<td><strong>Program:</strong></td><td>{{patient.program}}</td>
+				</tr>
+				<tr>
+					<td><strong>Year:</strong></td><td>{{patient.year}}</td>
 				</tr>
 				<tr>
 					<td><strong>Location:</strong></td><td>{{patient.location}}</td>
 				</tr>
 				<tr>
-					<td><strong>Year:</strong></td><td>{{patient.year}}</td>
-				</tr>
-	    		<tr>
-					<td><strong>Name:</strong></td><td>{% if patient.fullname %}{{patient.fullname}}{% else %}<span style="color:grey">(Not Provided)</span>{% endif %}</td>
-				</tr>
-				<tr>
-					<td><strong>Age:</strong></td><td>{% if patient.age %}{{patient.age}}{% else %}<span style="color:grey">(Not Provided)</span>{% endif %}</td>
-				</tr>
-				<tr>
-					<td><strong>E-mail:</strong></td><td>{% if patient.email %}{{patient.email}}{% else %}<span style="color:grey">(Not Provided)</span>{% endif %}</td>
-				</tr>
-	    		<tr>
 					<td><strong>Phone:</strong></td><td>{% if patient.phone %}{{patient.phone}}{% else %}<span style="color:grey">(Not Provided)</span>{% endif %}</td>
 				</tr> <!-- !-->
-	    		
+	    		<tr>
+					<td><strong>Age:</strong></td><td>{% if patient.age %}{{patient.age}}{% else %}<span style="color:grey">(Not Provided)</span>{% endif %}</td>
+				</tr>
+				
 	    		</tbody>
 	    	</table>
 
 	</div>
+	<h3>Completed screenings</h3>
 	<div class="panel panel-self panel-default">
 		<div class="panel-body-self">
 			<div class="container">
@@ -77,9 +83,9 @@
 			                            	#}
 			                            <div class="card-body">
 			                            {% if response.completed %}
-			                        		<a href="{{url_for('complete_survey',session_id=response.session_id)}}" class="card-link">Completion record</a>
+			                        		<a href="{{url_for('complete_survey',sr_id=response.id,session_id=response.session_id)}}" class="card-link">Clearance record</a>
 			                        	{% elif response.exited %}
-			                        		<a href="{{url_for('exit_survey',session_id=response.session_id)}}" class="card-link">Exit record</a>
+			                        		<a href="{{url_for('exit_survey',sr_id=response.id, session_id=response.session_id)}}" class="card-link">Stay at home record</a>
 			                     		{% endif %}
                             		</div>
 	                        </div>
@@ -93,10 +99,7 @@
                         <div class="chat-body clearfix">
                             <div class="header" >
                                 <strong class="primary-font" style="font-size:18px; color:#f0ad4e">{{commenter.username}} <span style="font-size:14px">commented</span></strong>
-                                <small class="pull-right text-muted">
-                                    <i class="fa fa-clock-o fa-fw"></i>{{momentjs(time).calendar()}}<a href="/comment/delete/{{response.id}}" class="btn btn-xs btn-secondary">Delete</a>
-                                </small>
-                            </div>
+                                </div>
                             <p style="font-weight: normal;">
                             	{{response.body}}
                             </p>

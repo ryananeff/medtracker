@@ -2,14 +2,14 @@
 {% block title %}Responses | ISMMS Health Check{% endblock %}
 {% block body %}
 	    <div class="page-header">
-		    <h2><span style="color: grey;">All Surveys /</span> Responses</h2>
+		    <h2><span style="color: grey;">All Surveys /</span> Responses Today</h2>
 	    </div>
 	    <div class="col col-12">
 		  <table class="table table-hover" id="activesort">
 			  <thead>
 			  <th>#</th>
 			  <th>Time</th>
-			  <th>Patient</th>
+			  <th>Name / Device ID</th>
 			  <th>Survey</th>
 			  <th>Question</th>
 			  <th>Response</th>
@@ -19,7 +19,7 @@
 			  <tr>
 			  <td>{{loop.index}}</td>
 			  <td>{{momentjs(response.time).calendar()}}</td>
-			  <td><a href="/patients/{{response.patient.id}}">{{response.patient.fullname}} ({{response.patient.mrn}})</a></td>
+			  <td><a href="/patients/{{response.patient.id}}">{{response.patient.fullname}} ({{fmt_id(response.patient.mrn)}})</a></td>
 			  <td>{{response.question.survey.title}}</td>
 			  <td>{{response.question.body}}</td>
 			<td>{{response._response}}</td>

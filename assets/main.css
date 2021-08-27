@@ -1,6 +1,7 @@
 @font-face{
   font-family: Neue_Helvetica;
   src:url("/assets/fonts/neue_helvetica_reg.woff2");
+  font-display: swap;
 }
 body{
   font-family: Neue_Helvetica;
@@ -64,7 +65,7 @@ select {
 .img-circle {
 	horizontal-align:middle;
 	border-radius:50%;
-	height:150px;
+	height:100px;
 }
 
 .col-lg-4 {
