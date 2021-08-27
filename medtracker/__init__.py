@@ -37,6 +37,7 @@ app.config['REMEMBER_COOKIE_SECURE'] = True
 app.config['SESSION_COOKIE_SECURE'] = False
 app.config['SECRET_KEY'] = flask_secret_key
 app.config['WTF_CSRF_ENABLED']=True
+app.config['SEND_FILE_MAX_AGE_DEFAULT'] = 3600
 #app.config["DEBUG_TB_PROFILER_ENABLED"] = True
 #app.config["DEBUG_TB_INTERCEPT_REDIRECTS"] = False
 #app.debug = True

@@ -1,6 +1,8 @@
 import pandas as pd
 import plotly.graph_objects as go
 import numpy as np
+import requests
+from io import StringIO
 
 def prepFigure(figure, title):
     figure.update_xaxes(tickformat='%a<br>%b %d',
@@ -24,8 +26,15 @@ def prepFigure(figure, title):
 start_date = "2020-03-01"
 
 #confirmed cases
-url = "https://usafactsstatic.blob.core.windows.net/public/data/covid-19/covid_confirmed_usafacts.csv"
-confirmed_df=pd.read_csv(url)
+read_headers = {
+    "sec-ch-ua": "\"Chromium\";v=\"92\", \" Not A;Brand\";v=\"99\", \"Google Chrome\";v=\"92\"",
+    "sec-ch-ua-mobile": "?0",
+    "upgrade-insecure-requests": "1"
+  }
+url = "https://static.usafacts.org/public/data/covid-19/covid_confirmed_usafacts.csv"
+req = requests.get(url, headers=read_headers)
+data = StringIO(req.text)
+confirmed_df=pd.read_csv(data)
 
 nyc_counties_df = confirmed_df.loc[(confirmed_df['State'] == 'NY') & (confirmed_df['countyFIPS'].isin([36005, 36061, 36081, 36085, 36047]))]
 nyc_counties_df["County Name"] = [a.strip() for a in nyc_counties_df["County Name"]]
@@ -39,8 +48,10 @@ nyc_counties_df['Total'] = nyc_counties_df['Bronx County'] + nyc_counties_df['Ki
 
 
 #confirmed deaths
-url = "https://usafactsstatic.blob.core.windows.net/public/data/covid-19/covid_deaths_usafacts.csv"
-deaths_df = pd.read_csv(url)
+url = "https://static.usafacts.org/public/data/covid-19/covid_deaths_usafacts.csv"
+req = requests.get(url, headers=read_headers)
+data = StringIO(req.text)
+deaths_df = pd.read_csv(data)
 
 nyc_counties_deaths_df = deaths_df.loc[(deaths_df['State'] == 'NY') & (deaths_df['countyFIPS'].isin([36005, 36061, 36081, 36085, 36047]))]
 nyc_counties_deaths_df["County Name"] = [a.strip() for a in nyc_counties_deaths_df["County Name"]]

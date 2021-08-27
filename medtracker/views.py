@@ -87,22 +87,26 @@ def detect_user_session():
 	if (patient_ident_req is None)|(g.device is None):
 
 		g.patient_ident = randomword(16)
+		flash("The COVID19 tracker will be retired on July 1st, 2021. No new devices may be registered. Your device is currently unregistered.")
 
 		# when the response exists, set a cookie with the language
-		@after_this_request
-		def remember_pt_id(response):
-			response.set_cookie('patient_ident', g.patient_ident, max_age=datetime.timedelta(weeks=52))
-			device = Device(device_id = g.patient_ident)
-			db.session.add(device)
-			db.session.commit()
-			g.device = device
-			return response
+		#@after_this_request
+		#def remember_pt_id(response):
+			#response.set_cookie('patient_ident', g.patient_ident, max_age=datetime.timedelta(weeks=52))
+			#device = Device(device_id = g.patient_ident)
+			#db.session.add(device)
+			#db.session.commit()
+			#g.device = device
+			#return response
 	else:
 		g.patient_ident = g.device.device_id
 		g.patient = Patient.query.filter_by(mrn=g.patient_ident).first()
 		@after_this_request
 		def refresh_pt_id(response):
-			response.set_cookie('patient_ident', g.patient_ident, max_age=datetime.timedelta(weeks=52))
+			if hasattr(g,"flashed") == False:
+				response.set_cookie('patient_ident', g.patient_ident, max_age=(datetime.datetime(2021,7,1)-datetime.datetime.now()))
+				flash("The COVID19 tracker will be retired on July 1st, 2021. Your device will be unregistered automatically at that time.")
+				g.flashed=True
 			return response
 
 	if current_user.is_authenticated:
@@ -281,7 +285,8 @@ def send_survey_response_email(patient, record, app=app):
 def index():
 	g.patient = Patient.query.filter_by(mrn=g.patient_ident).first()
 	if g.patient == None:
-		flash("Your device appears to be unregistered. Please <a href='/patients/signup/1'>register</a> your device.")
+		pass
+		#flash("Your device appears to be unregistered. Please <a href='/patients/signup/1'>register</a> your device.")
 	elif check_patient_identified(g.patient)==False:
 		flash("Due to changes at Student Health, please <a href='/patients/edit/self'>update</a> your records before continuing.")
 	return render_template("index.html")
@@ -409,8 +414,8 @@ def serve_survey(survey_id):
 	today = datetime.datetime.now().date()
 	previous_responses = SurveyResponse.query.filter(SurveyResponse.uniq_id==g.patient.id).\
 		filter(SurveyResponse.end_time.isnot(None),SurveyResponse.start_time>today).first()
-	if (current_user.is_authenticated==False) & (previous_responses!=None):
-		return render_template("survey_quit.html",survey=survey, patient=g.patient,message="You can only take the survey once per day.")
+	#if (current_user.is_authenticated==False) & (previous_responses!=None):
+		#return render_template("survey_quit.html",survey=survey, patient=g.patient,message="You can only take the survey once per day.")
 
 	survey_response_id = request.values.get("sr", None)
 	question_id = request.values.get("question", None)
@@ -666,7 +671,8 @@ def remove_question(_id):
 ### controller for patient functions
 @app.route('/patients/signup/<int:survey_id>', methods=['GET', 'POST'])
 def patient_signup(survey_id):
-	'''GUI: add a patient to the DB via user sign up'''
+
+	#GUI: add a patient to the DB via user sign up
 	patient = Patient.query.filter_by(mrn=g.patient_ident).first()
 	if patient == None:
 		new_patient = True
@@ -688,7 +694,7 @@ def patient_signup(survey_id):
 		      Please keep this ID for your records: %s"""% fmt_id(g.patient_ident))
 		return redirect(url_for("start_survey",survey_id=survey_id))
 	if new_patient:
-		return render_template('form_signup_register.html', action="Register", data_type="device", form=formobj)
+		return abort(401,"The student health tracker is being retired and no new devices may be registered at this time. Thank you for using the student health check app! :)")
 	else:
 		if (patient.fullname != None) & (patient.fullname != ""):
 			flash("Welcome back, %s! (ID:%s)" % (patient.fullname,fmt_id(patient.mrn)))
@@ -1342,7 +1348,7 @@ def survey_response_dashboard(survey_id):
 	                       today_pct_pos=today_pct_pos, patients = sig_r,special_figs=special_figs)
 
 @app.route("/covid/dashboard",methods=["GET"])
-@cache.cached(timeout=None,key_prefix=make_cache_key)
+#@cache.cached(timeout=1800,key_prefix=make_cache_key)
 def survey_response_student_dashboard():
 	survey_id = 1
 	start_request = request.values.get("start_date","2020-06-29")
