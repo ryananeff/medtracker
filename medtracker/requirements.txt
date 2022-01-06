@@ -2,7 +2,7 @@ amqp==1.4.9
 anyjson==0.3.3
 billiard==3.3.0.22
 blinker==1.4
-celery==3.1.20
+celery==5.2.2
 cffi==1.5.0
 cryptography==1.2.2
 DateTime==4.0.1
